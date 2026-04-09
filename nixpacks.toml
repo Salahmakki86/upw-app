@@ -1,8 +1,0 @@
-[phases.install]
-cmds = []
-
-[phases.build]
-cmds = []
-
-[start]
-cmd = "npx serve dist -s"
