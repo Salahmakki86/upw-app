@@ -1,0 +1,502 @@
+import { useState, useEffect, useRef } from 'react'
+import { useApp } from '../context/AppContext'
+import { useLang } from '../context/LangContext'
+import Layout from '../components/Layout'
+
+const VOCAB_DATA = [
+  {
+    ar: 'مخيف', en: 'Terrified',
+    levels: [
+      { ar: 'قلق', en: 'Nervous', color: '#e67e22' },
+      { ar: 'غير مرتاح', en: 'Uncomfortable', color: '#f39c12' },
+      { ar: 'حذر', en: 'Cautious', color: '#2ecc71' },
+    ]
+  },
+  {
+    ar: 'فاشل', en: 'Failed',
+    levels: [
+      { ar: 'لم أنجز بعد', en: 'Not yet', color: '#e67e22' },
+      { ar: 'أتعلم', en: 'Learning', color: '#f39c12' },
+      { ar: 'أتطور', en: 'Growing', color: '#2ecc71' },
+    ]
+  },
+  {
+    ar: 'منهك', en: 'Exhausted',
+    levels: [
+      { ar: 'محتاج راحة', en: 'Need rest', color: '#e67e22' },
+      { ar: 'أعيد شحن طاقتي', en: 'Recharging', color: '#2ecc71' },
+      { ar: 'أستعيد قوتي', en: 'Recovering', color: '#27ae60' },
+    ]
+  },
+  {
+    ar: 'محبط', en: 'Frustrated',
+    levels: [
+      { ar: 'لم أجد الطريقة بعد', en: "Haven't found the way", color: '#e67e22' },
+      { ar: 'أبحث', en: 'Exploring', color: '#f39c12' },
+      { ar: 'أتعلم', en: 'Learning', color: '#2ecc71' },
+    ]
+  },
+  {
+    ar: 'كاره', en: 'Hate',
+    levels: [
+      { ar: 'لا أفضله', en: "Don't prefer", color: '#e67e22' },
+      { ar: 'أختار غيره', en: 'Choosing differently', color: '#2ecc71' },
+      { ar: 'أتقبله', en: 'Accepting', color: '#27ae60' },
+    ]
+  },
+  {
+    ar: 'خائف', en: 'Afraid',
+    levels: [
+      { ar: 'حذر', en: 'Cautious', color: '#e67e22' },
+      { ar: 'متأهب', en: 'Alert', color: '#f39c12' },
+      { ar: 'مستعد', en: 'Ready', color: '#2ecc71' },
+    ]
+  },
+  {
+    ar: 'يائس', en: 'Hopeless',
+    levels: [
+      { ar: 'في مرحلة تحدٍّ', en: 'In a challenge', color: '#e67e22' },
+      { ar: 'أبني قوتي', en: 'Building strength', color: '#f39c12' },
+      { ar: 'أنمو', en: 'Growing', color: '#2ecc71' },
+    ]
+  },
+]
+
+const MAGIC_QUESTIONS = {
+  ar: [
+    'ما الذي يمكنني التحكم فيه في هذا الموقف؟',
+    'ما الذي يمكنني تعلمه من هذا؟',
+    'كيف يمكنني استخدام هذا لصالحي؟',
+    'ما الذي سأكون ممتناً له بعد عام من الآن؟',
+    'من يمكنني أن أساعد بهذه التجربة؟',
+    'ما الذي سيحدث إذا لم أتخذ إجراءً؟',
+    'ما الخطوة الأصغر التي يمكنني اتخاذها الآن؟',
+  ],
+  en: [
+    'What CAN I control in this situation?',
+    'What can I LEARN from this?',
+    'How can I USE this to my advantage?',
+    'What will I be GRATEFUL for about this in a year?',
+    'Who can I HELP with this experience?',
+    'What WILL HAPPEN if I don\'t act?',
+    'What\'s the SMALLEST step I can take right now?',
+  ]
+}
+
+const INTERRUPT_LIST = {
+  ar: [
+    { emoji: '🏃', text: 'اقفز 20 مرة الآن بأقصى طاقة!' },
+    { emoji: '🎵', text: 'غنِّ أغنيتك المفضلة بصوت عالٍ لمدة دقيقة!' },
+    { emoji: '💃', text: 'ارقص لمدة دقيقة كاملة — أي رقصة!' },
+    { emoji: '🤣', text: 'اضحك بصوت عالٍ 10 مرات متواصلة!' },
+    { emoji: '🚿', text: 'اذهب فوراً واشرب كوب ماء بارد كامل!' },
+    { emoji: '💪', text: 'اعمل 10 ضغط الآن — اشعر بقوتك!' },
+    { emoji: '🧊', text: 'ضع يديك تحت الماء البارد 30 ثانية!' },
+    { emoji: '🌬️', text: 'خذ 5 أنفاس عملاقة — ملء الرئتين تماماً!' },
+  ],
+  en: [
+    { emoji: '🏃', text: 'Jump 20 times right now with maximum energy!' },
+    { emoji: '🎵', text: 'Sing your favorite song out loud for a minute!' },
+    { emoji: '💃', text: 'Dance for a full minute — any dance!' },
+    { emoji: '🤣', text: 'Laugh out loud 10 times in a row!' },
+    { emoji: '🚿', text: 'Go right now and drink a full glass of cold water!' },
+    { emoji: '💪', text: 'Do 10 push-ups now — feel your strength!' },
+    { emoji: '🧊', text: 'Put your hands under cold water for 30 seconds!' },
+    { emoji: '🌬️', text: 'Take 5 giant breaths — completely fill your lungs!' },
+  ]
+}
+
+const TRIAD_DATA = {
+  ar: {
+    physiology: [
+      { emoji: '🏋️', title: 'اقفز وتحرك', desc: 'قم من مكانك وتحرك بطاقة 60 ثانية' },
+      { emoji: '🧘', title: 'وضعية القوة', desc: 'أكتاف للخلف، رأس مرفوع، تنفس عميق، ابتسامة' },
+      { emoji: '💨', title: 'تنفس 4-4-8', desc: 'شهيق 4 ث — احبس 4 ث — زفير 8 ث' },
+      { emoji: '👐', title: 'قوة الصوت', desc: 'تكلم بصوت عالٍ وواثق — غيّر نبرتك' },
+    ],
+    focus: [
+      { emoji: '🎯', title: 'ركز على الحل', desc: 'بدلاً من المشكلة — ما الخطوة التالية؟' },
+      { emoji: '🙏', title: 'لحظة امتنان', desc: 'فكر في 3 أشياء جميلة في حياتك الآن' },
+      { emoji: '🌟', title: 'التركيز على ما تريد', desc: 'حيث يذهب تركيزك تذهب طاقتك' },
+      { emoji: '❓', title: 'سؤال القوة', desc: 'ما الذي يعمل بشكل جيد في حياتي الآن؟' },
+    ],
+    language: [
+      { emoji: '🔄', title: 'غيّر كلماتك', desc: '"مشكلة" → "تحدي"، "مستحيل" → "لم أجد الطريقة بعد"' },
+      { emoji: '💬', title: 'لغة الاختيار', desc: '"يجب أن أفعل" → "أختار أن أفعل"' },
+      { emoji: '📈', title: 'لغة النمو', desc: '"أنا فاشل" → "أنا أتعلم وأتطور"' },
+      { emoji: '🔥', title: 'تكرار صوتي', desc: 'ردد بقوة: "أنا أقوى من أي تحدي!"' },
+    ],
+  },
+  en: {
+    physiology: [
+      { emoji: '🏋️', title: 'Jump & Move', desc: 'Get up and move with full energy for 60 seconds' },
+      { emoji: '🧘', title: 'Power Posture', desc: 'Shoulders back, head up, deep breath, big smile' },
+      { emoji: '💨', title: '4-4-8 Breathing', desc: 'Inhale 4s — Hold 4s — Exhale 8s' },
+      { emoji: '👐', title: 'Voice Power', desc: 'Speak loudly and confidently — change your tone' },
+    ],
+    focus: [
+      { emoji: '🎯', title: 'Focus on Solution', desc: 'Instead of the problem — what is the next step?' },
+      { emoji: '🙏', title: 'Gratitude Moment', desc: 'Think of 3 beautiful things in your life right now' },
+      { emoji: '🌟', title: 'Focus on What You Want', desc: 'Where focus goes, energy flows' },
+      { emoji: '❓', title: 'Power Question', desc: 'What is working well in my life right now?' },
+    ],
+    language: [
+      { emoji: '🔄', title: 'Change Your Words', desc: '"Problem" → "Challenge", "Impossible" → "Haven\'t found the way yet"' },
+      { emoji: '💬', title: 'Language of Choice', desc: '"I have to" → "I choose to"' },
+      { emoji: '📈', title: 'Growth Language', desc: '"I\'m a failure" → "I am learning and growing"' },
+      { emoji: '🔥', title: 'Incantation', desc: 'Say powerfully: "I am stronger than any challenge!"' },
+    ],
+  }
+}
+
+const BREATHE_PHASES_DATA = {
+  ar: [
+    { label: 'شهيق', duration: 4, color: '#3498db' },
+    { label: 'احبس', duration: 16, color: '#c9a84c' },
+    { label: 'زفير', duration: 8, color: '#2ecc71' },
+  ],
+  en: [
+    { label: 'Inhale', duration: 4, color: '#3498db' },
+    { label: 'Hold', duration: 16, color: '#c9a84c' },
+    { label: 'Exhale', duration: 8, color: '#2ecc71' },
+  ]
+}
+
+const TRANSFORMER_DATA = {
+  ar: [
+    ['أنا فاشل', 'أنا أتعلم وأتطور'],
+    ['مستحيل', 'لم أجد الطريقة بعد'],
+    ['أنا خائف', 'أنا متحمس ومتوتر إيجابياً'],
+    ['مشكلة', 'تحدٍّ وفرصة للنمو'],
+    ['يجب أن أفعل', 'أختار أن أفعل'],
+  ],
+  en: [
+    ["I'm a failure", "I'm learning and growing"],
+    ['Impossible', "Haven't found the way yet"],
+    ["I'm scared", "I'm excited and positively energized"],
+    ['Problem', 'Challenge and growth opportunity'],
+    ['I have to', 'I choose to'],
+  ]
+}
+
+function SOSTimer({ onDone, lang }) {
+  const [seconds, setSeconds] = useState(60)
+  const ref = useRef(null)
+
+  const STEPS = lang === 'ar' ? [
+    { s: 0,  e: 10, text: 'قم من مكانك الآن! 🏃', color: '#e63946' },
+    { s: 10, e: 25, text: 'خذ 3 أنفاس عميقة 💨', color: '#3498db' },
+    { s: 25, e: 40, text: 'ارفع يديك وابتسم! 😁', color: '#c9a84c' },
+    { s: 40, e: 55, text: '«أنا أقوى من هذا!» 💪', color: '#2ecc71' },
+    { s: 55, e: 60, text: 'كيف تشعر الآن؟ ✨', color: '#9b59b6' },
+  ] : [
+    { s: 0,  e: 10, text: 'Get up and move NOW! 🏃', color: '#e63946' },
+    { s: 10, e: 25, text: 'Take 3 deep breaths 💨', color: '#3498db' },
+    { s: 25, e: 40, text: 'Raise your hands and SMILE! 😁', color: '#c9a84c' },
+    { s: 40, e: 55, text: '"I am stronger than this!" 💪', color: '#2ecc71' },
+    { s: 55, e: 60, text: 'How do you feel now? ✨', color: '#9b59b6' },
+  ]
+
+  useEffect(() => {
+    ref.current = setInterval(() => {
+      setSeconds(s => {
+        if (s <= 1) { clearInterval(ref.current); onDone(); return 0 }
+        return s - 1
+      })
+    }, 1000)
+    return () => clearInterval(ref.current)
+  }, [])
+
+  const elapsed = 60 - seconds
+  const currentStep = STEPS.find(st => elapsed >= st.s && elapsed < st.e) || STEPS[STEPS.length - 1]
+  const pct = (elapsed / 60) * 100
+
+  return (
+    <div className="flex flex-col items-center py-6 space-y-6">
+      <div className="relative w-48 h-48 rounded-full flex items-center justify-center"
+        style={{ background: `conic-gradient(${currentStep.color} ${pct * 3.6}deg, #1a1a1a 0)`,
+          animation: 'pulse-red 1.5s ease-in-out infinite' }}>
+        <div className="w-40 h-40 rounded-full flex flex-col items-center justify-center" style={{ background: '#090909' }}>
+          <span className="text-5xl font-black" style={{ color: currentStep.color }}>{seconds}</span>
+          <span className="text-xs mt-1" style={{ color: '#888' }}>{lang === 'ar' ? 'ثانية' : 'sec'}</span>
+        </div>
+      </div>
+      <div className="rounded-2xl px-6 py-4 text-center w-full"
+        style={{ background: `${currentStep.color}15`, border: `1px solid ${currentStep.color}44` }}>
+        <p className="text-lg font-black text-white">{currentStep.text}</p>
+      </div>
+      <div className="progress-bar-bg w-full">
+        <div className="h-1.5 rounded-full transition-all duration-1000"
+          style={{ width: `${pct}%`, background: currentStep.color }} />
+      </div>
+    </div>
+  )
+}
+
+function BreathGuide({ lang, t }) {
+  const BREATHE_PHASES = BREATHE_PHASES_DATA[lang]
+  const [phase, setPhase] = useState(0)
+  const [count, setCount] = useState(4)
+  const [running, setRunning] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!running) return
+    ref.current = setInterval(() => {
+      setCount(c => {
+        if (c <= 1) {
+          setPhase(p => {
+            const next = (p + 1) % BREATHE_PHASES.length
+            setCount(BREATHE_PHASES[next].duration)
+            return next
+          })
+          return BREATHE_PHASES[(phase + 1) % BREATHE_PHASES.length].duration
+        }
+        return c - 1
+      })
+    }, 1000)
+    return () => clearInterval(ref.current)
+  }, [running, phase])
+
+  const current = BREATHE_PHASES[phase]
+
+  return (
+    <div className="card space-y-4">
+      <h3 className="font-bold text-white text-sm">{t('state_breathing')}</h3>
+      <div className="flex items-center justify-center py-4">
+        <div className="w-32 h-32 rounded-full flex flex-col items-center justify-center transition-all duration-1000"
+          style={{ background: `${current.color}18`, border: `3px solid ${current.color}`,
+            boxShadow: running ? `0 0 30px ${current.color}44` : 'none',
+            transform: running && phase === 0 ? 'scale(1.15)' : 'scale(1)' }}>
+          <span className="text-3xl font-black" style={{ color: current.color }}>{count}</span>
+          <span className="text-xs font-bold mt-1" style={{ color: current.color }}>{current.label}</span>
+        </div>
+      </div>
+      <button onClick={() => setRunning(!running)}
+        className="w-full py-3 rounded-2xl font-bold transition-all active:scale-95"
+        style={{ background: running ? '#1a1a1a' : 'linear-gradient(135deg, #3498db, #2980b9)',
+          border: running ? '1px solid #2a2a2a' : 'none', color: '#fff' }}>
+        {running ? `⏸ ${t('pause')}` : `▶ ${t('state_breathe_start')}`}
+      </button>
+    </div>
+  )
+}
+
+export default function StateManagement() {
+  const { state, logState, updateMagicQuestions } = useApp()
+  const { lang, t } = useLang()
+  const [mode, setMode] = useState('home')
+  const [triadTab, setTriadTab] = useState('physiology')
+  const [randomInterrupt, setRandomInterrupt] = useState(null)
+  const [selectedVocab, setSelectedVocab] = useState(null)
+  const [magicProblem, setMagicProblem] = useState('')
+
+  const TRIAD_TOOLS = TRIAD_DATA[lang]
+  const TRANSFORMER = TRANSFORMER_DATA[lang]
+  const INTERRUPTS = INTERRUPT_LIST[lang]
+
+  const handleSosComplete = () => { logState('beautiful', '✨'); setMode('result') }
+
+  if (mode === 'sos') {
+    return (
+      <Layout title={`🚨 SOS`} subtitle={lang === 'ar' ? '60 ثانية تغيير جذري' : '60 seconds radical change'}>
+        <SOSTimer onDone={handleSosComplete} lang={lang} />
+      </Layout>
+    )
+  }
+
+  if (mode === 'result') {
+    return (
+      <Layout title="">
+        <div className="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4">
+          <div className="text-6xl animate-scale-in">🌟</div>
+          <h2 className="text-2xl font-black text-white">
+            {lang === 'ar' ? 'أحسنت!' : 'Well done!'}
+          </h2>
+          <p className="text-sm" style={{ color: '#888' }}>
+            {lang === 'ar'
+              ? 'لاحظ الفرق في مشاعرك — هذه قوة الثالوث العاطفي'
+              : 'Notice the difference in how you feel — this is the power of the Triad'}
+          </p>
+          <button onClick={() => setMode('home')} className="btn-gold px-8 py-3 mt-2">{t('back')}</button>
+        </div>
+      </Layout>
+    )
+  }
+
+  const TRIAD_TABS = [
+    { key: 'physiology', label: t('state_physiology'), emoji: '💪' },
+    { key: 'focus',      label: t('state_focus'),      emoji: '🎯' },
+    { key: 'language',   label: t('state_language'),   emoji: '💬' },
+  ]
+
+  return (
+    <Layout title={t('state_title')} subtitle={t('state_subtitle')}>
+      <div className="space-y-4 pt-2">
+
+        {/* SOS Big Button */}
+        <button onClick={() => setMode('sos')}
+          className="w-full rounded-3xl py-6 flex flex-col items-center gap-2 transition-all duration-200 active:scale-95"
+          style={{ background: 'linear-gradient(135deg, #e63946, #c1121f)',
+            boxShadow: '0 0 30px rgba(230,57,70,0.4)', animation: 'pulse-red 2s ease-in-out infinite' }}>
+          <span className="text-4xl">🚨</span>
+          <span className="text-xl font-black text-white">{t('state_sos')}</span>
+          <span className="text-xs text-white opacity-70">{t('state_sos_desc')}</span>
+        </button>
+
+        {/* Current State */}
+        <div className="card">
+          <p className="text-xs mb-2" style={{ color: '#888' }}>{t('dash_how_feel')}</p>
+          <div className="flex gap-3">
+            {[
+              { val: 'beautiful', label: `✨ ${t('dash_beautiful')}`, c: '#2ecc71' },
+              { val: 'suffering',  label: `🌧 ${t('dash_suffering')}`,  c: '#e63946' },
+            ].map(opt => (
+              <button key={opt.val} onClick={() => logState(opt.val, opt.label)}
+                className="flex-1 py-2 rounded-xl font-bold text-sm transition-all"
+                style={{ background: state.todayState === opt.val ? `${opt.c}20` : '#111',
+                  border: `1px solid ${state.todayState === opt.val ? opt.c + '66' : '#222'}`,
+                  color: state.todayState === opt.val ? opt.c : '#666' }}>
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Breathing */}
+        <BreathGuide lang={lang} t={t} />
+
+        {/* Emotional Triad */}
+        <div className="card">
+          <h3 className="font-bold text-white mb-3">{t('state_triad')}</h3>
+          <div className="flex gap-1 mb-4">
+            {TRIAD_TABS.map(tab => (
+              <button key={tab.key} onClick={() => setTriadTab(tab.key)}
+                className="flex-1 py-2 rounded-xl text-xs font-bold transition-all"
+                style={{ background: triadTab === tab.key ? 'rgba(201,168,76,0.15)' : '#111',
+                  border: `1px solid ${triadTab === tab.key ? 'rgba(201,168,76,0.4)' : '#1e1e1e'}`,
+                  color: triadTab === tab.key ? '#c9a84c' : '#666' }}>
+                {tab.emoji} {tab.label}
+              </button>
+            ))}
+          </div>
+          <div className="space-y-2">
+            {TRIAD_TOOLS[triadTab].map((tool, i) => (
+              <div key={i} className="rounded-xl p-3 flex items-start gap-3"
+                style={{ background: '#111', border: '1px solid #1e1e1e' }}>
+                <span className="text-xl">{tool.emoji}</span>
+                <div>
+                  <p className="text-sm font-bold text-white">{tool.title}</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#888' }}>{tool.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Pattern Interrupt */}
+        <div className="card">
+          <h3 className="font-bold text-white mb-3">{t('state_pattern_break')}</h3>
+          <p className="text-xs mb-3" style={{ color: '#888' }}>{t('state_pattern_desc')}</p>
+          <button onClick={() => setRandomInterrupt(INTERRUPTS[Math.floor(Math.random() * INTERRUPTS.length)])}
+            className="w-full py-3 rounded-2xl font-bold text-sm mb-3 transition-all active:scale-95"
+            style={{ background: '#222', border: '1px solid #333', color: '#c9a84c' }}>
+            🎲 {t('state_new_pattern')}
+          </button>
+          {randomInterrupt && (
+            <div className="rounded-2xl p-4 text-center animate-scale-in"
+              style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)' }}>
+              <p className="text-3xl mb-2">{randomInterrupt.emoji}</p>
+              <p className="font-bold text-white">{randomInterrupt.text}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Language Transformer */}
+        <div className="rounded-2xl p-4" style={{ background: '#111', border: '1px solid #1e1e1e' }}>
+          <h3 className="font-bold text-white mb-1">🔄 {t('state_transformer')}</h3>
+          <p className="text-xs mb-3" style={{ color: '#888' }}>{t('state_transformer_desc')}</p>
+          {TRANSFORMER.map(([neg, pos]) => (
+            <div key={neg} className="flex items-center gap-2 mb-2 text-xs">
+              <span style={{ color: '#e63946' }} className="flex-1 text-right">{neg}</span>
+              <span style={{ color: '#888' }}>→</span>
+              <span style={{ color: '#2ecc71' }} className="flex-1 text-left">{pos}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Transformational Vocabulary */}
+        <div className="rounded-2xl p-4" style={{ background: '#111', border: '1px solid #1e1e1e' }}>
+          <h3 className="font-bold text-white mb-1">💬 {t('state_vocab')}</h3>
+          <p className="text-xs mb-3" style={{ color: '#888' }}>{t('state_vocab_desc')}</p>
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {VOCAB_DATA.map((word, i) => (
+              <button
+                key={i}
+                onClick={() => setSelectedVocab(selectedVocab === i ? null : i)}
+                className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+                style={{
+                  background: selectedVocab === i ? 'rgba(230,57,70,0.2)' : 'rgba(230,57,70,0.08)',
+                  border: `1px solid ${selectedVocab === i ? '#e63946' : 'rgba(230,57,70,0.25)'}`,
+                  color: selectedVocab === i ? '#e63946' : '#cc6666',
+                }}>
+                {lang === 'ar' ? word.ar : word.en}
+              </button>
+            ))}
+          </div>
+          {selectedVocab !== null && (
+            <div className="mt-3 space-y-2 animate-fade-in">
+              <p className="text-xs font-bold" style={{ color: '#c9a84c' }}>
+                {lang === 'ar' ? '→ بدائل أقل شدة:' : '→ Softer alternatives:'}
+              </p>
+              {VOCAB_DATA[selectedVocab].levels.map((lvl, li) => (
+                <div key={li} className="flex items-center gap-3 rounded-xl p-2.5"
+                  style={{ background: `${lvl.color}12`, border: `1px solid ${lvl.color}33` }}>
+                  <span className="text-xs font-bold w-16 text-center rounded-full px-2 py-0.5"
+                    style={{ background: `${lvl.color}20`, color: lvl.color }}>
+                    {lang === 'ar' ? `مستوى ${li + 1}` : `Level ${li + 1}`}
+                  </span>
+                  <span className="text-sm font-bold" style={{ color: lvl.color }}>
+                    {lang === 'ar' ? lvl.ar : lvl.en}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Magic Problem-Solving Questions */}
+        <div className="rounded-2xl p-4" style={{ background: '#111', border: '1px solid #1e1e1e' }}>
+          <h3 className="font-bold text-white mb-1">✨ {t('state_magic_q')}</h3>
+          <p className="text-xs mb-3" style={{ color: '#888' }}>{t('state_magic_q_desc')}</p>
+          <textarea
+            value={magicProblem}
+            onChange={e => setMagicProblem(e.target.value)}
+            placeholder={lang === 'ar' ? 'اكتب تحديك أو مشكلتك هنا...' : 'Write your challenge or problem here...'}
+            rows={2}
+            className="input-dark resize-none text-sm w-full mb-3"
+          />
+          {MAGIC_QUESTIONS[lang].map((q, i) => (
+            <div key={i} className="mb-3">
+              <div className="flex items-start gap-2 mb-1.5">
+                <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black"
+                  style={{ background: 'rgba(201,168,76,0.15)', color: '#c9a84c' }}>
+                  {i + 1}
+                </span>
+                <p className="text-sm font-bold text-white leading-snug">{q}</p>
+              </div>
+              <textarea
+                value={(state.magicQuestions || {})[`q${i}`] || ''}
+                onChange={e => updateMagicQuestions(`q${i}`, e.target.value)}
+                placeholder={lang === 'ar' ? 'إجابتك...' : 'Your answer...'}
+                rows={2}
+                className="input-dark resize-none text-xs w-full"
+                style={{ marginLeft: lang === 'ar' ? 0 : '2rem', marginRight: lang === 'ar' ? '2rem' : 0 }}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </Layout>
+  )
+}

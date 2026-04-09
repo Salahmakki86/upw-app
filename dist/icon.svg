@@ -1,0 +1,7 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512'>
+  <rect width='512' height='512' fill='#090909'/>
+  <circle cx='256' cy='256' r='220' fill='none' stroke='#c9a84c' stroke-width='8'/>
+  <text x='256' y='200' font-family='Arial' font-size='80' font-weight='bold' fill='#c9a84c' text-anchor='middle'>UPW</text>
+  <text x='256' y='300' font-family='Arial' font-size='40' fill='#ffffff' text-anchor='middle'>حرر قوتك</text>
+  <text x='256' y='360' font-family='Arial' font-size='28' fill='#888' text-anchor='middle'>Tony Robbins</text>
+</svg>
