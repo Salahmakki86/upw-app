@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppProvider } from './context/AppContext'
 import { LangProvider } from './context/LangContext'
+import NotificationSetup from './components/NotificationSetup'
+import MessageModal from './components/MessageModal'
 
 import LoginPage    from './pages/LoginPage'
 import AdminPage    from './pages/AdminPage'
@@ -39,6 +41,8 @@ function AppRoutes() {
   return (
     <LangProvider>
       <AppProvider userId={currentUser.id} hasData={hasData}>
+        <NotificationSetup />
+        <MessageModal />
         <BrowserRouter>
           <Routes>
             <Route path="/"        element={<Dashboard />}       />
