@@ -31,12 +31,14 @@ import Statistics        from './pages/Statistics'
 
 function AppRoutes() {
   const { currentUser } = useAuth()
+  // hasData flag is stored after login to know if backend already has state
+  const hasData = !!localStorage.getItem('upw-token')
 
   if (!currentUser) return <LoginPage />
 
   return (
     <LangProvider>
-      <AppProvider userId={currentUser.id}>
+      <AppProvider userId={currentUser.id} hasData={hasData}>
         <BrowserRouter>
           <Routes>
             <Route path="/"        element={<Dashboard />}       />

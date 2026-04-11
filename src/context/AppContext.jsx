@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
+import { upwApi } from '../api/upwApi'
 
 const INITIAL_STATE = {
   // Streak
@@ -197,13 +198,46 @@ function saveState(state, userId) {
   } catch {}
 }
 
-export function AppProvider({ children, userId }) {
+export function AppProvider({ children, userId, hasData }) {
   const [state, setStateRaw] = useState(() => loadState(userId))
+  const [syncing, setSyncing] = useState(false)
+  const syncTimer = useRef(null)
+  const isMounted = useRef(true)
+
+  // On mount: fetch state from backend (or upload localStorage if first time)
+  useEffect(() => {
+    isMounted.current = true
+    async function initSync() {
+      try {
+        if (hasData) {
+          // Pull from backend
+          const { state: remoteState } = await upwApi.getState()
+          if (remoteState && isMounted.current) {
+            const base = userId === 'admin' ? INITIAL_STATE : STUDENT_INITIAL_STATE
+            const merged = { ...base, ...remoteState }
+            setStateRaw(merged)
+            saveState(merged, userId)
+          }
+        } else {
+          // First sync: push localStorage state to backend
+          const localState = loadState(userId)
+          await upwApi.saveState(localState)
+        }
+      } catch {}
+    }
+    initSync()
+    return () => { isMounted.current = false }
+  }, [userId]) // eslint-disable-line
 
   const setState = useCallback((updater) => {
     setStateRaw(prev => {
       const next = typeof updater === 'function' ? updater(prev) : { ...prev, ...updater }
       saveState(next, userId)
+      // Debounced sync to backend (3 seconds)
+      if (syncTimer.current) clearTimeout(syncTimer.current)
+      syncTimer.current = setTimeout(() => {
+        upwApi.saveState(next).catch(() => {})
+      }, 3000)
       return next
     })
   }, [userId])

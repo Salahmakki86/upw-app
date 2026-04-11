@@ -12,9 +12,8 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    await new Promise(r => setTimeout(r, 400))
-    const ok = login(email.trim(), password)
-    if (!ok) setError('البريد الإلكتروني أو كلمة المرور غير صحيحة')
+    const result = await login(email.trim(), password)
+    if (!result.ok) setError(result.error || 'البريد الإلكتروني أو كلمة المرور غير صحيحة')
     setLoading(false)
   }
 
