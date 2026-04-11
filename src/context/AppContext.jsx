@@ -171,31 +171,42 @@ const INITIAL_STATE = {
 
 const AppContext = createContext(null)
 
-function loadState() {
+// Admin keeps the original key; students get their own namespace
+function storageKey(userId) {
+  return userId === 'admin' ? 'upw-state' : 'upw-state-' + userId
+}
+
+const STUDENT_INITIAL_STATE = {
+  ...INITIAL_STATE,
+  businessKPIs: { revenue: 0, clients: 0, avgOrder: 0, conversion: 0, cac: 0, margin: 0 },
+}
+
+function loadState(userId) {
+  const base = userId === 'admin' ? INITIAL_STATE : STUDENT_INITIAL_STATE
   try {
-    const raw = localStorage.getItem('upw-state')
-    return raw ? { ...INITIAL_STATE, ...JSON.parse(raw) } : INITIAL_STATE
+    const raw = localStorage.getItem(storageKey(userId))
+    return raw ? { ...base, ...JSON.parse(raw) } : base
   } catch {
-    return INITIAL_STATE
+    return base
   }
 }
 
-function saveState(state) {
+function saveState(state, userId) {
   try {
-    localStorage.setItem('upw-state', JSON.stringify(state))
+    localStorage.setItem(storageKey(userId), JSON.stringify(state))
   } catch {}
 }
 
-export function AppProvider({ children }) {
-  const [state, setStateRaw] = useState(loadState)
+export function AppProvider({ children, userId }) {
+  const [state, setStateRaw] = useState(() => loadState(userId))
 
   const setState = useCallback((updater) => {
     setStateRaw(prev => {
       const next = typeof updater === 'function' ? updater(prev) : { ...prev, ...updater }
-      saveState(next)
+      saveState(next, userId)
       return next
     })
-  }, [])
+  }, [userId])
 
   const update = useCallback((key, value) => {
     setState(prev => ({ ...prev, [key]: value }))

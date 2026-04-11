@@ -1,8 +1,11 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppProvider } from './context/AppContext'
 import { LangProvider } from './context/LangContext'
 
-import Dashboard       from './pages/Dashboard'
+import LoginPage    from './pages/LoginPage'
+import AdminPage    from './pages/AdminPage'
+import Dashboard    from './pages/Dashboard'
 import MorningRitual   from './pages/MorningRitual'
 import StateManagement from './pages/StateManagement'
 import Goals           from './pages/Goals'
@@ -26,10 +29,14 @@ import EnergyProtocol    from './pages/EnergyProtocol'
 import DailyChallenge    from './pages/DailyChallenge'
 import Statistics        from './pages/Statistics'
 
-export default function App() {
+function AppRoutes() {
+  const { currentUser } = useAuth()
+
+  if (!currentUser) return <LoginPage />
+
   return (
     <LangProvider>
-      <AppProvider>
+      <AppProvider userId={currentUser.id}>
         <BrowserRouter>
           <Routes>
             <Route path="/"        element={<Dashboard />}       />
@@ -55,9 +62,22 @@ export default function App() {
             <Route path="/protocol"      element={<EnergyProtocol />}      />
             <Route path="/challenge"     element={<DailyChallenge />}      />
             <Route path="/stats"         element={<Statistics />}          />
+            <Route
+              path="/admin"
+              element={currentUser.role === 'admin' ? <AdminPage /> : <Navigate to="/" />}
+            />
+            <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </BrowserRouter>
       </AppProvider>
     </LangProvider>
+  )
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   )
 }

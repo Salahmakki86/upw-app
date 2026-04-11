@@ -5,9 +5,11 @@ import {
   BarChart2, BookOpen, Briefcase, Compass, Calendar,
   TrendingUp, Shield, Clock,
   Trophy, Mail, Users, Heart, Activity, Shuffle, PieChart,
+  LogOut, Settings,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
+import { useAuth } from '../context/AuthContext'
 
 const QUOTES = {
   ar: [
@@ -34,6 +36,7 @@ export default function Dashboard() {
   const { state, logState } = useApp()
   const navigate = useNavigate()
   const { lang, toggleLang, t } = useLang()
+  const { currentUser, logout } = useAuth()
   const [showStateModal, setShowStateModal] = useState(false)
   const isAr = lang === 'ar'
 
@@ -147,6 +150,18 @@ export default function Dashboard() {
             <Flame size={12} />
             {state.streak} {t('day')}
           </div>
+          {currentUser?.role === 'admin' && (
+            <button onClick={() => navigate('/admin')}
+              className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+              style={{ background:'rgba(201,168,76,0.1)', border:'1px solid rgba(201,168,76,0.3)' }}>
+              <Settings size={15} style={{ color: '#c9a84c' }} />
+            </button>
+          )}
+          <button onClick={logout}
+            className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+            style={{ background:'rgba(255,107,122,0.1)', border:'1px solid rgba(255,107,122,0.3)' }}>
+            <LogOut size={15} style={{ color: '#ff6b7a' }} />
+          </button>
         </div>
       </div>
 
