@@ -1,16 +1,25 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, Plus, Trash2, Users, Eye, EyeOff } from 'lucide-react'
-import { useAuth } from '../context/AuthContext'
+import { ArrowRight, Plus, Trash2, Users, Eye, EyeOff, Link, Copy, Check } from 'lucide-react'
+import { useAuth, encodeInvite } from '../context/AuthContext'
 
 export default function AdminPage() {
   const navigate = useNavigate()
   const { users, addUser, deleteUser, currentUser } = useAuth()
 
-  const [form, setForm]       = useState({ name: '', email: '', password: '' })
-  const [showPw, setShowPw]   = useState(false)
-  const [error, setError]     = useState('')
-  const [success, setSuccess] = useState('')
+  const [form, setForm]         = useState({ name: '', email: '', password: '' })
+  const [showPw, setShowPw]     = useState(false)
+  const [error, setError]       = useState('')
+  const [success, setSuccess]   = useState('')
+  const [copiedId, setCopiedId] = useState(null)
+
+  const copyInviteLink = (user) => {
+    const link = `${window.location.origin}/#invite/${encodeInvite(user)}`
+    navigator.clipboard.writeText(link).then(() => {
+      setCopiedId(user.id)
+      setTimeout(() => setCopiedId(null), 2500)
+    })
+  }
 
   if (currentUser?.role !== 'admin') {
     return (
@@ -130,6 +139,14 @@ export default function AdminPage() {
             الطلاب ({students.length})
           </h2>
 
+          {students.length > 0 && (
+            <div className="flex items-start gap-2 rounded-xl px-3 py-2.5 mb-3" style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
+              <Link size={14} style={{ color: '#c9a84c', marginTop: 2, flexShrink: 0 }} />
+              <p className="text-xs leading-relaxed" style={{ color: '#999' }}>
+                اضغط أيقونة الرابط 🔗 بجانب اسم الطالب، أرسل الرابط له، وعند فتحه سيُسجَّل حسابه تلقائياً
+              </p>
+            </div>
+          )}
           {students.length === 0 ? (
             <p className="text-sm text-center py-6" style={{ color: '#555' }}>
               لا يوجد طلاب بعد
@@ -142,19 +159,29 @@ export default function AdminPage() {
                   className="flex items-center justify-between rounded-xl px-4 py-3"
                   style={{ background: '#1e1e1e', border: '1px solid #2a2a2a' }}
                 >
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                     <span className="text-sm font-semibold" style={{ color: '#e8e8e8' }}>{u.name}</span>
-                    <span className="text-xs" style={{ color: '#666', direction: 'ltr' }}>{u.email}</span>
+                    <span className="text-xs truncate" style={{ color: '#666', direction: 'ltr' }}>{u.email}</span>
                   </div>
-                  <button
-                    onClick={() => {
-                      if (window.confirm(`حذف ${u.name}؟`)) deleteUser(u.id)
-                    }}
-                    className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
-                    style={{ background: 'rgba(220,53,69,0.15)', color: '#ff6b7a' }}
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => copyInviteLink(u)}
+                      className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
+                      style={{ background: copiedId === u.id ? 'rgba(46,204,113,0.2)' : 'rgba(201,168,76,0.15)', color: copiedId === u.id ? '#4ade80' : '#c9a84c' }}
+                      title="نسخ رابط الدعوة"
+                    >
+                      {copiedId === u.id ? <Check size={14} /> : <Link size={14} />}
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`حذف ${u.name}؟`)) deleteUser(u.id)
+                      }}
+                      className="w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90"
+                      style={{ background: 'rgba(220,53,69,0.15)', color: '#ff6b7a' }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
