@@ -1,7 +1,7 @@
 {
-  "name": "حرر قوتك — UPW",
-  "short_name": "حرر قوتك",
-  "description": "تطبيق يومي لتطبيق مفاهيم Unleash the Power Within لتوني روبنز",
+  "name": "اطلق قواك الخفية",
+  "short_name": "قواك الخفية",
+  "description": "برنامج يومي لاطلاق قواك الخفية وتحقيق حياة استثنائية",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#090909",

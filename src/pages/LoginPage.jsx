@@ -32,10 +32,10 @@ export default function LoginPage() {
             boxShadow: '0 0 40px rgba(201,168,76,0.35)',
           }}
         >
-          <span className="text-3xl font-black" style={{ color: '#0a0a0a' }}>UPW</span>
+          <span className="text-xl font-black leading-tight text-center px-1" style={{ color: '#0a0a0a' }}>قواك</span>
         </div>
         <h1 className="text-2xl font-black tracking-wide" style={{ color: '#e8c96a' }}>
-          Unleash The Power Within
+          اطلق قواك الخفية
         </h1>
         <p className="text-sm mt-1" style={{ color: '#666' }}>
           أدخل بياناتك للمتابعة

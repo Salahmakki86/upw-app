@@ -135,7 +135,7 @@ export default function Dashboard() {
             {new Date().toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
           <h1 className="text-2xl font-black text-white">
-            {isAr ? 'حرر قوتك' : 'Unleash Power'} <span style={{ color: '#c9a84c' }}>⚡</span>
+            {isAr ? 'اطلق قواك الخفية' : 'Unleash Your Power'} <span style={{ color: '#c9a84c' }}>⚡</span>
           </h1>
         </div>
         <div className="flex items-center gap-2">
