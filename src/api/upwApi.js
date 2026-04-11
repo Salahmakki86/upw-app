@@ -1,4 +1,4 @@
-const API = import.meta.env.DEV ? 'http://localhost:3001' : 'https://salahmakki.app'
+const API = import.meta.env.DEV ? 'http://localhost:3001' : 'https://www.salahmakki.app'
 
 function getToken() { return localStorage.getItem('upw-token') }
 function setToken(token) {
