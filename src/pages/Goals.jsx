@@ -191,21 +191,32 @@ function AddGoalModal({ onClose, onSave, t, lang }) {
   const canNext = step === 0 ? form.result.trim() : step === 1 ? form.purpose.trim() : true
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center"
+    <div className="fixed inset-0 z-[100] flex items-end justify-center"
       style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)' }}>
-      <div className="w-full max-w-[480px] rounded-t-3xl p-5 pb-8 animate-slide-up overflow-y-auto"
-        style={{ background: '#141414', border: '1px solid #2a2a2a', maxHeight: '90vh' }}>
-        <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: '#333' }} />
-        <div className="flex gap-2 mb-4">
-          {[0, 1, 2].map(i => (
-            <div key={i} className="h-1 flex-1 rounded-full transition-all"
-              style={{ background: i <= step ? '#c9a84c' : '#222' }} />
-          ))}
+      <div
+        className="w-full max-w-[480px] rounded-t-3xl animate-slide-up flex flex-col"
+        style={{ background: '#141414', border: '1px solid #2a2a2a', maxHeight: '88vh' }}
+      >
+        {/* ── Fixed header ── */}
+        <div className="px-5 pt-4 pb-3 flex-shrink-0">
+          <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: '#333' }} />
+          <div className="flex gap-2 mb-4">
+            {[0, 1, 2].map(i => (
+              <div key={i} className="h-1 flex-1 rounded-full transition-all"
+                style={{ background: i <= step ? '#c9a84c' : '#222' }} />
+            ))}
+          </div>
+          <h3 className="text-lg font-black text-white mb-0.5">{STEP_INFO[step].title}</h3>
+          <p className="text-xs" style={{ color: '#888' }}>{STEP_INFO[step].subtitle}</p>
         </div>
-        <h3 className="text-lg font-black text-white mb-0.5">{STEP_INFO[step].title}</h3>
-        <p className="text-xs mb-4" style={{ color: '#888' }}>{STEP_INFO[step].subtitle}</p>
-        {renderContent()}
-        <div className="flex gap-3 mt-5">
+
+        {/* ── Scrollable content ── */}
+        <div className="flex-1 overflow-y-auto px-5 py-3" style={{ WebkitOverflowScrolling: 'touch' }}>
+          {renderContent()}
+        </div>
+
+        {/* ── Fixed footer ── */}
+        <div className="px-5 pt-3 pb-8 flex-shrink-0 flex gap-3" style={{ borderTop: '1px solid #222' }}>
           {step > 0 && (
             <button onClick={() => setStep(step - 1)} className="btn-dark px-5 py-3 text-sm">← {t('back')}</button>
           )}
