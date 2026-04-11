@@ -202,7 +202,8 @@ function ProgressTab() {
                       {statusLabel(s.lastActive)}
                     </span>
                   </div>
-                  <p className="text-xs mt-0.5" style={{ color: '#555' }}>
+                  <p className="text-xs mt-0.5" style={{ color: '#888', direction: 'ltr' }}>{s.email}</p>
+                  <p className="text-xs" style={{ color: '#555' }}>
                     {s.totalDays} {s.totalDays === 1 ? 'يوم نشاط' : 'يوم نشاط'}
                   </p>
                   <WeekDots activity={s.weekActivity} />
@@ -420,7 +421,7 @@ export default function AdminPage() {
                     >
                       <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                         <span className="text-sm font-semibold" style={{ color: '#e8e8e8' }}>{u.name}</span>
-                        <span className="text-xs truncate" style={{ color: '#666', direction: 'ltr' }}>{u.email}</span>
+                        <span className="text-xs truncate" style={{ color: '#999', direction: 'ltr' }}>{u.email}</span>
                         {u.last_sync && (
                           <span className="text-xs" style={{ color: '#444' }}>
                             آخر مزامنة: {new Date(u.last_sync).toLocaleDateString('ar-EG')}
