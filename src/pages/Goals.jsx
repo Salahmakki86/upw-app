@@ -5,8 +5,8 @@ import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
 
 const TIMEFRAMES = {
-  ar: ['30 يوم', '90 يوم', 'سنة', '3 سنوات'],
-  en: ['30 days', '90 days', '1 year', '3 years'],
+  ar: ['7 أيام', '30 يوم', '90 يوم', 'سنة', '3 سنوات'],
+  en: ['7 days', '30 days', '90 days', '1 year', '3 years'],
 }
 
 function GoalCard({ goal, onUpdate, onDelete, t }) {
@@ -388,7 +388,7 @@ function AddGoalModal({ onClose, onSave, t, lang }) {
           placeholder={t('goals_result_placeholder')} rows={3} className="input-dark resize-none text-sm" />
         <div>
           <p className="text-xs mb-2" style={{ color: '#888' }}>{t('goals_timeframe')}:</p>
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="grid grid-cols-5 gap-1.5">
             {TF.map(tf => (
               <button key={tf} onClick={() => set('timeframe', tf)}
                 className="py-1.5 rounded-xl text-xs font-bold transition-all"
