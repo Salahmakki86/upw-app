@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import { useToast } from '../context/ToastContext'
@@ -91,6 +92,7 @@ export default function LifeStoryReframing() {
   const { state, update } = useApp()
   const { lang } = useLang()
   const { showToast } = useToast()
+  const navigate = useNavigate()
   const isAr = lang === 'ar'
 
   const saved = state.lifeStory || DEFAULT_STORY
@@ -448,6 +450,33 @@ export default function LifeStoryReframing() {
             </p>
           </div>
         </div>
+
+        {/* ===== SECTION 6 — CROSS-LINK TO BELIEFS ===== */}
+        {(oldStoryFilled || newStoryFilled) && (
+          <div className="card" style={{ background: 'rgba(155,89,182,0.06)', border: '1px solid rgba(155,89,182,0.25)', borderRadius: 16, padding: '1.5rem' }}>
+            <h2 style={{ color: '#9b59b6', fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+              {isAr ? '🧠 عمّق التحول مع نموذج ديكنز' : '🧠 Deepen the Shift with Dickens Process'}
+            </h2>
+            <p style={{ color: '#888', fontSize: '0.85rem', lineHeight: 1.7, marginBottom: '1rem' }}>
+              {isAr
+                ? 'الخطوة التالية: استخدم نموذج ديكنز لتحويل المعتقدات المقيّدة الكامنة وراء قصتك القديمة إلى معتقدات مُمكِّنة جديدة بشكل دائم'
+                : 'Next step: Use the Dickens Process to permanently transform the limiting beliefs behind your old story into new empowering ones'}
+            </p>
+            <button
+              onClick={() => navigate('/beliefs')}
+              style={{
+                background: 'rgba(155,89,182,0.12)',
+                border: '1px solid rgba(155,89,182,0.3)',
+                borderRadius: 12, padding: '12px 18px',
+                color: '#9b59b6', fontWeight: 700, fontSize: 14,
+                cursor: 'pointer', width: '100%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              {isAr ? '→ انتقل لتحويل المعتقدات' : 'Transform Beliefs with Dickens →'}
+            </button>
+          </div>
+        )}
 
       </div>
     </Layout>

@@ -210,9 +210,12 @@ function StepWelcome({ onStart, isAr, weekNumber, weekDates, lastPulseDays }) {
 }
 
 // Step 1 — State of the Week
-function StepState({ data, onChange, onNext, isAr }) {
+function StepState({ data, onChange, onNext, onBack, isAr }) {
   return (
     <div className="flex flex-col gap-6 px-6 pt-4 pb-8">
+      <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#666', fontSize: 13, cursor: 'pointer', padding: '4px 0', textAlign: 'start', alignSelf: 'flex-start' }}>
+        {isAr ? '← رجوع' : '← Back'}
+      </button>
       <p style={{ fontSize: 18, fontWeight: 700, color: '#fff', textAlign: 'center' }}>
         {isAr ? 'كيف كانت طاقتك هذا الأسبوع؟' : 'How was your energy this week?'}
       </p>
@@ -276,7 +279,7 @@ function StepState({ data, onChange, onNext, isAr }) {
 }
 
 // Step 2 — Progress Review
-function StepProgress({ state, onNext, isAr }) {
+function StepProgress({ state, onNext, onBack, isAr, lastWeekPulse, currentEnergy }) {
   const mornings  = countRecentMornings(state)
   const wins      = countRecentWins(state)
   const sleep     = avgSleep(state)
@@ -297,6 +300,9 @@ function StepProgress({ state, onNext, isAr }) {
 
   return (
     <div className="flex flex-col gap-4 px-6 pt-4 pb-8">
+      <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#666', fontSize: 13, cursor: 'pointer', padding: '4px 0', textAlign: 'start', alignSelf: 'flex-start' }}>
+        {isAr ? '← رجوع' : '← Back'}
+      </button>
       <p style={{ fontSize: 18, fontWeight: 700, color: '#fff', textAlign: 'center' }}>
         {isAr ? '📈 ملخص أسبوعك' : '📈 Your Week at a Glance'}
       </p>
@@ -318,6 +324,44 @@ function StepProgress({ state, onNext, isAr }) {
           {i === bestIdx && <span style={{ fontSize: 11, color: '#c9a84c', fontWeight: 700 }}>★ Best</span>}
         </div>
       ))}
+
+      {/* Week-over-week comparison */}
+      {lastWeekPulse && (
+        <div style={{ background: 'rgba(52,152,219,0.06)', border: '1px solid rgba(52,152,219,0.18)', borderRadius: 14, padding: '14px 16px' }}>
+          <p style={{ fontSize: 12, color: '#3498db', fontWeight: 700, marginBottom: 10 }}>
+            {isAr ? '📊 مقارنة مع الأسبوع الماضي' : '📊 vs Last Week'}
+          </p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {/* Energy delta */}
+            {(() => {
+              const diff = currentEnergy - (lastWeekPulse.energy || 0)
+              const color = diff > 0 ? '#2ecc71' : diff < 0 ? '#e63946' : '#888'
+              const arrow = diff > 0 ? '↑' : diff < 0 ? '↓' : '→'
+              return (
+                <div style={{ background: '#111', borderRadius: 10, padding: '8px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, minWidth: 60 }}>
+                  <span style={{ fontSize: 11, color: '#666' }}>{isAr ? 'الطاقة' : 'Energy'}</span>
+                  <span style={{ fontSize: 16, fontWeight: 800, color }}>{arrow}{Math.abs(diff) > 0 ? Math.abs(diff) : ''}</span>
+                  <span style={{ fontSize: 10, color: '#555' }}>{lastWeekPulse.energy || 0} → {currentEnergy}</span>
+                </div>
+              )
+            })()}
+            {/* Last week word */}
+            {lastWeekPulse.word && (
+              <div style={{ background: '#111', borderRadius: 10, padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span style={{ fontSize: 11, color: '#666' }}>{isAr ? 'كلمة الأسبوع الماضي' : 'Last week\'s word'}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#c9a84c' }}>{lastWeekPulse.word}</span>
+              </div>
+            )}
+            {/* Last week win */}
+            {lastWeekPulse.win && (
+              <div style={{ background: '#111', borderRadius: 10, padding: '8px 12px', flex: 1 }}>
+                <span style={{ fontSize: 11, color: '#666', display: 'block', marginBottom: 2 }}>{isAr ? 'انتصار الأسبوع الماضي' : 'Last week\'s win'}</span>
+                <span style={{ fontSize: 12, color: '#2ecc71' }}>{lastWeekPulse.win.slice(0, 60)}{lastWeekPulse.win.length > 60 ? '...' : ''}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Mini bar chart */}
       <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: 14, padding: '14px 16px' }}>
@@ -352,7 +396,7 @@ function StepProgress({ state, onNext, isAr }) {
 }
 
 // Step 3 — Win & Challenge
-function StepWinChallenge({ data, onChange, onNext, isAr }) {
+function StepWinChallenge({ data, onChange, onNext, onBack, isAr }) {
   const fields = [
     {
       key: 'win',
@@ -376,6 +420,9 @@ function StepWinChallenge({ data, onChange, onNext, isAr }) {
 
   return (
     <div className="flex flex-col gap-5 px-6 pt-4 pb-8">
+      <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#666', fontSize: 13, cursor: 'pointer', padding: '4px 0', textAlign: 'start', alignSelf: 'flex-start' }}>
+        {isAr ? '← رجوع' : '← Back'}
+      </button>
       <p style={{ fontSize: 18, fontWeight: 700, color: '#fff', textAlign: 'center' }}>
         {isAr ? '🏆 الانتصار والتحدي' : '🏆 Win & Challenge'}
       </p>
@@ -408,7 +455,7 @@ function StepWinChallenge({ data, onChange, onNext, isAr }) {
 }
 
 // Step 4 — Wheel Quick Check
-function StepWheel({ data, onChange, onNext, isAr, lastWeekWheel }) {
+function StepWheel({ data, onChange, onNext, onBack, isAr, lastWeekWheel }) {
   const lowestArea = LIFE_AREAS.reduce((low, a) => {
     const v = data[a.key] || 0
     return v < (data[low?.key] || 0) ? a : low
@@ -416,6 +463,9 @@ function StepWheel({ data, onChange, onNext, isAr, lastWeekWheel }) {
 
   return (
     <div className="flex flex-col gap-4 px-6 pt-4 pb-8">
+      <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#666', fontSize: 13, cursor: 'pointer', padding: '4px 0', textAlign: 'start', alignSelf: 'flex-start' }}>
+        {isAr ? '← رجوع' : '← Back'}
+      </button>
       <p style={{ fontSize: 18, fontWeight: 700, color: '#fff', textAlign: 'center' }}>
         {isAr ? '🌐 عجلة الحياة السريعة' : '🌐 Quick Wheel Check'}
       </p>
@@ -489,7 +539,7 @@ function StepWheel({ data, onChange, onNext, isAr, lastWeekWheel }) {
 }
 
 // Step 5 — Intention
-function StepIntention({ data, onChange, onNext, isAr }) {
+function StepIntention({ data, onChange, onNext, onBack, isAr }) {
   const [customWord, setCustomWord] = useState('')
 
   function selectWord(w) {
@@ -499,6 +549,9 @@ function StepIntention({ data, onChange, onNext, isAr }) {
 
   return (
     <div className="flex flex-col gap-5 px-6 pt-4 pb-8">
+      <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#666', fontSize: 13, cursor: 'pointer', padding: '4px 0', textAlign: 'start', alignSelf: 'flex-start' }}>
+        {isAr ? '← رجوع' : '← Back'}
+      </button>
       <p style={{ fontSize: 18, fontWeight: 700, color: '#fff', textAlign: 'center' }}>
         {isAr ? '🎯 نية الأسبوع القادم' : '🎯 Next Week\'s Intention'}
       </p>
@@ -721,6 +774,13 @@ export default function WeeklyPulse() {
     return lastKey ? weeklyPulse[lastKey].wheel : null
   })()
 
+  // Get last completed pulse entry for week-over-week comparison
+  const lastWeekPulse = (() => {
+    const keys = Object.keys(weeklyPulse).sort().reverse()
+    const lastKey = keys.find(k => k !== weekKey && weeklyPulse[k]?.completedAt)
+    return lastKey ? weeklyPulse[lastKey] : null
+  })()
+
   const [step, setStep] = useState(existingPulse?.completedAt ? 6 : 0)
 
   // Form state — pre-populate from existing pulse if any
@@ -787,6 +847,7 @@ export default function WeeklyPulse() {
             data={stateData}
             onChange={(k, v) => setStateData(prev => ({ ...prev, [k]: v }))}
             onNext={() => { savePulse(); setStep(2) }}
+            onBack={() => setStep(s => s - 1)}
             isAr={isAr}
           />
         )}
@@ -795,7 +856,10 @@ export default function WeeklyPulse() {
           <StepProgress
             state={state}
             onNext={() => setStep(3)}
+            onBack={() => setStep(s => s - 1)}
             isAr={isAr}
+            lastWeekPulse={lastWeekPulse}
+            currentEnergy={stateData.energy}
           />
         )}
 
@@ -804,6 +868,7 @@ export default function WeeklyPulse() {
             data={winData}
             onChange={(k, v) => setWinData(prev => ({ ...prev, [k]: v }))}
             onNext={() => { savePulse(); setStep(4) }}
+            onBack={() => setStep(s => s - 1)}
             isAr={isAr}
           />
         )}
@@ -813,6 +878,7 @@ export default function WeeklyPulse() {
             data={wheelData}
             onChange={(k, v) => setWheelData(prev => ({ ...prev, [k]: v }))}
             onNext={() => { savePulse(); setStep(5) }}
+            onBack={() => setStep(s => s - 1)}
             isAr={isAr}
             lastWeekWheel={lastWeekWheel}
           />
@@ -823,6 +889,7 @@ export default function WeeklyPulse() {
             data={intentData}
             onChange={(k, v) => setIntentData(prev => ({ ...prev, [k]: v }))}
             onNext={() => { savePulse(); setStep(6) }}
+            onBack={() => setStep(s => s - 1)}
             isAr={isAr}
           />
         )}

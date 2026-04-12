@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
@@ -121,6 +122,7 @@ function CANIMiniCalendar({ caniLog, isAr, lang }) {
 export default function EveningRitual() {
   const { state, update } = useApp()
   const { lang, t } = useLang()
+  const navigate = useNavigate()
   const isAr = lang === 'ar'
   const [answers, setAnswers] = useState({})
   const [qIndex, setQIndex] = useState(0)
@@ -336,11 +338,20 @@ export default function EveningRitual() {
             </p>
             {/* CROSS-LINK 6: Wheel suggestion hint */}
             {wheelSuggestedCaniLabel && (
-              <p className="text-xs mb-2" style={{ color: '#888' }}>
-                📊 {isAr
-                  ? `مقترح من Wheel of Life: "${wheelSuggestedCaniLabel}" يحتاج أكثر اهتماماً`
-                  : `Suggested from Wheel of Life: "${wheelSuggestedCaniLabel}" needs the most attention`}
-              </p>
+              <div className="rounded-xl px-3 py-2 mb-2 flex items-center justify-between gap-2"
+                style={{ background: 'rgba(52,152,219,0.08)', border: '1px solid rgba(52,152,219,0.2)' }}>
+                <p className="text-xs" style={{ color: '#3498db', flex: 1 }}>
+                  📊 {isAr
+                    ? `مقترح من عجلة الحياة: "${wheelSuggestedCaniLabel}"`
+                    : `Suggested from Wheel: "${wheelSuggestedCaniLabel}"`}
+                </p>
+                <button
+                  onClick={() => navigate('/wheel')}
+                  className="text-xs font-bold px-2 py-1 rounded-lg transition-all active:scale-95"
+                  style={{ background: 'rgba(52,152,219,0.15)', border: '1px solid rgba(52,152,219,0.3)', color: '#3498db', whiteSpace: 'nowrap', cursor: 'pointer' }}>
+                  {isAr ? 'عجلة الحياة ←' : '→ Wheel'}
+                </button>
+              </div>
             )}
             <div className="grid grid-cols-3 gap-2">
               {CANI_AREAS.map(area => {

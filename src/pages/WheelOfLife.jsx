@@ -363,11 +363,11 @@ export default function WheelOfLife() {
           </div>
         )}
 
-        {state.wheelHistory.length > 0 && (
+        {wheelHistory.length > 0 && (
           <div className="card">
             <p className="text-sm font-bold text-white mb-3">📈 {t('wheel_history')}</p>
             <div className="space-y-2">
-              {[...state.wheelHistory].reverse().slice(0, 5).map((snap, i) => {
+              {[...wheelHistory].reverse().slice(0, 5).map((snap, i) => {
                 const snapAvg = (Object.values(snap.scores).reduce((a, b) => a + b, 0) / 7).toFixed(1)
                 return (
                   <div key={i} className="flex justify-between items-center text-xs">

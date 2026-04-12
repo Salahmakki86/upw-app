@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
-import { ChevronRight, ChevronLeft, Zap, Target, Brain, Sun } from 'lucide-react'
+import { ChevronRight, ChevronLeft } from 'lucide-react'
 
 const STEPS = [
   {
@@ -28,10 +28,42 @@ const STEPS = [
 ]
 
 const FEATURES = [
-  { icon: Sun,    color: '#c9a84c', labelAr: 'روتين يومي',   labelEn: 'Daily Ritual',   descAr: 'صباح ومساء احترافي',    descEn: 'Morning & evening rituals' },
-  { icon: Target, color: '#3498db', labelAr: 'أهداف واضحة',  labelEn: 'Clear Goals',    descAr: 'بمنهج RPM الفعّال',     descEn: 'Using the RPM method' },
-  { icon: Brain,  color: '#9b59b6', labelAr: 'تتبع ذكي',     labelEn: 'Smart Tracking', descAr: 'نوم، عادات، امتنان',    descEn: 'Sleep, habits, gratitude' },
-  { icon: Zap,    color: '#2ecc71', labelAr: 'تقدم مرئي',    labelEn: 'Visible Progress',descAr: 'إحصاءات ورحلة يومية', descEn: 'Stats & daily journey' },
+  {
+    emoji: '☀️', color: '#f39c12',
+    labelAr: 'الروتين الصباحي', labelEn: 'Morning Ritual',
+    descAr: 'تقنية الضخ: تنفس + امتنان + تصور الأهداف (15 دقيقة)',
+    descEn: 'Priming: breathing + gratitude + goal visualization (15 min)'
+  },
+  {
+    emoji: '🎯', color: '#3498db',
+    labelAr: 'الأهداف بمنهج RPM',  labelEn: 'Goals with RPM Method',
+    descAr: 'Result → Purpose → Massive Action — الطريقة الأقوى لتحقيق الأهداف',
+    descEn: 'Result → Purpose → Massive Action — the most powerful goal system'
+  },
+  {
+    emoji: '🌐', color: '#2ecc71',
+    labelAr: 'عجلة الحياة',  labelEn: 'Wheel of Life',
+    descAr: 'قيّم 7 مجالات: الصحة، العلاقات، المال، المهنة... واكتشف أين التوازن',
+    descEn: 'Rate 7 areas: health, relationships, money, career... and find balance'
+  },
+  {
+    emoji: '🧠', color: '#9b59b6',
+    labelAr: 'تحويل المعتقدات',  labelEn: 'Beliefs Transformation',
+    descAr: 'نموذج ديكنز: اكتشف المعتقدات المقيّدة وحوّلها إلى قوة دافعة',
+    descEn: 'Dickens Process: discover limiting beliefs and turn them into driving force'
+  },
+  {
+    emoji: '📊', color: '#c9a84c',
+    labelAr: 'الفحص الأسبوعي',  labelEn: 'Weekly Pulse',
+    descAr: 'كل أسبوع: قيّم طاقتك، راجع انتصاراتك، وضع نيتك للأسبوع القادم',
+    descEn: 'Each week: rate your energy, review your wins, set next week\'s intention'
+  },
+  {
+    emoji: '🚨', color: '#e63946',
+    labelAr: 'أدوات الطوارئ',  labelEn: 'Emergency Toolkit',
+    descAr: 'عندما تشعر بالضغط: 6 أدوات فورية لتغيير حالتك في 60 ثانية',
+    descEn: 'When overwhelmed: 6 instant tools to change your state in 60 seconds'
+  },
 ]
 
 export default function OnboardingModal({ onDone }) {
@@ -160,9 +192,11 @@ export default function OnboardingModal({ onDone }) {
             <p style={{ fontSize: 13, color: '#888', marginBottom: 16 }}>
               {isAr ? 'كل شيء في مكانه — ابدأ بيومك وتوسّع شيئاً فشيئاً' : 'Everything in its place — start with your day and expand gradually'}
             </p>
+            <p style={{ fontSize: 11, color: '#555', marginBottom: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>
+              {isAr ? '🔓 يُفتح تدريجياً مع تقدمك' : '🔓 Unlocks gradually as you progress'}
+            </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {FEATURES.map((f, i) => {
-                const Icon = f.icon
                 return (
                   <div key={i} style={{
                     display: 'flex', alignItems: 'center', gap: 12,
@@ -174,8 +208,9 @@ export default function OnboardingModal({ onDone }) {
                       width: 36, height: 36, borderRadius: 10, flexShrink: 0,
                       background: `${f.color}18`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 18,
                     }}>
-                      <Icon size={16} style={{ color: f.color }} />
+                      {f.emoji}
                     </div>
                     <div>
                       <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 2 }}>

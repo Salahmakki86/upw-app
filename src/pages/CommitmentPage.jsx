@@ -130,6 +130,40 @@ export default function CommitmentPage() {
             </p>
           </div>
 
+          {/* Active Goals — inspiration for commitment */}
+          {(() => {
+            const activeGoals = (state.goals || []).filter(g => (g.progress || 0) < 100).slice(0, 3)
+            if (!activeGoals.length) return null
+            return (
+              <div style={{
+                background: 'rgba(201,168,76,0.06)',
+                border: '1px solid rgba(201,168,76,0.2)',
+                borderRadius: 14,
+                padding: '14px 16px',
+                marginBottom: 24,
+              }}>
+                <p style={{ color: '#c9a84c', fontSize: 12, fontWeight: 700, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 }}>
+                  {isAr ? '🎯 أهدافك الحالية — دع التزامك يدعمها' : '🎯 Your Active Goals — let your commitment support them'}
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {activeGoals.map((g, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{
+                        width: 28, height: 28, borderRadius: '50%',
+                        background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.25)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: '#c9a84c', fontSize: 11, fontWeight: 700, flexShrink: 0,
+                      }}>
+                        {g.progress || 0}%
+                      </div>
+                      <span style={{ color: '#bbb', fontSize: 13, lineHeight: 1.4 }}>{g.result || g.title || ''}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
+
           {/* Form */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Commitment text */}
