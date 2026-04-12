@@ -310,21 +310,56 @@ export default function MorningRitual() {
         {/* Video mode */}
         {videoMode && (
           <div className="space-y-4">
-            <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2a2a2a', background: '#000' }}>
-              <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
-                <iframe
-                  src="https://www.youtube-nocookie.com/embed/faTGTgid8Uc?rel=0&modestbranding=1"
-                  title="Morning Priming with Tony Robbins"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  referrerPolicy="strict-origin-when-cross-origin"
+            {/* Fake player — thumbnail + play button opens YouTube */}
+            <button
+              onClick={() => window.open(VIDEO_URL, '_blank')}
+              className="w-full rounded-2xl overflow-hidden relative block"
+              style={{ border: '1px solid #333', background: '#000' }}
+            >
+              <img
+                src="https://img.youtube.com/vi/faTGTgid8Uc/maxresdefault.jpg"
+                alt="Tony Robbins Morning Priming"
+                className="w-full block"
+                style={{ opacity: 0.75 }}
+              />
+              {/* Play button overlay */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center"
                   style={{
-                    position: 'absolute', top: 0, left: 0,
-                    width: '100%', height: '100%',
-                    border: 'none',
+                    background: 'rgba(231,76,60,0.92)',
+                    boxShadow: '0 0 40px rgba(231,76,60,0.7)',
                   }}
-                />
+                >
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+                    <polygon points="5,3 19,12 5,21" />
+                  </svg>
+                </div>
+                <span
+                  className="text-xs font-bold px-3 py-1 rounded-full"
+                  style={{ background: 'rgba(0,0,0,0.75)', color: '#fff' }}
+                >
+                  {isAr ? 'اضغط للمشاهدة في يوتيوب' : 'Tap to watch on YouTube'}
+                </span>
               </div>
+              {/* YouTube logo badge */}
+              <div
+                className="absolute bottom-2 right-2 px-2 py-0.5 rounded text-xs font-black"
+                style={{ background: '#e74c3c', color: '#fff' }}
+              >
+                YouTube
+              </div>
+            </button>
+
+            <div className="rounded-2xl p-3" style={{ background: '#161616', border: '1px solid #222' }}>
+              <p className="text-xs font-bold text-white mb-1">
+                🎬 Morning Priming — Tony Robbins
+              </p>
+              <p className="text-xs" style={{ color: '#666' }}>
+                {isAr
+                  ? 'سيفتح في يوتيوب. بعد الانتهاء ارجع واضغط "انتهيت".'
+                  : 'Opens in YouTube. Come back when done and tap "Done".'}
+              </p>
             </div>
 
             <button
