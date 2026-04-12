@@ -193,6 +193,15 @@ const INITIAL_STATE = {
   // Coach messages received (for students)
   coachMessages: [],
 
+  // Baseline assessment: { date, scores: { health, career, finances, relationships, family, fun, growth, spirituality, contribution, environment } }
+  baseline: null,
+
+  // Commitment contract: { text, name, why, signedAt, date }
+  commitment: null,
+
+  // Group challenge: { active: null | { id, titleAr, titleEn, emoji, startDate, daysLog: {} } }
+  groupChallenge: null,
+
   // Scaling Up
   scalingUp: {
     bhag: '', corePurpose: '', brandPromise: '', coreCustomer: '',

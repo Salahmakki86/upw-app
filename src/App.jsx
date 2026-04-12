@@ -40,6 +40,12 @@ import SleepTracker     from './pages/SleepTracker'
 import Achievements     from './pages/Achievements'
 import StudentProgress  from './pages/StudentProgress'
 import CoachMessages    from './pages/CoachMessages'
+import TodayPage        from './pages/TodayPage'
+import BaselinePage     from './pages/BaselinePage'
+import InsightsPage     from './pages/InsightsPage'
+import CommitmentPage   from './pages/CommitmentPage'
+import GroupChallengePage from './pages/GroupChallengePage'
+import WeeklyReportPage from './pages/WeeklyReportPage'
 
 function AppRoutes() {
   const { currentUser } = useAuth()
@@ -99,6 +105,15 @@ function AppRoutes() {
             <Route
               path="/coach-messages"
               element={currentUser.role === 'admin' ? <CoachMessages /> : <Navigate to="/" />}
+            />
+            <Route path="/today"          element={<TodayPage />}          />
+            <Route path="/baseline"       element={<BaselinePage />}       />
+            <Route path="/insights"       element={<InsightsPage />}       />
+            <Route path="/commitment"     element={<CommitmentPage />}     />
+            <Route path="/group-challenge" element={<GroupChallengePage />} />
+            <Route
+              path="/weekly-report"
+              element={currentUser.role === 'admin' ? <WeeklyReportPage /> : <Navigate to="/" />}
             />
             <Route
               path="/admin"

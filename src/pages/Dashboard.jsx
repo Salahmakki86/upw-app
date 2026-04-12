@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Flame, ChevronLeft, Star, Zap, Sun, Moon, Target,
@@ -7,10 +7,12 @@ import {
   Trophy, Mail, Users, Heart, Activity, Shuffle, PieChart,
   LogOut, Settings, NotebookPen, CheckSquare, Eye, Smile,
   MessageSquare, GraduationCap, Moon as MoonIcon,
+  LifeBuoy, Brain, Sparkles, FileText, Swords,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import { useAuth } from '../context/AuthContext'
+import { upwApi } from '../api/upwApi'
 
 const QUOTES = {
   ar: [
@@ -39,7 +41,16 @@ export default function Dashboard() {
   const { lang, toggleLang, t } = useLang()
   const { currentUser, logout } = useAuth()
   const [showStateModal, setShowStateModal] = useState(false)
+  const [supportSent, setSupportSent] = useState(false)
   const isAr = lang === 'ar'
+
+  const sendSupport = useCallback(async () => {
+    try {
+      await upwApi.sendCoachMessage({ toUserId: 'admin', body: isAr ? '🙋 الطالب يحتاج دعماً الآن' : '🙋 Student needs support now', type: 'reminder' })
+    } catch {}
+    setSupportSent(true)
+    setTimeout(() => setSupportSent(false), 3000)
+  }, [isAr])
 
   const today = new Date().toISOString().split('T')[0]
   const quote = QUOTES[lang][new Date().getDay() % QUOTES[lang].length]
@@ -100,6 +111,15 @@ export default function Dashboard() {
   const sufferingCnt = (state.stateLog || []).filter(s => s.state === 'suffering').length
   const hasStateHistory = (state.stateLog || []).length > 0
 
+  // ── Daily Score (7 tasks) ────────────────────────────────
+  const dailyScore = useMemo(() => {
+    const gratitudeDone = (state.gratitude?.[today] || []).filter(Boolean).length >= 3
+    const habitsDone    = (state.habitTracker?.log?.[today] || []).length > 0
+    const winsDone      = (state.dailyWins?.[today] || []).length > 0
+    const sleepDone     = !!(state.sleepLog?.[today])
+    return [state.morningDone, gratitudeDone, habitsDone, !!state.todayState, winsDone, state.eveningDone, sleepDone].filter(Boolean).length
+  }, [state, today])
+
   // ── Quick Links ──────────────────────────────────────────
   const QUICK_LINKS = [
     { path: '/morning',  icon: Sun,      labelKey: 'dash_link_morning',  color: '#c9a84c' },
@@ -134,6 +154,12 @@ export default function Dashboard() {
     { path: '/vision',        icon: Eye,          labelKey: 'dash_link_vision',     color: '#e91e8c' },
     { path: '/sleep',         icon: MoonIcon,     labelKey: 'dash_link_sleep',      color: '#9b59b6' },
     { path: '/achievements',  icon: Trophy,       labelKey: 'dash_link_achievements',color: '#c9a84c' },
+    { path: '/today',         icon: Sparkles,     labelKey: 'dash_link_today',        color: '#c9a84c' },
+    { path: '/baseline',      icon: BarChart2,    labelKey: 'dash_link_baseline',     color: '#3498db' },
+    { path: '/insights',      icon: Brain,        labelKey: 'dash_link_insights',     color: '#9b59b6' },
+    { path: '/commitment',    icon: FileText,     labelKey: 'dash_link_commitment',   color: '#e91e8c' },
+    { path: '/group-challenge',icon: Swords,      labelKey: 'dash_link_group_challenge', color: '#e67e22' },
+    { path: '/weekly-report', icon: Calendar,     labelKey: 'dash_link_weekly_report', color: '#27ae60', adminOnly: true },
   ]
 
   return (
@@ -177,6 +203,50 @@ export default function Dashboard() {
       </div>
 
       <div className="px-4 space-y-4 pb-8">
+
+        {/* ── Today Hub Smart Card ─────────────────────────────── */}
+        <button
+          onClick={() => navigate('/today')}
+          className="w-full rounded-2xl p-4 transition-all active:scale-[0.98]"
+          style={{ background: 'linear-gradient(135deg, #1a1500 0%, #181818 100%)', border: '1px solid rgba(201,168,76,0.35)' }}
+        >
+          <div className="flex items-center justify-between">
+            <div style={{ textAlign: isAr ? 'right' : 'left' }}>
+              <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
+                ⚡ {isAr ? 'يومك الذكي' : 'Smart Daily Hub'}
+              </p>
+              <p className="text-base font-black text-white">
+                {dailyScore}/7 {isAr ? 'مهام مكتملة' : 'tasks done'}
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: '#888' }}>
+                {isAr ? 'اضغط لرؤية خطة يومك' : 'Tap to see your daily plan'}
+              </p>
+            </div>
+            <div style={{ position: 'relative', width: 56, height: 56 }}>
+              <svg width="56" height="56" style={{ transform: 'rotate(-90deg)' }}>
+                <circle cx="28" cy="28" r="22" fill="none" stroke="#1e1e1e" strokeWidth="4" />
+                <circle cx="28" cy="28" r="22" fill="none"
+                  stroke={dailyScore === 7 ? '#2ecc71' : '#c9a84c'}
+                  strokeWidth="4"
+                  strokeDasharray={`${(dailyScore / 7) * 138.2} 138.2`}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span className="text-xs font-black" style={{ color: dailyScore === 7 ? '#2ecc71' : '#c9a84c' }}>
+                  {dailyScore}/7
+                </span>
+              </div>
+            </div>
+          </div>
+          {dailyScore === 7 && (
+            <div className="mt-3 rounded-xl p-2 text-center" style={{ background: '#2ecc7110', border: '1px solid #2ecc7130' }}>
+              <p className="text-xs font-bold" style={{ color: '#2ecc71' }}>
+                🏆 {isAr ? 'يوم مثالي! أنت استثنائي!' : 'Perfect day! You\'re extraordinary!'}
+              </p>
+            </div>
+          )}
+        </button>
 
         {/* ── State Card ─────────────────────────────────────── */}
         <button onClick={() => setShowStateModal(true)}
@@ -468,6 +538,25 @@ export default function Dashboard() {
         </div>
 
       </div>
+
+      {/* ── Support Button (students only) ─────────────────── */}
+      {currentUser?.role !== 'admin' && (
+        <button
+          onClick={sendSupport}
+          className="fixed z-40 flex items-center gap-2 rounded-full px-4 py-3 font-bold text-sm transition-all active:scale-95"
+          style={{
+            bottom: 84, left: isAr ? 16 : 'auto', right: isAr ? 'auto' : 16,
+            background: supportSent ? 'linear-gradient(135deg,#2ecc71,#27ae60)' : 'linear-gradient(135deg,#c9a84c,#e8c96a)',
+            color: '#0a0a0a',
+            boxShadow: '0 4px 20px rgba(201,168,76,0.4)',
+          }}
+        >
+          <LifeBuoy size={16} />
+          {supportSent
+            ? (isAr ? 'تم الإرسال ✓' : 'Sent ✓')
+            : (isAr ? 'أحتاج دعماً' : 'Need Support')}
+        </button>
+      )}
 
       {/* ── State Modal ─────────────────────────────────────── */}
       {showStateModal && (

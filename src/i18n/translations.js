@@ -280,6 +280,12 @@ export const translations = {
     dash_link_vision:        'لوحة الرؤية',
     dash_link_sleep:         'النوم',
     dash_link_achievements:  'الإنجازات',
+    dash_link_today:          'يومي الذكي',
+    dash_link_baseline:       'نقطة الانطلاق',
+    dash_link_insights:       'رحلتي',
+    dash_link_commitment:     'التزامي',
+    dash_link_group_challenge:'تحدي الـ٣٠',
+    dash_link_weekly_report:  'التقرير الأسبوعي',
 
     // Page titles & subtitles
     wins_title: 'يوميات الانتصارات',
@@ -581,6 +587,12 @@ export const translations = {
     dash_link_vision:        'Vision Board',
     dash_link_sleep:         'Sleep',
     dash_link_achievements:  'Achievements',
+    dash_link_today:          'Smart Today',
+    dash_link_baseline:       'My Baseline',
+    dash_link_insights:       'My Journey',
+    dash_link_commitment:     'Commitment',
+    dash_link_group_challenge:'30-Day Challenge',
+    dash_link_weekly_report:  'Weekly Report',
 
     // Page titles & subtitles
     wins_title: 'Daily Wins Journal',
