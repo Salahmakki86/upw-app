@@ -310,61 +310,21 @@ export default function MorningRitual() {
         {/* Video mode */}
         {videoMode && (
           <div className="space-y-4">
-            {/* Thumbnail card */}
-            <div
-              className="rounded-2xl overflow-hidden relative flex items-center justify-center"
-              style={{ background: '#0f0f0f', border: '1px solid #2a2a2a', minHeight: 200 }}
-            >
-              <img
-                src={`https://img.youtube.com/vi/faTGTgid8Uc/hqdefault.jpg`}
-                alt="Tony Robbins Priming"
-                className="w-full object-cover"
-                style={{ opacity: 0.6 }}
-              />
-              <button
-                onClick={() => window.open(VIDEO_URL, '_blank')}
-                className="absolute flex flex-col items-center gap-2"
-              >
-                <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center"
+            <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2a2a2a', background: '#000' }}>
+              <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
+                <iframe
+                  src="https://www.youtube-nocookie.com/embed/faTGTgid8Uc?rel=0&modestbranding=1"
+                  title="Morning Priming with Tony Robbins"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  referrerPolicy="strict-origin-when-cross-origin"
                   style={{
-                    background: '#e74c3c',
-                    boxShadow: '0 0 30px rgba(231,76,60,0.6)',
+                    position: 'absolute', top: 0, left: 0,
+                    width: '100%', height: '100%',
+                    border: 'none',
                   }}
-                >
-                  <span className="text-white text-2xl ml-1">▶</span>
-                </div>
-                <span className="text-white text-xs font-bold px-3 py-1 rounded-full"
-                  style={{ background: 'rgba(0,0,0,0.7)' }}>
-                  {isAr ? 'افتح الفيديو' : 'Open Video'}
-                </span>
-              </button>
-            </div>
-
-            <div className="rounded-2xl p-4 space-y-3" style={{ background: 'rgba(231,76,60,0.06)', border: '1px solid rgba(231,76,60,0.2)' }}>
-              <p className="text-sm font-black" style={{ color: '#e74c3c' }}>
-                🎬 {isAr ? 'طقوس الصباح مع توني روبينز' : 'Morning Priming with Tony Robbins'}
-              </p>
-              <div className="space-y-2">
-                {(isAr ? [
-                  '⏱ الفيديو يبدأ من البداية',
-                  '📱 سيفتح في تطبيق يوتيوب أو المتصفح',
-                  '🔄 ارجع هنا بعد الانتهاء واضغط "انتهيت"',
-                ] : [
-                  '⏱ Video starts from the beginning',
-                  '📱 Opens in YouTube app or browser',
-                  '🔄 Come back here after and tap "Done"',
-                ]).map((tip, i) => (
-                  <p key={i} className="text-xs" style={{ color: '#aaa' }}>{tip}</p>
-                ))}
+                />
               </div>
-              <button
-                onClick={() => window.open(VIDEO_URL, '_blank')}
-                className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
-                style={{ background: 'linear-gradient(135deg, #e74c3c, #c0392b)', color: '#fff' }}
-              >
-                ▶ {isAr ? 'شاهد الفيديو الآن' : 'Watch Video Now'}
-              </button>
             </div>
 
             <button
