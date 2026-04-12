@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
 import { upwApi } from '../api/upwApi'
+import { useToast } from './ToastContext'
 
 const INITIAL_STATE = {
   // Streak
@@ -193,6 +194,9 @@ const INITIAL_STATE = {
   // Coach messages received (for students)
   coachMessages: [],
 
+  // Onboarding
+  onboardingDone: false,
+
   // Baseline assessment: { date, scores: { health, career, finances, relationships, family, fun, growth, spirituality, contribution, environment } }
   baseline: null,
 
@@ -249,6 +253,7 @@ export function AppProvider({ children, userId, hasData }) {
   const [syncing, setSyncing] = useState(false)
   const syncTimer = useRef(null)
   const isMounted = useRef(true)
+  const { showToast } = useToast()
 
   // On mount: fetch state from backend (or upload localStorage if first time)
   useEffect(() => {
@@ -282,7 +287,9 @@ export function AppProvider({ children, userId, hasData }) {
       // Debounced sync to backend (3 seconds)
       if (syncTimer.current) clearTimeout(syncTimer.current)
       syncTimer.current = setTimeout(() => {
-        upwApi.saveState(next).catch(() => {})
+        upwApi.saveState(next)
+          .then(() => showToast('تم الحفظ ✓', 'success', 2000))
+          .catch(() => showToast('خطأ في الحفظ — تحقق من الاتصال', 'error', 4000))
       }, 3000)
       return next
     })

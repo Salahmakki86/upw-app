@@ -1,7 +1,8 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Flame, ChevronLeft, Star, Zap, Sun, Moon, Target,
+  Flame, ChevronLeft, ChevronDown, ChevronUp,
+  Star, Zap, Sun, Moon, Target,
   BarChart2, BookOpen, Briefcase, Compass, Calendar,
   TrendingUp, Shield, Clock,
   Trophy, Mail, Users, Heart, Activity, Shuffle, PieChart,
@@ -13,6 +14,7 @@ import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import { useAuth } from '../context/AuthContext'
 import { upwApi } from '../api/upwApi'
+import OnboardingModal from '../components/OnboardingModal'
 
 const QUOTES = {
   ar: [
@@ -41,8 +43,11 @@ export default function Dashboard() {
   const { lang, toggleLang, t } = useLang()
   const { currentUser, logout } = useAuth()
   const [showStateModal, setShowStateModal] = useState(false)
-  const [supportSent, setSupportSent] = useState(false)
+  const [supportSent, setSupportSent]     = useState(false)
+  const [openCats, setOpenCats]           = useState({ daily: true, goals: false, programs: false, tools: false, admin: false })
   const isAr = lang === 'ar'
+
+  const toggleCat = (key) => setOpenCats(prev => ({ ...prev, [key]: !prev[key] }))
 
   const sendSupport = useCallback(async () => {
     try {
@@ -120,46 +125,82 @@ export default function Dashboard() {
     return [state.morningDone, gratitudeDone, habitsDone, !!state.todayState, winsDone, state.eveningDone, sleepDone].filter(Boolean).length
   }, [state, today])
 
-  // ── Quick Links ──────────────────────────────────────────
-  const QUICK_LINKS = [
-    { path: '/morning',  icon: Sun,      labelKey: 'dash_link_morning',  color: '#c9a84c' },
-    { path: '/state',    icon: Zap,      labelKey: 'dash_link_state',    color: '#e63946' },
-    { path: '/goals',    icon: Target,   labelKey: 'dash_link_goals',    color: '#3498db' },
-    { path: '/wheel',    icon: BarChart2,labelKey: 'dash_link_wheel',    color: '#2ecc71' },
-    { path: '/beliefs',  icon: Star,     labelKey: 'dash_link_beliefs',  color: '#9b59b6' },
-    { path: '/energy',   icon: Flame,    labelKey: 'dash_link_energy',   color: '#e67e22' },
-    { path: '/evening',  icon: Moon,     labelKey: 'dash_link_evening',  color: '#95a5a6' },
-    { path: '/library',  icon: BookOpen, labelKey: 'dash_link_library',  color: '#1abc9c' },
-    { path: '/business', icon: Briefcase,labelKey: 'dash_link_business', color: '#c9a84c' },
-    { path: '/destiny',  icon: Compass,  labelKey: 'dash_link_destiny',  color: '#9b59b6' },
-    { path: '/weekly',   icon: Calendar,    labelKey: 'dash_link_weekly',   color: '#3498db' },
-    { path: '/freedom',  icon: TrendingUp,  labelKey: 'dash_link_freedom',  color: '#f1c40f' },
-    { path: '/power30',  icon: Zap,         labelKey: 'dash_link_power30',  color: '#e67e22' },
-    { path: '/fear',     icon: Shield,      labelKey: 'dash_link_fear',     color: '#9b59b6' },
-    { path: '/time',          icon: Clock,     labelKey: 'dash_link_time',          color: '#1abc9c' },
-    { path: '/wins',          icon: Trophy,    labelKey: 'dash_link_wins',          color: '#f1c40f' },
-    { path: '/letters',       icon: Mail,      labelKey: 'dash_link_letters',       color: '#3498db' },
-    { path: '/modeling',      icon: Users,     labelKey: 'dash_link_modeling',      color: '#2ecc71' },
-    { path: '/relationships', icon: Heart,     labelKey: 'dash_link_relationships', color: '#e91e8c' },
-    { path: '/protocol',      icon: Activity,  labelKey: 'dash_link_protocol',      color: '#1abc9c' },
-    { path: '/challenge',     icon: Shuffle,   labelKey: 'dash_link_challenge',     color: '#e67e22' },
-    { path: '/stats',         icon: PieChart,  labelKey: 'dash_link_stats',         color: '#9b59b6' },
-    { path: '/scaling',       icon: TrendingUp,   labelKey: 'dash_link_scaling',    color: '#27ae60', adminOnly: true },
-    { path: '/lifebook',      icon: NotebookPen,  labelKey: 'dash_link_lifebook',   color: '#8e44ad', adminOnly: true },
-    { path: '/students',      icon: GraduationCap,labelKey: 'dash_link_students',   color: '#3498db', adminOnly: true },
-    { path: '/coach-messages',icon: MessageSquare,labelKey: 'dash_link_coach_msg',  color: '#e74c3c', adminOnly: true },
-    { path: '/gratitude',     icon: Smile,        labelKey: 'dash_link_gratitude',  color: '#f1c40f' },
-    { path: '/habits',        icon: CheckSquare,  labelKey: 'dash_link_habits',     color: '#2ecc71' },
-    { path: '/reading',       icon: BookOpen,     labelKey: 'dash_link_reading',    color: '#3498db' },
-    { path: '/vision',        icon: Eye,          labelKey: 'dash_link_vision',     color: '#e91e8c' },
-    { path: '/sleep',         icon: MoonIcon,     labelKey: 'dash_link_sleep',      color: '#9b59b6' },
-    { path: '/achievements',  icon: Trophy,       labelKey: 'dash_link_achievements',color: '#c9a84c' },
-    { path: '/today',         icon: Sparkles,     labelKey: 'dash_link_today',        color: '#c9a84c' },
-    { path: '/baseline',      icon: BarChart2,    labelKey: 'dash_link_baseline',     color: '#3498db' },
-    { path: '/insights',      icon: Brain,        labelKey: 'dash_link_insights',     color: '#9b59b6' },
-    { path: '/commitment',    icon: FileText,     labelKey: 'dash_link_commitment',   color: '#e91e8c' },
-    { path: '/group-challenge',icon: Swords,      labelKey: 'dash_link_group_challenge', color: '#e67e22' },
-    { path: '/weekly-report', icon: Calendar,     labelKey: 'dash_link_weekly_report', color: '#27ae60', adminOnly: true },
+  // ── Categorised Links ────────────────────────────────────
+  const LINK_CATEGORIES = [
+    {
+      key: 'daily',
+      labelAr: '🌅 يومك',
+      labelEn: '🌅 Your Day',
+      links: [
+        { path: '/today',    icon: Sparkles,    labelKey: 'dash_link_today',    color: '#c9a84c' },
+        { path: '/morning',  icon: Sun,         labelKey: 'dash_link_morning',  color: '#f39c12' },
+        { path: '/state',    icon: Zap,         labelKey: 'dash_link_state',    color: '#e63946' },
+        { path: '/evening',  icon: Moon,        labelKey: 'dash_link_evening',  color: '#95a5a6' },
+        { path: '/wins',     icon: Trophy,      labelKey: 'dash_link_wins',     color: '#f1c40f' },
+        { path: '/gratitude',icon: Smile,       labelKey: 'dash_link_gratitude',color: '#f1c40f' },
+        { path: '/habits',   icon: CheckSquare, labelKey: 'dash_link_habits',   color: '#2ecc71' },
+        { path: '/sleep',    icon: MoonIcon,    labelKey: 'dash_link_sleep',    color: '#9b59b6' },
+      ],
+    },
+    {
+      key: 'goals',
+      labelAr: '🎯 أهدافك وتطورك',
+      labelEn: '🎯 Goals & Growth',
+      links: [
+        { path: '/goals',    icon: Target,     labelKey: 'dash_link_goals',     color: '#3498db' },
+        { path: '/wheel',    icon: BarChart2,  labelKey: 'dash_link_wheel',     color: '#2ecc71' },
+        { path: '/beliefs',  icon: Star,       labelKey: 'dash_link_beliefs',   color: '#9b59b6' },
+        { path: '/destiny',  icon: Compass,    labelKey: 'dash_link_destiny',   color: '#9b59b6' },
+        { path: '/freedom',  icon: TrendingUp, labelKey: 'dash_link_freedom',   color: '#f1c40f' },
+        { path: '/power30',  icon: Zap,        labelKey: 'dash_link_power30',   color: '#e67e22' },
+        { path: '/fear',     icon: Shield,     labelKey: 'dash_link_fear',      color: '#9b59b6' },
+        { path: '/time',     icon: Clock,      labelKey: 'dash_link_time',      color: '#1abc9c' },
+      ],
+    },
+    {
+      key: 'programs',
+      labelAr: '📚 البرامج',
+      labelEn: '📚 Programs',
+      links: [
+        { path: '/energy',       icon: Flame,       labelKey: 'dash_link_energy',       color: '#e67e22' },
+        { path: '/weekly',       icon: Calendar,    labelKey: 'dash_link_weekly',        color: '#3498db' },
+        { path: '/relationships',icon: Heart,       labelKey: 'dash_link_relationships', color: '#e91e8c' },
+        { path: '/modeling',     icon: Users,       labelKey: 'dash_link_modeling',      color: '#2ecc71' },
+        { path: '/protocol',     icon: Activity,    labelKey: 'dash_link_protocol',      color: '#1abc9c' },
+        { path: '/challenge',    icon: Shuffle,     labelKey: 'dash_link_challenge',     color: '#e67e22' },
+        { path: '/group-challenge',icon: Swords,    labelKey: 'dash_link_group_challenge',color: '#e67e22' },
+        { path: '/commitment',   icon: FileText,    labelKey: 'dash_link_commitment',    color: '#e91e8c' },
+        { path: '/letters',      icon: Mail,        labelKey: 'dash_link_letters',       color: '#3498db' },
+        { path: '/library',      icon: BookOpen,    labelKey: 'dash_link_library',       color: '#1abc9c' },
+      ],
+    },
+    {
+      key: 'tools',
+      labelAr: '🔧 الأدوات',
+      labelEn: '🔧 Tools',
+      links: [
+        { path: '/insights',    icon: Brain,      labelKey: 'dash_link_insights',    color: '#9b59b6' },
+        { path: '/baseline',    icon: BarChart2,  labelKey: 'dash_link_baseline',    color: '#3498db' },
+        { path: '/reading',     icon: BookOpen,   labelKey: 'dash_link_reading',     color: '#3498db' },
+        { path: '/vision',      icon: Eye,        labelKey: 'dash_link_vision',      color: '#e91e8c' },
+        { path: '/achievements',icon: Trophy,     labelKey: 'dash_link_achievements',color: '#c9a84c' },
+        { path: '/stats',       icon: PieChart,   labelKey: 'dash_link_stats',       color: '#9b59b6' },
+      ],
+    },
+    {
+      key: 'admin',
+      labelAr: '👨‍💼 إدارة',
+      labelEn: '👨‍💼 Admin',
+      adminOnly: true,
+      links: [
+        { path: '/students',      icon: GraduationCap, labelKey: 'dash_link_students',     color: '#3498db' },
+        { path: '/coach-messages',icon: MessageSquare, labelKey: 'dash_link_coach_msg',    color: '#e74c3c' },
+        { path: '/weekly-report', icon: Calendar,      labelKey: 'dash_link_weekly_report',color: '#27ae60' },
+        { path: '/business',      icon: Briefcase,     labelKey: 'dash_link_business',     color: '#c9a84c' },
+        { path: '/scaling',       icon: TrendingUp,    labelKey: 'dash_link_scaling',      color: '#27ae60' },
+        { path: '/lifebook',      icon: NotebookPen,   labelKey: 'dash_link_lifebook',     color: '#8e44ad' },
+      ],
+    },
   ]
 
   return (
@@ -500,27 +541,56 @@ export default function Dashboard() {
           )
         })()}
 
-        {/* ── Quick Links Grid ────────────────────────────────── */}
-        <div>
-          <p className="section-title mb-3">{t('dash_quick_links')}</p>
-          <div className="grid grid-cols-4 gap-2">
-            {QUICK_LINKS.filter(l => !l.adminOnly || currentUser?.role === 'admin').map((link) => {
-              const Icon = link.icon
+        {/* ── Categorised Links ───────────────────────────────── */}
+        <div className="space-y-3">
+          <p className="section-title">{t('dash_quick_links')}</p>
+
+          {LINK_CATEGORIES
+            .filter(cat => !cat.adminOnly || currentUser?.role === 'admin')
+            .map(cat => {
+              const isOpen = openCats[cat.key]
               return (
-                <button key={link.path} onClick={() => navigate(link.path)}
-                  className="flex flex-col items-center gap-2 rounded-2xl p-3 transition-all duration-200 active:scale-95"
-                  style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ background: `${link.color}18` }}>
-                    <Icon size={18} style={{ color: link.color }} />
-                  </div>
-                  <span className="text-xs text-center leading-tight" style={{ color: '#aaa', fontSize: 9 }}>
-                    {t(link.labelKey)}
-                  </span>
-                </button>
+                <div key={cat.key} className="rounded-2xl overflow-hidden"
+                  style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
+
+                  {/* Category header — tap to toggle */}
+                  <button
+                    onClick={() => toggleCat(cat.key)}
+                    className="w-full flex items-center justify-between px-4 py-3 transition-all active:opacity-70"
+                  >
+                    <span className="text-sm font-black" style={{ color: isOpen ? '#c9a84c' : '#777' }}>
+                      {isAr ? cat.labelAr : cat.labelEn}
+                    </span>
+                    {isOpen
+                      ? <ChevronUp size={15} style={{ color: '#c9a84c' }} />
+                      : <ChevronDown size={15} style={{ color: '#444' }} />}
+                  </button>
+
+                  {/* Links grid — collapsible */}
+                  {isOpen && (
+                    <div className="grid grid-cols-4 gap-2 px-3 pb-3">
+                      {cat.links.map(link => {
+                        const Icon = link.icon
+                        return (
+                          <button key={link.path} onClick={() => navigate(link.path)}
+                            className="flex flex-col items-center gap-2 rounded-xl p-2.5 transition-all duration-200 active:scale-95"
+                            style={{ background: '#151515', border: '1px solid #252525' }}>
+                            <div className="w-9 h-9 rounded-lg flex items-center justify-center"
+                              style={{ background: `${link.color}18` }}>
+                              <Icon size={17} style={{ color: link.color }} />
+                            </div>
+                            <span className="text-center leading-tight font-semibold"
+                              style={{ color: '#aaa', fontSize: 9 }}>
+                              {t(link.labelKey)}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
               )
             })}
-          </div>
         </div>
 
         {/* ── Affirmation Banner ──────────────────────────────── */}
@@ -538,6 +608,11 @@ export default function Dashboard() {
         </div>
 
       </div>
+
+      {/* ── Onboarding (first login) ───────────────────────── */}
+      {!state.onboardingDone && (
+        <OnboardingModal onDone={() => {}} />
+      )}
 
       {/* ── Support Button (students only) ─────────────────── */}
       {currentUser?.role !== 'admin' && (

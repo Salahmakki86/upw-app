@@ -4,6 +4,7 @@ import { AppProvider } from './context/AppContext'
 import { LangProvider } from './context/LangContext'
 import NotificationSetup from './components/NotificationSetup'
 import MessageModal from './components/MessageModal'
+import { ToastProvider } from './context/ToastContext'
 
 import LoginPage    from './pages/LoginPage'
 import AdminPage    from './pages/AdminPage'
@@ -56,6 +57,7 @@ function AppRoutes() {
 
   return (
     <LangProvider>
+      <ToastProvider>
       <AppProvider userId={currentUser.id} hasData={hasData}>
         <NotificationSetup />
         <MessageModal />
@@ -123,6 +125,7 @@ function AppRoutes() {
           </Routes>
         </BrowserRouter>
       </AppProvider>
+      </ToastProvider>
     </LangProvider>
   )
 }
