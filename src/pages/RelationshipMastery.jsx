@@ -71,7 +71,7 @@ export default function RelationshipMastery() {
   const lowestKey = Object.entries(ratings).sort((a, b) => a[1] - b[1])[0]?.[0]
 
   return (
-    <Layout title={t('relationships_title')} subtitle={t('relationships_subtitle')}>
+    <Layout title={t('relationships_title')} subtitle={t('relationships_subtitle')} helpKey="relationships">
       <div className="space-y-4 pt-2">
 
         {/* Tony Quote */}

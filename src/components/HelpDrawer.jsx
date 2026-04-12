@@ -1,0 +1,591 @@
+import { X } from 'lucide-react'
+import { useLang } from '../context/LangContext'
+
+const HELP = {
+  home: {
+    ar: {
+      title: '🏠 لوحة التحكم',
+      what: 'مركز قيادة يومك. تبدأ من هنا كل يوم لتتتبع رحلتك نحو الحياة الاستثنائية.',
+      steps: [
+        'سجّل حالتك العاطفية كل صباح — هذا يحدد طاقتك لليوم كله',
+        'اتبع خطوات الرحلة اليومية: الصباح → الطاقة → الحالة → المساء',
+        'ابحث في الروابط السريعة عن الأداة التي تحتاجها',
+        'راقب عداد الأيام المتتالية — هذا يبني الزخم',
+      ]
+    },
+    en: {
+      title: '🏠 Dashboard',
+      what: 'Your daily command center. Start here every day to track your journey toward an extraordinary life.',
+      steps: [
+        'Log your emotional state every morning — this sets your energy for the entire day',
+        'Follow the daily journey: Morning → Energy → State → Evening',
+        'Use the quick links to access any tool you need',
+        'Watch your streak counter — building momentum is key to lasting change',
+      ]
+    }
+  },
+  morning: {
+    ar: {
+      title: '☀️ طقس الصباح',
+      what: 'التمهيد (Priming) هو تقنية توني روبنز لبرمجة عقلك وجسدك في 10-20 دقيقة كل صباح. يغير حالتك من النوم إلى القوة الكاملة.',
+      steps: [
+        'المرحلة 1 — التنفس النشط: 30 نفساً عميقاً مع رفع الذراعين. يزيد الأوكسجين ويوقظ الجهاز العصبي',
+        'المرحلة 2 — الامتنان: فكّر في 3 أشياء تشعر بامتنان حقيقي لها. الدماغ لا يستطيع أن يكون ممتناً وخائفاً في آنٍ واحد',
+        'المرحلة 3 — الشفاء والعطاء: أرسل طاقة الحب لنفسك ثم لمن تحب ثم للعالم',
+        'المرحلة 4 — التخيّل: تخيّل أهدافك محققة بتفاصيل حية — الصور والأصوات والمشاعر',
+        'أسئلة القوة: أجب على الأسئلة بصدق لتوجيه عقلك نحو الإيجابية والحلول',
+      ]
+    },
+    en: {
+      title: '☀️ Morning Ritual',
+      what: 'Priming is Tony Robbins\' technique to program your mind and body in 10-20 minutes each morning. It shifts your state from sleep to full power.',
+      steps: [
+        'Phase 1 — Active Breathing: 30 deep breaths with arm movements. Increases oxygen and awakens the nervous system',
+        'Phase 2 — Gratitude: Think of 3 things you feel genuine gratitude for. The brain cannot be grateful and fearful simultaneously',
+        'Phase 3 — Healing & Giving: Send love energy to yourself, then to loved ones, then to the world',
+        'Phase 4 — Visualization: Visualize your goals as already achieved with vivid detail — images, sounds, feelings',
+        'Power Questions: Answer honestly to direct your mind toward positivity and solutions',
+      ]
+    }
+  },
+  state: {
+    ar: {
+      title: '⚡ إدارة الحالة',
+      what: 'الحالة (State) هي مجموع ما تشعر به الآن جسدياً وعاطفياً. توني روبنز يقول: "التحكم في حالتك = التحكم في حياتك." هنا تتعلم كيف.',
+      steps: [
+        'بروتوكول SOS: عندما تشعر بحالة سيئة، استخدم هذا البروتوكول الطارئ لتغيير حالتك فوراً',
+        'ثلاثي العاطفة: جسدك + تركيزك + لغتك يحددون حالتك. غيّر أياً منها وستتغير حالتك',
+        'أنماط التنفس: تنفس معين لتهدئة الأعصاب، وتنفس آخر لرفع الطاقة',
+        'محول المفردات: الكلمات التي تستخدمها تشكّل واقعك. بدّل الكلمات السلبية بأخرى أقل شدة',
+      ]
+    },
+    en: {
+      title: '⚡ State Management',
+      what: 'State is the sum of everything you feel right now — physically and emotionally. Tony Robbins says: "Control your state = control your life." Here you learn how.',
+      steps: [
+        'SOS Protocol: When you feel a bad state, use this emergency protocol to change your state immediately',
+        'Emotional Triad: Your body + focus + language determine your state. Change any one of them and your state changes',
+        'Breathing Patterns: Specific breathing to calm the nervous system, and another to raise energy',
+        'Vocabulary Transformer: The words you use shape your reality. Replace negative words with less intense alternatives',
+      ]
+    }
+  },
+  goals: {
+    ar: {
+      title: '🎯 الأهداف (RPM)',
+      what: 'نظام RPM هو منهجية توني روبنز للأهداف: النتيجة (Result) + الغرض (Purpose) + خريطة العمل (Massive Action Plan). يختلف عن قوائم المهام العادية لأنه يربط كل هدف بسبب عميق.',
+      steps: [
+        'R — النتيجة: حدد هدفك بوضوح ودقة شديدة. "الوضوح هو القوة"',
+        'P — الغرض: اسأل نفسك لماذا هذا الهدف ضروري. الأسباب القوية تخلق طاقة لا تنفد',
+        'M — خطة العمل: حدد الخطوات الملموسة. كل خطوة منجزة تحسب نسبة التقدم',
+        'الهدف اليومي: كل يوم حدد ماذا ستفعل لهذا الهدف تحديداً — هذا يبني عادة التقدم المستمر',
+        'الشريط والنقاط: راقب تقدمك اليومي والأسبوعي. النقاط الذهبية تعني أيام نشطة',
+      ]
+    },
+    en: {
+      title: '🎯 Goals (RPM)',
+      what: 'RPM is Tony Robbins\' goal methodology: Result + Purpose + Massive Action Plan. It differs from regular to-do lists because it connects every goal to a deep reason.',
+      steps: [
+        'R — Result: Define your goal with extreme clarity and precision. "Clarity is power"',
+        'P — Purpose: Ask yourself WHY this goal is absolutely necessary. Strong reasons create boundless energy',
+        'M — Action Plan: Define concrete steps. Each completed step counts toward your progress percentage',
+        'Daily Goal: Each day, specify exactly what you will do for this goal — this builds the habit of continuous progress',
+        'Streak & Dots: Track your daily and weekly progress. Gold dots indicate active days',
+      ]
+    }
+  },
+  wheel: {
+    ar: {
+      title: '☸️ عجلة الحياة',
+      what: 'أداة توني روبنز لتشخيص التوازن في حياتك. تقيّم 7 مجالات من 0-10. أي مجال منخفض يؤثر على المجالات الأخرى كلها.',
+      steps: [
+        'قيّم كل مجال من 0 (كارثي) إلى 10 (مثالي) — كن صادقاً تماماً',
+        'انظر للنمط العام: أي المجالات تحتاج أكثر اهتمام الآن؟',
+        'احفظ لقطة دورية (أسبوعياً أو شهرياً) لترى تطورك مع الوقت',
+        'ابدأ دائماً بالمجال الأدنى تقييماً — رفعه يؤثر على كل المجالات الأخرى',
+      ]
+    },
+    en: {
+      title: '☸️ Wheel of Life',
+      what: 'Tony Robbins\' tool for diagnosing balance in your life. You rate 7 areas from 0-10. Any low area affects all other areas.',
+      steps: [
+        'Rate each area from 0 (catastrophic) to 10 (perfect) — be completely honest',
+        'Look at the overall pattern: which areas need the most attention right now?',
+        'Save a snapshot periodically (weekly or monthly) to see your progress over time',
+        'Always start with the lowest-rated area — improving it impacts all other areas',
+      ]
+    }
+  },
+  beliefs: {
+    ar: {
+      title: '💡 المعتقدات',
+      what: 'المعتقدات هي "سقف" قدراتك. توني روبنز يقول أن المعتقدات المحدودة هي السبب الرئيسي لعدم وصول الناس لإمكانياتهم. هنا تكشفها وتحولها.',
+      steps: [
+        'اكتب المعتقد المحدود كما يظهر في ذهنك بصدق تام',
+        'تقنية ديكنز (Dickens Process): تخيّل حياتك بعد 1 سنة، 5 سنوات، 10 سنوات إذا استمررت بهذا المعتقد. ما الألم الذي ستشعر به؟',
+        'ثم تخيّل حياتك إذا تخليت عن هذا المعتقد — ما البهجة التي ستشعر بها؟',
+        'استبدله بمعتقد مُمكِّن واكتبه في قسم المعتقدات المُمكِّنة',
+        'كرر قراءة معتقداتك المُمكِّنة يومياً لتثبيتها في عقلك',
+      ]
+    },
+    en: {
+      title: '💡 Beliefs',
+      what: 'Beliefs are the "ceiling" of your capabilities. Tony Robbins says limiting beliefs are the main reason people don\'t reach their potential. Here you expose and transform them.',
+      steps: [
+        'Write the limiting belief exactly as it appears in your mind — be completely honest',
+        'Dickens Process: Imagine your life after 1 year, 5 years, 10 years if you keep this belief. What pain will you feel?',
+        'Then imagine your life if you released this belief — what joy would you experience?',
+        'Replace it with an empowering belief and write it in the Empowering Beliefs section',
+        'Read your empowering beliefs daily to install them in your mind',
+      ]
+    }
+  },
+  energy: {
+    ar: {
+      title: '🔥 تحدي الطاقة',
+      what: 'تحدي 10 أيام لبناء عادات الطاقة العالية. توني روبنز يقول أن الطاقة هي الأساس — بدون طاقة عالية لا يمكنك تنفيذ أي شيء.',
+      steps: [
+        'المهدايا (Gifts): الأشياء التي ترفع طاقتك — الحركة، الماء، التغذية الجيدة، النوم',
+        'السموم (Poisons): الأشياء التي تسرق طاقتك — السكر الزائد، قلة النوم، السلبية',
+        'اضغط على العادات التي أنجزتها اليوم',
+        'الهدف: إنجاز 80% أو أكثر من العادات كل يوم لمدة 10 أيام متتالية',
+      ]
+    },
+    en: {
+      title: '🔥 Energy Challenge',
+      what: 'A 10-day challenge to build high-energy habits. Tony Robbins says energy is the foundation — without high energy you cannot execute anything.',
+      steps: [
+        'Gifts: Things that raise your energy — movement, water, good nutrition, sleep',
+        'Poisons: Things that steal your energy — excess sugar, sleep deprivation, negativity',
+        'Tap the habits you completed today',
+        'Goal: Complete 80% or more of habits every day for 10 consecutive days',
+      ]
+    }
+  },
+  evening: {
+    ar: {
+      title: '🌙 طقس المساء',
+      what: 'نهاية يومك بوعي تامة تضاعف النمو. العقل يعالج ويحفظ المعلومات أثناء النوم — لذا ما تفكر فيه قبل النوم يصبح أعمق.',
+      steps: [
+        'الامتنان المسائي: 3 أشياء حدثت اليوم تشعر بامتنان لها — حتى الصغيرة',
+        'أجب على أسئلة التأمل بصدق — ماذا تعلمت؟ كيف ساهمت؟',
+        'قيّم يومك من 1-10 وحدد ما ستفعله مختلفاً غداً',
+        'مهام الغد: اكتب أهم 3 مهام لغد — عقلك سيعمل عليها أثناء نومك',
+      ]
+    },
+    en: {
+      title: '🌙 Evening Ritual',
+      what: 'Ending your day with full awareness multiplies growth. The mind processes and stores information during sleep — so what you think about before sleep becomes deeper.',
+      steps: [
+        'Evening Gratitude: 3 things that happened today you feel grateful for — even small ones',
+        'Answer the reflection questions honestly — what did you learn? How did you contribute?',
+        'Rate your day from 1-10 and identify what you\'ll do differently tomorrow',
+        'Tomorrow\'s Tasks: Write your top 3 tasks for tomorrow — your mind will work on them during sleep',
+      ]
+    }
+  },
+  business: {
+    ar: {
+      title: '💼 إتقان الأعمال',
+      what: 'خريطة أعمالك على صفحة واحدة بمنهجية توني روبنز. تحدد من تخدم، ماذا تقدم، ولماذا أنت الخيار الأفضل. والمقاييس الرئيسية (KPIs) لمتابعة نمو أعمالك.',
+      steps: [
+        'خريطة الأعمال: أجب على الأسئلة الستة (من؟ ماذا؟ تخدم؟ المشكلة؟ لماذا؟ أين؟) بوضوح تام',
+        'الكود المقدس: قيمك الجوهرية التي لن تتنازل عنها أبداً',
+        'مقاييس الأداء: تابع الإيرادات والعملاء ومعدل التحويل شهرياً',
+        'احفظ لقطة شهرية للمقاييس لترى نمو الأعمال بمرور الوقت',
+        'خطوات العمل: الإجراءات المحددة لتطوير كل جانب من جوانب أعمالك',
+      ]
+    },
+    en: {
+      title: '💼 Business Mastery',
+      what: 'Your business blueprint on one page using Tony Robbins\' methodology. Define who you serve, what you offer, and why you\'re the best choice. Plus key KPIs to track your business growth.',
+      steps: [
+        'Business Map: Answer the six questions (WHO? WHAT? SERVE? PROBLEM? WHY? WHERE?) with complete clarity',
+        'Sacred Code: Your core values that you will never compromise',
+        'Performance Metrics: Track revenue, clients, and conversion rate monthly',
+        'Save a monthly snapshot of metrics to see business growth over time',
+        'Action Steps: Specific actions to develop each aspect of your business',
+      ]
+    }
+  },
+  destiny: {
+    ar: {
+      title: '🧭 موعد مع القدر',
+      what: 'برنامج توني روبنز المكثف من 6 أيام لإعادة تصميم حياتك من الجذور. تتعمق في قيمك، هويتك، أنماطك، ورسالتك في الحياة.',
+      steps: [
+        'اليوم 1: الاحتياجات الإنسانية الستة — اكتشف ما يحركك فعلاً',
+        'اليوم 2: القيم — حدد ما هو الأهم في حياتك وبأي ترتيب',
+        'اليوم 3: الأنماط والمعتقدات — كشف الأنماط التي تحكم قراراتك',
+        'اليوم 4: الهوية — من أنت حقاً؟ من تريد أن تكون؟',
+        'اليوم 5: الرسالة والرؤية — ما الأثر الذي تريد تركه في العالم؟',
+        'اليوم 6: الخطة والالتزام — ترجمة كل شيء إلى خطوات عملية',
+      ]
+    },
+    en: {
+      title: '🧭 Date with Destiny',
+      what: 'Tony Robbins\' intensive 6-day program to redesign your life from the ground up. Go deep into your values, identity, patterns, and life purpose.',
+      steps: [
+        'Day 1: Six Human Needs — discover what truly drives you',
+        'Day 2: Values — define what matters most in your life and in what order',
+        'Day 3: Patterns & Beliefs — uncover the patterns that govern your decisions',
+        'Day 4: Identity — who are you really? Who do you want to become?',
+        'Day 5: Mission & Vision — what impact do you want to leave in the world?',
+        'Day 6: Plan & Commitment — translate everything into practical steps',
+      ]
+    }
+  },
+  weekly: {
+    ar: {
+      title: '📅 المراجعة الأسبوعية',
+      what: 'مراجعة أسبوعية عميقة لـ 7 مجالات حياتك. توني روبنز يقول أن التقدم الحقيقي يحتاج مراجعة منتظمة وتعديلات مستمرة.',
+      steps: [
+        'قيّم أسبوعك في كل مجال من 1-10',
+        'اكتب ما أنجزته وما تعلمته هذا الأسبوع',
+        'حدد 3 أولويات للأسبوع القادم',
+        'اجعل هذه عادة أسبوعية — أفضل وقت: الجمعة مساءً أو الأحد صباحاً',
+      ]
+    },
+    en: {
+      title: '📅 Weekly Review',
+      what: 'A deep weekly review of 7 life areas. Tony Robbins says real progress requires regular reviews and continuous adjustments.',
+      steps: [
+        'Rate your week in each area from 1-10',
+        'Write what you accomplished and what you learned this week',
+        'Identify 3 priorities for next week',
+        'Make this a weekly habit — best time: Friday evening or Sunday morning',
+      ]
+    }
+  },
+  freedom: {
+    ar: {
+      title: '💰 الحرية المالية',
+      what: 'مسار توني روبنز للحرية المالية من 7 مستويات. من الاستقرار إلى الثروة المطلقة. كل مستوى له استراتيجيات محددة.',
+      steps: [
+        'حدد مستواك الحالي بصدق',
+        'اقرأ استراتيجيات مستواك الحالي ومستواك التالي',
+        'حدد صافي ثروتك الحالية والدخل السلبي الشهري',
+        'ضع هدفاً واضحاً للانتقال للمستوى التالي',
+      ]
+    },
+    en: {
+      title: '💰 Financial Freedom',
+      what: 'Tony Robbins\' 7-level financial freedom path. From stability to absolute wealth. Each level has specific strategies.',
+      steps: [
+        'Honestly assess your current level',
+        'Read the strategies for your current and next level',
+        'Define your current net worth and monthly passive income',
+        'Set a clear goal to move to the next level',
+      ]
+    }
+  },
+  power30: {
+    ar: {
+      title: '⚡ القوة الشخصية 30 يوم',
+      what: 'برنامج توني روبنز الكلاسيكي لمدة 30 يوماً لبناء عادات النجاح. كل يوم له تركيز محدد يبني فوق اليوم السابق.',
+      steps: [
+        'الأسبوع 1: الأساسيات — بناء عادات الطاقة والتركيز',
+        'الأسبوع 2: العلاقات — تحسين علاقاتك مع نفسك والآخرين',
+        'الأسبوع 3: المال والأعمال — تطوير عقلية الوفرة',
+        'الأسبوع 4: الهدف والرسالة — اكتشاف غرضك الأعمق',
+        'علّم على كل يوم تكمله — الاستمرارية هي المفتاح',
+      ]
+    },
+    en: {
+      title: '⚡ Personal Power 30 Days',
+      what: 'Tony Robbins\' classic 30-day program to build success habits. Each day has a specific focus that builds on the previous day.',
+      steps: [
+        'Week 1: Fundamentals — build energy and focus habits',
+        'Week 2: Relationships — improve your relationship with yourself and others',
+        'Week 3: Money & Business — develop an abundance mindset',
+        'Week 4: Purpose & Mission — discover your deeper purpose',
+        'Check off each day you complete — consistency is the key',
+      ]
+    }
+  },
+  fear: {
+    ar: {
+      title: '🛡️ تحويل الخوف إلى قوة',
+      what: 'توني روبنز يقول: "الخوف وراءه هدية." هذه الأداة تساعدك تحول كل خوف من عائق إلى وقود للنمو.',
+      steps: [
+        'حدد الخوف: اكتبه بوضوح — ماذا تخشى بالضبط؟',
+        'التكلفة: ماذا يكلفك هذا الخوف إذا استمر؟ في العلاقات؟ في المال؟ في الصحة؟',
+        'الهدية: ما الشيء الإيجابي الذي يحاول هذا الخوف حمايتك منه؟',
+        'الرافعة: استخدم ألم الخوف كرافعة للتحرك',
+        'الخطة: ما الخطوة الصغيرة الأولى التي ستتخذها اليوم رغم الخوف؟',
+      ]
+    },
+    en: {
+      title: '🛡️ Fear to Power',
+      what: 'Tony Robbins says: "Behind every fear is a gift." This tool helps you transform every fear from an obstacle into fuel for growth.',
+      steps: [
+        'Define the Fear: Write it clearly — what exactly do you fear?',
+        'The Cost: What does this fear cost you if it continues? In relationships? Money? Health?',
+        'The Gift: What positive thing is this fear trying to protect you from?',
+        'The Leverage: Use the pain of the fear as leverage to move forward',
+        'The Plan: What small first step will you take today despite the fear?',
+      ]
+    }
+  },
+  time: {
+    ar: {
+      title: '⏰ وقت الحياة',
+      what: 'كيف تقضي وقتك؟ هذه الأداة تكشف أين تذهب ساعاتك فعلاً مقابل أين تريد أن تذهب. الوقت هو أثمن مورد لديك.',
+      steps: [
+        'سجّل كم ساعة تقضي فعلاً في كل مجال من مجالات حياتك أسبوعياً',
+        'حدد كم ساعة تريد أن تقضي مثالياً في كل مجال',
+        'انظر للفجوة — أين الفرق الأكبر؟ هذا ما يحتاج تغييراً',
+        'الصخور الكبيرة (Big Rocks): 5 أشياء يجب أن تحتل أعلى الأولوية في وقتك',
+      ]
+    },
+    en: {
+      title: '⏰ Time of Life',
+      what: 'How do you spend your time? This tool reveals where your hours actually go versus where you want them to go. Time is your most precious resource.',
+      steps: [
+        'Record how many hours you actually spend in each life area weekly',
+        'Define how many hours you ideally want to spend in each area',
+        'Look at the gap — where is the biggest difference? That\'s what needs changing',
+        'Big Rocks: 5 things that must occupy top priority in your time',
+      ]
+    }
+  },
+  wins: {
+    ar: {
+      title: '🏆 انتصارات اليوم',
+      what: 'توثيق انتصاراتك اليومية يبني الزخم والثقة. توني روبنز يقول: "العقل يتجه نحو ما يركز عليه." ركّز على ما أنجزته.',
+      steps: [
+        'سجّل كل انتصار مهما كان صغيراً — لا يوجد انتصار صغير',
+        'صنّف انتصارك (شخصي، عمل، صحة، علاقات، روحي)',
+        'اقرأ انتصاراتك السابقة عندما تشعر بالإحباط — هذا يعيد ثقتك',
+        'الهدف: على الأقل انتصار واحد يومياً',
+      ]
+    },
+    en: {
+      title: '🏆 Daily Wins',
+      what: 'Documenting your daily wins builds momentum and confidence. Tony Robbins says: "The mind moves toward what it focuses on." Focus on what you\'ve accomplished.',
+      steps: [
+        'Record every win no matter how small — there\'s no such thing as a small win',
+        'Categorize your win (personal, work, health, relationships, spiritual)',
+        'Read your past wins when you feel discouraged — this restores your confidence',
+        'Goal: At least one win every day',
+      ]
+    }
+  },
+  letters: {
+    ar: {
+      title: '✉️ رسائل إلى نفسي',
+      what: 'اكتب رسالة لنفسك في المستقبل (بعد 3، 6، 12 شهراً). هذه الأداة تخلق وضوحاً عميقاً لما تريده وتحفزك على الوصول إليه.',
+      steps: [
+        'اختر الإطار الزمني: رسالة لنفسك بعد 3 أشهر، 6 أشهر، أو سنة',
+        'اكتب كأنك ترسل لصديق عزيز — بصدق وعاطفة',
+        'اذكر: أين أنت الآن، ما الذي تحلم به، ما العهود التي تقطعها على نفسك',
+        'عيّن تاريخ فتح الرسالة — التطبيق سيذكرك',
+        'عندما تقرأها لاحقاً، ستدهشك كم نموت',
+      ]
+    },
+    en: {
+      title: '✉️ Letters to Myself',
+      what: 'Write a letter to your future self (in 3, 6, or 12 months). This tool creates deep clarity about what you want and motivates you to reach it.',
+      steps: [
+        'Choose the timeframe: a letter to yourself after 3 months, 6 months, or 1 year',
+        'Write as if you\'re writing to a dear friend — honestly and emotionally',
+        'Mention: where you are now, what you dream of, what promises you make to yourself',
+        'Set an opening date — the app will remind you',
+        'When you read it later, you\'ll be amazed at how much you\'ve grown',
+      ]
+    }
+  },
+  modeling: {
+    ar: {
+      title: '🌟 نمذجة التميز',
+      what: 'توني روبنز يقول: "النجاح يترك آثاراً." اكتشف معتقدات واستراتيجيات الناجحين وانسخها. هذا أسرع طريق للنجاح.',
+      steps: [
+        'اختر قدوة في مجال تريد التميز فيه',
+        'ادرس معتقداتهم: ماذا يؤمنون؟ كيف يفكرون عن أنفسهم؟',
+        'ادرس استراتيجياتهم: ما الأنماط اليومية التي يتبعونها؟',
+        'ابدأ تطبيق نفس المعتقدات والاستراتيجيات في حياتك',
+        'برنامج 4 أسابيع: أسبوع لكل جانب (الجسم، العقل، المال، العلاقات)',
+      ]
+    },
+    en: {
+      title: '🌟 Modeling Excellence',
+      what: 'Tony Robbins says: "Success leaves clues." Discover the beliefs and strategies of successful people and replicate them. This is the fastest path to success.',
+      steps: [
+        'Choose a role model in an area where you want to excel',
+        'Study their beliefs: what do they believe? How do they think about themselves?',
+        'Study their strategies: what daily patterns do they follow?',
+        'Start applying the same beliefs and strategies in your life',
+        '4-week program: one week for each aspect (body, mind, money, relationships)',
+      ]
+    }
+  },
+  relationships: {
+    ar: {
+      title: '❤️ إتقان العلاقات',
+      what: 'توني روبنز يقول: "جودة علاقاتك = جودة حياتك." هنا تقيّم وتطور أهم علاقاتك في 6 مجالات.',
+      steps: [
+        'قيّم كل علاقة من 1-10 بصدق تام',
+        'حدد الاحتياجات الإنسانية التي لم تُلبَّ في كل علاقة',
+        'خطة العطاء: حدد شيئاً محدداً ستفعله لكل شخص مهم هذا الأسبوع',
+        'اليقين في العلاقات: الاحتياج الأول للبشر — كيف توفره لمن تحب؟',
+      ]
+    },
+    en: {
+      title: '❤️ Relationship Mastery',
+      what: 'Tony Robbins says: "The quality of your relationships = the quality of your life." Here you assess and develop your most important relationships across 6 areas.',
+      steps: [
+        'Rate each relationship from 1-10 with complete honesty',
+        'Identify which human needs are unmet in each relationship',
+        'Giving Plan: Define something specific you will do for each important person this week',
+        'Certainty in Relationships: The #1 human need — how do you provide it for those you love?',
+      ]
+    }
+  },
+  protocol: {
+    ar: {
+      title: '⚡ بروتوكول الطاقة',
+      what: 'بروتوكولك اليومي لطاقة عالية ومستدامة. ما تأكله، كيف تتنفس، كم تتحرك — كل هذا يحدد مستوى طاقتك.',
+      steps: [
+        'سجّل كمية الماء التي تشربها يومياً — الهدف: 2-3 لترات',
+        'التعرض للبرودة (Cold Exposure): دش بارد أو سباحة — يرفع الطاقة بشكل هائل',
+        'الحركة: كم دقيقة تحركت اليوم؟ الحركة تخلق الطاقة',
+        'التغذية: سجّل ما أكلته — كل طعام مصدر طاقة أو مصدر تعب',
+        'راجع بروتوكولك أسبوعياً وعدّله بناءً على كيف تشعر',
+      ]
+    },
+    en: {
+      title: '⚡ Energy Protocol',
+      what: 'Your daily protocol for high, sustained energy. What you eat, how you breathe, how much you move — all of this determines your energy level.',
+      steps: [
+        'Track your daily water intake — goal: 2-3 liters',
+        'Cold Exposure: cold shower or swimming — massively boosts energy',
+        'Movement: how many minutes did you move today? Movement creates energy',
+        'Nutrition: log what you ate — every food is either an energy source or energy drain',
+        'Review your protocol weekly and adjust based on how you feel',
+      ]
+    }
+  },
+  challenge: {
+    ar: {
+      title: '🎲 تحدي اليوم',
+      what: 'تحدٍّ يومي صغير يخرجك من منطقة الراحة. توني روبنز يقول: "الحياة الحقيقية تبدأ خارج منطقة الراحة."',
+      steps: [
+        'اقبل التحدي اليومي — حتى لو بدا صعباً في البداية',
+        'التحديات تشمل: الحالة، العقلية، العلاقات، المهنة، الصحة',
+        'الهدف: تحدٍّ واحد صغير كل يوم = 365 قفزة في السنة',
+        'وثّق إنجاز التحدي في التطبيق — هذا يبني الزخم',
+      ]
+    },
+    en: {
+      title: '🎲 Daily Challenge',
+      what: 'A small daily challenge that pushes you outside your comfort zone. Tony Robbins says: "Real life begins outside the comfort zone."',
+      steps: [
+        'Accept the daily challenge — even if it seems hard at first',
+        'Challenges include: state, mindset, relationships, career, health',
+        'Goal: one small challenge every day = 365 leaps in a year',
+        'Document completing the challenge in the app — this builds momentum',
+      ]
+    }
+  },
+  stats: {
+    ar: {
+      title: '📊 إحصاءاتي',
+      what: 'نظرة شاملة على رحلتك ونموك. الأرقام لا تكذب — هنا ترى مدى تقدمك الحقيقي.',
+      steps: [
+        'راجع إحصاءاتك أسبوعياً على الأقل',
+        'ركّز على الاتجاهات (Trends) لا على يوم واحد',
+        'إذا كان مقياس منخفضاً — لا تحكم على نفسك، فقط عدّل المسار',
+        'احتفل بالمقاييس المرتفعة — أنت تنجح!',
+      ]
+    },
+    en: {
+      title: '📊 My Statistics',
+      what: 'A comprehensive view of your journey and growth. Numbers don\'t lie — here you see your real progress.',
+      steps: [
+        'Review your stats at least weekly',
+        'Focus on trends, not a single day',
+        'If a metric is low — don\'t judge yourself, just adjust the course',
+        'Celebrate high metrics — you\'re succeeding!',
+      ]
+    }
+  },
+  library: {
+    ar: {
+      title: '📚 المكتبة',
+      what: 'مرجعك لفهم مفاهيم توني روبنز الأساسية. كلما فهمت الأسباب وراء كل أداة، زاد تطبيقها تأثيراً.',
+      steps: [
+        'اقرأ مفهوماً جديداً كل أسبوع',
+        'طبّق ما تقرأه فوراً في أدوات التطبيق',
+        'المفاهيم الأساسية: الثلاثي العاطفي، RPM، التكييف بالارتباط العصبي (NAC)',
+        'الفهم العميق للمفاهيم يضاعف قوة الأدوات',
+      ]
+    },
+    en: {
+      title: '📚 Library',
+      what: 'Your reference for understanding Tony Robbins\' core concepts. The better you understand the "why" behind each tool, the more powerful its application.',
+      steps: [
+        'Read a new concept every week',
+        'Apply what you read immediately in the app\'s tools',
+        'Core concepts: Emotional Triad, RPM, Neuro-Associative Conditioning (NAC)',
+        'Deep understanding of concepts multiplies the power of the tools',
+      ]
+    }
+  },
+  scaling: {
+    ar: {
+      title: '📈 Scaling Up',
+      what: 'منهجية توسع الأعمال المبنية على كورس Scaling Up. تتضمن الخطة الاستراتيجية، أولويات التنفيذ اليومية، بناء الفريق، وإدارة التدفق النقدي.',
+      steps: [
+        'الخطة: ابدأ بـ BHAG (الهدف الكبير الجريء) وانزل للأهداف الربعية',
+        'اليوم: حدد أولويتك رقم 1 كل صباح — هذا هو الشيء الوحيد الذي يجب إنجازه',
+        'الناس: وثّق مسؤولية كل شخص في الفريق — من المسؤول عن ماذا؟',
+        'النقد: راقب نسبة LTV:CAC — يجب أن تكون 3:1 أو أكثر',
+      ]
+    },
+    en: {
+      title: '📈 Scaling Up',
+      what: 'Business scaling methodology based on the Scaling Up course. Includes strategic planning, daily execution priorities, team building, and cash flow management.',
+      steps: [
+        'Plan: Start with BHAG (Big Hairy Audacious Goal) and work down to quarterly priorities',
+        'Day: Set your #1 priority every morning — this is the one thing that must get done',
+        'People: Document each team member\'s accountability — who is responsible for what?',
+        'Cash: Monitor your LTV:CAC ratio — it should be 3:1 or higher',
+      ]
+    }
+  },
+}
+
+export default function HelpDrawer({ pageKey, onClose }) {
+  const { lang } = useLang()
+  const content = HELP[pageKey]?.[lang]
+  if (!content) return null
+  return (
+    <div className="fixed inset-0 z-[200] flex items-end justify-center"
+      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+      onClick={onClose}>
+      <div className="w-full max-w-[480px] rounded-t-3xl p-5 pb-10 animate-slide-up overflow-y-auto"
+        style={{ background: '#141414', border: '1px solid #2a2a2a', maxHeight: '75vh' }}
+        onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-black text-white">{content.title}</h3>
+          <button onClick={onClose} className="p-1.5 rounded-full" style={{ background: '#222' }}>
+            <X size={16} color="#888" />
+          </button>
+        </div>
+        <p className="text-xs mb-4 leading-relaxed" style={{ color: '#aaa' }}>{content.what}</p>
+        {content.steps && content.steps.length > 0 && (
+          <div className="space-y-3">
+            {content.steps.map((step, i) => (
+              <div key={i} className="flex gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black"
+                  style={{ background: 'rgba(201,168,76,0.15)', color: '#c9a84c' }}>
+                  {i + 1}
+                </div>
+                <p className="text-xs leading-relaxed pt-0.5" style={{ color: '#bbb' }}>{step}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

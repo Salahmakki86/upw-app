@@ -176,7 +176,7 @@ export default function FinancialFreedom() {
   }
 
   return (
-    <Layout title={t('freedom_title')} subtitle={t('freedom_subtitle')}>
+    <Layout title={t('freedom_title')} subtitle={t('freedom_subtitle')} helpKey="freedom">
       <div className="space-y-4 pt-2">
 
         {/* Current Level Badge */}

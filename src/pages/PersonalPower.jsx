@@ -157,7 +157,7 @@ export default function PersonalPower() {
   }
 
   return (
-    <Layout title={t('power30_title')} subtitle={t('power30_subtitle')}>
+    <Layout title={t('power30_title')} subtitle={t('power30_subtitle')} helpKey="power30">
       <div className="space-y-4 pt-2">
 
         {/* Stats Bar */}

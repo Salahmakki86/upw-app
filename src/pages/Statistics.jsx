@@ -96,7 +96,7 @@ export default function Statistics() {
   ]
 
   return (
-    <Layout title={t('stats_title')} subtitle={t('stats_subtitle')}>
+    <Layout title={t('stats_title')} subtitle={t('stats_subtitle')} helpKey="stats">
       <div className="space-y-4 pt-2">
 
         {/* 1. Overview */}

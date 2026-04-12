@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import BottomNav from './BottomNav'
 import { useLang } from '../context/LangContext'
+import HelpDrawer from './HelpDrawer'
 
-export default function Layout({ children, title, subtitle, rightAction }) {
+export default function Layout({ children, title, subtitle, rightAction, helpKey }) {
   const { lang, toggleLang, t } = useLang()
+  const [showHelp, setShowHelp] = useState(false)
 
   return (
     <div className="flex flex-col h-full" style={{ background: '#090909' }}>
@@ -20,6 +23,21 @@ export default function Layout({ children, title, subtitle, rightAction }) {
           </div>
           <div className="flex items-center gap-2">
             {rightAction && <div>{rightAction}</div>}
+            {/* Help Button */}
+            {helpKey && (
+              <button
+                onClick={() => setShowHelp(true)}
+                className="flex items-center justify-center rounded-full font-bold text-xs transition-all duration-200 active:scale-90"
+                style={{
+                  width: 36, height: 36,
+                  background: 'rgba(201,168,76,0.1)',
+                  border: '1px solid rgba(201,168,76,0.3)',
+                  color: '#c9a84c',
+                }}
+              >
+                ?
+              </button>
+            )}
             {/* Language Toggle */}
             <button
               onClick={toggleLang}
@@ -46,6 +64,7 @@ export default function Layout({ children, title, subtitle, rightAction }) {
       </main>
 
       <BottomNav />
+      {showHelp && <HelpDrawer pageKey={helpKey} onClose={() => setShowHelp(false)} />}
     </div>
   )
 }

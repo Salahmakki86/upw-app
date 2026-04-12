@@ -114,7 +114,7 @@ export default function WheelOfLife() {
   }
 
   return (
-    <Layout title={t('wheel_title')} subtitle={t('wheel_subtitle')}>
+    <Layout title={t('wheel_title')} subtitle={t('wheel_subtitle')} helpKey="wheel">
       <div className="space-y-4 pt-2">
 
         <div className="rounded-2xl flex items-center justify-center py-4"

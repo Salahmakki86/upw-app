@@ -102,7 +102,7 @@ export default function DailyWins() {
   const pastDays = last14.filter(d => d !== today && (dailyWins[d] || []).length > 0).reverse()
 
   return (
-    <Layout title={t('wins_title')} subtitle={t('wins_subtitle')}>
+    <Layout title={t('wins_title')} subtitle={t('wins_subtitle')} helpKey="wins">
       <div className="space-y-4 pt-2">
 
         {/* Stats Row */}

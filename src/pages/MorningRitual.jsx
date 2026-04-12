@@ -277,7 +277,7 @@ export default function MorningRitual() {
   }
 
   return (
-    <Layout title={t('morning_title')} subtitle={t('morning_subtitle')}>
+    <Layout title={t('morning_title')} subtitle={t('morning_subtitle')} helpKey="morning">
       <div className="space-y-4 pt-2">
         <div className="grid grid-cols-4 gap-1.5">
           {PHASES.map((ph) => {

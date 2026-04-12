@@ -3,40 +3,74 @@ import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
 
-const HABITS = [
-  { emoji: '💧', label: '3 لترات ماء (+ ليمون)' },
-  { emoji: '🥗', label: '70% غذاء غني بالماء' },
-  { emoji: '🌿', label: 'مكملات خضراء (سبيرولينا)' },
-  { emoji: '🚫', label: 'تجنب السكر والمشروبات الغازية' },
-  { emoji: '🏃', label: 'تمارين هوائية 30 دقيقة' },
-  { emoji: '💨', label: 'تمرين التنفس 1:4:2 × 3' },
-  { emoji: '🥑', label: 'دهون صحية في الوجبات' },
-  { emoji: '🚫', label: 'تجنب الأطعمة المصنعة' },
-  { emoji: '😴', label: 'نوم 7-8 ساعات' },
-  { emoji: '🙏', label: 'الامتنان صباحاً ومساءً' },
-]
+const HABITS_DATA = {
+  ar: [
+    { emoji: '💧', label: '3 لترات ماء (+ ليمون)' },
+    { emoji: '🥗', label: '70% غذاء غني بالماء' },
+    { emoji: '🌿', label: 'مكملات خضراء (سبيرولينا)' },
+    { emoji: '🚫', label: 'تجنب السكر والمشروبات الغازية' },
+    { emoji: '🏃', label: 'تمارين هوائية 30 دقيقة' },
+    { emoji: '💨', label: 'تمرين التنفس 1:4:2 × 3' },
+    { emoji: '🥑', label: 'دهون صحية في الوجبات' },
+    { emoji: '🚫', label: 'تجنب الأطعمة المصنعة' },
+    { emoji: '😴', label: 'نوم 7-8 ساعات' },
+    { emoji: '🙏', label: 'الامتنان صباحاً ومساءً' },
+  ],
+  en: [
+    { emoji: '💧', label: '3 liters of water (+ lemon)' },
+    { emoji: '🥗', label: '70% water-rich foods' },
+    { emoji: '🌿', label: 'Green supplements (spirulina)' },
+    { emoji: '🚫', label: 'Avoid sugar & soft drinks' },
+    { emoji: '🏃', label: '30-min aerobic exercise' },
+    { emoji: '💨', label: '1:4:2 breathing exercise × 3' },
+    { emoji: '🥑', label: 'Healthy fats with meals' },
+    { emoji: '🚫', label: 'Avoid processed foods' },
+    { emoji: '😴', label: '7–8 hours of sleep' },
+    { emoji: '🙏', label: 'Gratitude morning & evening' },
+  ],
+}
 
-const GIFTS = [
-  { emoji: '💨', title: 'التنفس الحيوي', color: '#3498db', desc: 'تمرين 1:4:2 يضاعف الأكسجين ويصرف السموم' },
-  { emoji: '💧', title: 'الماء الحي',     color: '#3498db', desc: '3 لترات يومياً + ليمون طازج' },
-  { emoji: '🥑', title: 'الزيوت الصحية', color: '#2ecc71', desc: 'زيتون، جوز الهند، أوميغا 3' },
-  { emoji: '🥦', title: 'القلوية',        color: '#27ae60', desc: '70% غذاء قلوي — أخضر حي' },
-  { emoji: '🏃', title: 'الحركة الهوائية',color: '#c9a84c', desc: '6 مرات أسبوعياً × 30 دقيقة' },
-  { emoji: '🌾', title: 'التغذية القصوى', color: '#e67e22', desc: 'أغذية حية وطازجة وغنية بالإنزيمات' },
-  { emoji: '🧘', title: 'الاستقامة',      color: '#9b59b6', desc: 'وضعية جسمك تؤثر مباشرة على طاقتك' },
-  { emoji: '🧠', title: 'العقل الموجّه',  color: '#c9a84c', desc: 'التأمل والامتنان يوجه طاقتك للشفاء' },
-]
+const GIFTS_DATA = {
+  ar: [
+    { emoji: '💨', title: 'التنفس الحيوي',   color: '#3498db', desc: 'تمرين 1:4:2 يضاعف الأكسجين ويصرف السموم' },
+    { emoji: '💧', title: 'الماء الحي',       color: '#3498db', desc: '3 لترات يومياً + ليمون طازج' },
+    { emoji: '🥑', title: 'الزيوت الصحية',   color: '#2ecc71', desc: 'زيتون، جوز الهند، أوميغا 3' },
+    { emoji: '🥦', title: 'القلوية',          color: '#27ae60', desc: '70% غذاء قلوي — أخضر حي' },
+    { emoji: '🏃', title: 'الحركة الهوائية', color: '#c9a84c', desc: '6 مرات أسبوعياً × 30 دقيقة' },
+    { emoji: '🌾', title: 'التغذية القصوى',  color: '#e67e22', desc: 'أغذية حية وطازجة وغنية بالإنزيمات' },
+    { emoji: '🧘', title: 'الاستقامة',        color: '#9b59b6', desc: 'وضعية جسمك تؤثر مباشرة على طاقتك' },
+    { emoji: '🧠', title: 'العقل الموجّه',    color: '#c9a84c', desc: 'التأمل والامتنان يوجه طاقتك للشفاء' },
+  ],
+  en: [
+    { emoji: '💨', title: 'Vital Breathing',  color: '#3498db', desc: '1:4:2 exercise doubles oxygen and expels toxins' },
+    { emoji: '💧', title: 'Living Water',     color: '#3498db', desc: '3 liters daily + fresh lemon' },
+    { emoji: '🥑', title: 'Healthy Oils',    color: '#2ecc71', desc: 'Olive oil, coconut oil, omega-3' },
+    { emoji: '🥦', title: 'Alkalinity',      color: '#27ae60', desc: '70% alkaline food — living greens' },
+    { emoji: '🏃', title: 'Aerobic Movement',color: '#c9a84c', desc: '6 times a week × 30 minutes' },
+    { emoji: '🌾', title: 'Peak Nutrition',  color: '#e67e22', desc: 'Living, fresh, enzyme-rich foods' },
+    { emoji: '🧘', title: 'Posture',         color: '#9b59b6', desc: 'Your body posture directly affects your energy' },
+    { emoji: '🧠', title: 'Directed Mind',   color: '#c9a84c', desc: 'Meditation & gratitude direct your energy to healing' },
+  ],
+}
 
-const POISONS = [
-  { emoji: '☠️', title: 'الدهون المصنعة',    color: '#e63946', effect: 'تسد الشرايين — تقتل الطاقة' },
-  { emoji: '☠️', title: 'اللحوم الحيوانية',  color: '#e63946', effect: '24-72 ساعة للهضم — تستنزف طاقتك' },
-  { emoji: '☠️', title: 'منتجات الألبان',    color: '#e67e22', effect: 'تنتج مخاطاً وتسبب التهابات' },
-  { emoji: '☠️', title: 'إدمان الأحماض',    color: '#e67e22', effect: 'قهوة مفرطة + سكر + غازيات = خراب' },
-]
+const POISONS_DATA = {
+  ar: [
+    { emoji: '☠️', title: 'الدهون المصنعة',   color: '#e63946', effect: 'تسد الشرايين — تقتل الطاقة' },
+    { emoji: '☠️', title: 'اللحوم الحيوانية', color: '#e63946', effect: '24-72 ساعة للهضم — تستنزف طاقتك' },
+    { emoji: '☠️', title: 'منتجات الألبان',   color: '#e67e22', effect: 'تنتج مخاطاً وتسبب التهابات' },
+    { emoji: '☠️', title: 'إدمان الأحماض',   color: '#e67e22', effect: 'قهوة مفرطة + سكر + غازيات = خراب' },
+  ],
+  en: [
+    { emoji: '☠️', title: 'Processed Fats',  color: '#e63946', effect: 'Clogs arteries — kills energy' },
+    { emoji: '☠️', title: 'Animal Meats',    color: '#e63946', effect: '24–72 hrs to digest — drains your energy' },
+    { emoji: '☠️', title: 'Dairy Products',  color: '#e67e22', effect: 'Produces mucus and causes inflammation' },
+    { emoji: '☠️', title: 'Acid Addiction',  color: '#e67e22', effect: 'Excess coffee + sugar + soft drinks = damage' },
+  ],
+}
 
-function HabitDay({ date, habitLog, onToggle, t }) {
+function HabitDay({ date, habitLog, onToggle, t, habits }) {
   const checked = habitLog || []
-  const pct = Math.round((checked.length / HABITS.length) * 100)
+  const pct = Math.round((checked.length / habits.length) * 100)
 
   return (
     <div className="space-y-2">
@@ -61,7 +95,7 @@ function HabitDay({ date, habitLog, onToggle, t }) {
         />
       </div>
       <div className="space-y-1.5">
-        {HABITS.map((h, i) => {
+        {habits.map((h, i) => {
           const done = checked.includes(i)
           return (
             <button
@@ -100,10 +134,15 @@ function HabitDay({ date, habitLog, onToggle, t }) {
 export default function EnergyChallenge() {
   const { state, toggleChallengeHabit, startChallenge, today } = useApp()
   const { lang, t } = useLang()
+  const isAr = lang === 'ar'
   const [tab, setTab] = useState('challenge')
 
   const isActive = state.challengeActive
   const todayLog = state.challengeLog[today] || []
+
+  const HABITS = HABITS_DATA[lang]
+  const GIFTS = GIFTS_DATA[lang]
+  const POISONS = POISONS_DATA[lang]
 
   const TABS = [
     { key: 'challenge', label: `🔥 ${t('energy_tab_challenge')}` },
@@ -112,7 +151,7 @@ export default function EnergyChallenge() {
   ]
 
   return (
-    <Layout title={t('energy_title')} subtitle={t('energy_subtitle')}>
+    <Layout title={t('energy_title')} subtitle={t('energy_subtitle')} helpKey="energy">
       <div className="space-y-4 pt-2">
 
         {/* Tab bar */}
@@ -134,9 +173,11 @@ export default function EnergyChallenge() {
             {!isActive ? (
               <div className="text-center py-8 space-y-4">
                 <p className="text-5xl">⚡</p>
-                <h3 className="text-xl font-black text-white">{lang === 'ar' ? 'تحدي الـ 10 أيام' : '10-Day Challenge'}</h3>
+                <h3 className="text-xl font-black text-white">
+                  {isAr ? 'تحدي الـ 10 أيام' : '10-Day Challenge'}
+                </h3>
                 <p className="text-sm leading-relaxed" style={{ color: '#888' }}>
-                  {lang === 'ar'
+                  {isAr
                     ? '10 أيام متواصلة لتطبيق مبادئ الطاقة النقية. الأيام الأولى صعبة — ثم ستشعر بطاقة لم تعرفها من قبل.'
                     : '10 consecutive days applying pure energy principles. The first days are tough — then you\'ll feel energy you\'ve never known before.'}
                 </p>
@@ -180,7 +221,7 @@ export default function EnergyChallenge() {
                   </div>
                 </div>
 
-                <HabitDay date={today} habitLog={todayLog} onToggle={toggleChallengeHabit} t={t} />
+                <HabitDay date={today} habitLog={todayLog} onToggle={toggleChallengeHabit} t={t} habits={HABITS} />
               </>
             )}
           </>
@@ -190,7 +231,7 @@ export default function EnergyChallenge() {
         {tab === 'gifts' && (
           <div className="space-y-3">
             <p className="text-xs" style={{ color: '#888' }}>
-              {lang === 'ar' ? 'الهدايا الثمانية — 8 مبادئ للطاقة النقية' : '8 Gifts — 8 Principles of Pure Energy'}
+              {isAr ? 'الهدايا الثمانية — 8 مبادئ للطاقة النقية' : '8 Gifts — 8 Principles of Pure Energy'}
             </p>
             {GIFTS.map((g, i) => (
               <div
@@ -222,7 +263,9 @@ export default function EnergyChallenge() {
         {/* Poisons tab */}
         {tab === 'poisons' && (
           <div className="space-y-3">
-            <p className="text-xs" style={{ color: '#888' }}>السموم الأربعة — تجنّبها طوال التحدي</p>
+            <p className="text-xs" style={{ color: '#888' }}>
+              {isAr ? 'السموم الأربعة — تجنّبها طوال التحدي' : 'The Four Poisons — avoid them throughout the challenge'}
+            </p>
             {POISONS.map((p, i) => (
               <div
                 key={i}
@@ -240,10 +283,13 @@ export default function EnergyChallenge() {
               className="rounded-2xl p-4"
               style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)' }}
             >
-              <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>💡 نصيحة البداية</p>
+              <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
+                💡 {isAr ? 'نصيحة البداية' : 'Starting Tip'}
+              </p>
               <p className="text-xs leading-relaxed" style={{ color: '#aaa' }}>
-                الأيام 1-3 قد تشعر بصداع وتعب — هذا طبيعي وهو تخلص من السموم.
-                بعد اليوم 4 ستشعر بفارق حقيقي في طاقتك.
+                {isAr
+                  ? 'الأيام 1-3 قد تشعر بصداع وتعب — هذا طبيعي وهو تخلص من السموم. بعد اليوم 4 ستشعر بفارق حقيقي في طاقتك.'
+                  : 'Days 1–3 you may feel headaches and fatigue — this is normal detoxification. After day 4 you will feel a real difference in your energy.'}
               </p>
             </div>
           </div>

@@ -579,7 +579,7 @@ export default function Goals() {
   }
 
   return (
-    <Layout title={t('goals_title')} subtitle={t('goals_subtitle')}>
+    <Layout title={t('goals_title')} subtitle={t('goals_subtitle')} helpKey="goals">
       <div className="space-y-4 pt-2">
 
         <div className="flex gap-2">

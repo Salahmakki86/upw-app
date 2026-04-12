@@ -85,7 +85,7 @@ export default function TimeOfLife() {
   ]
 
   return (
-    <Layout title={t('time_title')} subtitle={t('time_subtitle')}>
+    <Layout title={t('time_title')} subtitle={t('time_subtitle')} helpKey="time">
       <div className="space-y-4 pt-2">
 
         {/* 168 Hours Banner */}

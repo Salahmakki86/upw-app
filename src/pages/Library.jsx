@@ -99,7 +99,7 @@ export default function Library() {
   const CONCEPTS = CONCEPTS_DATA[lang]
 
   return (
-    <Layout title={t('library_title')} subtitle={t('library_subtitle')}>
+    <Layout title={t('library_title')} subtitle={t('library_subtitle')} helpKey="library">
       <div className="space-y-3 pt-2">
         {CONCEPTS.map((cat) => (
           <div key={cat.category} className="rounded-2xl overflow-hidden" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}>

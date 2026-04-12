@@ -142,7 +142,7 @@ export default function EnergyProtocol() {
   const nutritionItems = NUTRITION_ITEMS[lang]
 
   return (
-    <Layout title={t('protocol_title')} subtitle={t('protocol_subtitle')}>
+    <Layout title={t('protocol_title')} subtitle={t('protocol_subtitle')} helpKey="protocol">
       <div className="space-y-4 pt-2">
 
         {/* Summary Row */}

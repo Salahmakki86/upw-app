@@ -135,7 +135,7 @@ export default function EveningRitual() {
   }
 
   return (
-    <Layout title={t('evening_title')} subtitle={t('evening_subtitle')}>
+    <Layout title={t('evening_title')} subtitle={t('evening_subtitle')} helpKey="evening">
       <div className="space-y-4 pt-2">
         <div className="progress-bar-bg">
           <div className="progress-bar-fill" style={{ width: `${((qIndex + 1) / QUESTIONS.length) * 100}%` }} />

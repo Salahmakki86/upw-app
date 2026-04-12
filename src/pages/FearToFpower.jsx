@@ -223,7 +223,7 @@ export default function FearToFpower() {
   }
 
   return (
-    <Layout title={t('fear_title')} subtitle={t('fear_subtitle')}>
+    <Layout title={t('fear_title')} subtitle={t('fear_subtitle')} helpKey="fear">
       <div className="space-y-4 pt-2">
 
         {/* Hero */}

@@ -127,6 +127,7 @@ const FORCES_DATA = {
       title: 'أنظمة التسويق',
       subtitle: 'من يعرفك؟ ولماذا يختارك دون غيرك؟',
       tagline: 'X-Factor: الوحيد الذي يجمع الحدس الروحي والتحليل المالي',
+      xfactor: 'الوحيد الذي يجمع الحدس الروحي بالتحليل المالي العملي',
       channels: [
         { icon: '🔍', name: 'SEO', desc: 'مقالات طويلة عن التشافي الباطني — جذب عضوي ومجاني' },
         { icon: '📱', name: 'Social Media', desc: 'Instagram + Facebook + TikTok — محتوى يومي يُظهر التحولات' },
@@ -311,6 +312,7 @@ const FORCES_DATA = {
       title: 'Marketing Systems',
       subtitle: 'Who knows you? And why do they choose you?',
       tagline: 'X-Factor: The only one combining spiritual intuition with practical financial analysis',
+      xfactor: 'The only one combining spiritual intuition with practical financial analysis',
       channels: [
         { icon: '🔍', name: 'SEO', desc: 'Long-form articles on inner healing — free organic traffic that builds trust' },
         { icon: '📱', name: 'Social Media', desc: 'Instagram + Facebook + TikTok — daily content showing real transformations' },
@@ -797,6 +799,7 @@ export default function BusinessMastery() {
     <Layout
       title={lang === 'ar' ? '🏆 إتقان الأعمال' : '🏆 Business Mastery'}
       subtitle={lang === 'ar' ? 'نظام صلاح للنمو — 7 قوى × بياناتك الحقيقية' : 'Salah\'s Growth System — 7 Forces × Your Real Data'}
+      helpKey="business"
     >
       <div className="space-y-4 pt-2">
 

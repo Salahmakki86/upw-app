@@ -144,7 +144,7 @@ export default function ModelingExcellence() {
   const inputStyle = { background: '#111', border: '1px solid #333', color: 'white', borderRadius: 8, padding: '8px 12px', width: '100%', fontSize: 13 }
 
   return (
-    <Layout title={t('modeling_title')} subtitle={t('modeling_subtitle')}>
+    <Layout title={t('modeling_title')} subtitle={t('modeling_subtitle')} helpKey="modeling">
       <div className="space-y-4 pt-2">
 
         {/* Tabs */}

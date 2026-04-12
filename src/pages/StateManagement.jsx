@@ -331,7 +331,7 @@ export default function StateManagement() {
   ]
 
   return (
-    <Layout title={t('state_title')} subtitle={t('state_subtitle')}>
+    <Layout title={t('state_title')} subtitle={t('state_subtitle')} helpKey="state">
       <div className="space-y-4 pt-2">
 
         {/* SOS Big Button */}

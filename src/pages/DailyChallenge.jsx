@@ -130,7 +130,7 @@ export default function DailyChallenge() {
   }, [completed])
 
   return (
-    <Layout title={t('challenge_title')} subtitle={t('challenge_subtitle')}>
+    <Layout title={t('challenge_title')} subtitle={t('challenge_subtitle')} helpKey="challenge">
       <div className="space-y-4 pt-2">
 
         {/* Stats */}

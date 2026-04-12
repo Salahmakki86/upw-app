@@ -80,7 +80,7 @@ export default function LetterToSelf() {
   }
 
   return (
-    <Layout title={t('letters_title')} subtitle={t('letters_subtitle')}>
+    <Layout title={t('letters_title')} subtitle={t('letters_subtitle')} helpKey="letters">
       <div className="space-y-4 pt-2">
 
         {/* Tony Prompts */}
