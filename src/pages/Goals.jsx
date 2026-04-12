@@ -13,25 +13,90 @@ function GoalCard({ goal, onUpdate, onDelete, t }) {
   const [expanded, setExpanded] = useState(false)
   const [editProg, setEditProg] = useState(false)
   const [prog, setProg] = useState(goal.progress || 0)
+  const [newMilestone, setNewMilestone] = useState('')
+  const [showMilestoneInput, setShowMilestoneInput] = useState(false)
+  const [showWeeklyNote, setShowWeeklyNote] = useState(false)
+  const [weeklyNote, setWeeklyNote] = useState(goal.weeklyNote || '')
+
+  const today = new Date().toISOString().split('T')[0]
+  const dailyLog = goal.dailyLog || {}
+  const milestones = goal.milestones || []
+
+  // Streak for this goal
+  let streak = 0
+  let checkDate = today
+  while (dailyLog[checkDate]) {
+    streak++
+    const d = new Date(checkDate)
+    d.setDate(d.getDate() - 1)
+    checkDate = d.toISOString().split('T')[0]
+  }
+
+  // Last 7 days
+  const last7 = []
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86400000)
+    last7.push(d.toISOString().split('T')[0])
+  }
+
+  const doneToday = !!dailyLog[today]
+
+  // Auto-progress from milestones if present
+  const autoProgress = milestones.length > 0
+    ? Math.round((milestones.filter(m => m.done).length / milestones.length) * 100)
+    : null
+  const displayProgress = autoProgress !== null ? autoProgress : (goal.progress || 0)
+
+  const toggleTodayAction = () => {
+    const newLog = { ...dailyLog }
+    if (newLog[today]) delete newLog[today]
+    else newLog[today] = true
+    onUpdate(goal.id, { dailyLog: newLog })
+  }
+
+  const addMilestone = () => {
+    if (!newMilestone.trim()) return
+    const updated = [...milestones, { id: Date.now(), text: newMilestone.trim(), done: false }]
+    onUpdate(goal.id, { milestones: updated })
+    setNewMilestone('')
+    setShowMilestoneInput(false)
+  }
+
+  const toggleMilestone = (id) => {
+    const updated = milestones.map(m => m.id === id ? { ...m, done: !m.done } : m)
+    const newProgress = Math.round((updated.filter(m => m.done).length / updated.length) * 100)
+    onUpdate(goal.id, { milestones: updated, progress: newProgress })
+  }
+
+  const deleteMilestone = (id) => {
+    const updated = milestones.filter(m => m.id !== id)
+    onUpdate(goal.id, { milestones: updated })
+  }
+
+  const saveWeeklyNote = () => {
+    onUpdate(goal.id, { weeklyNote })
+    setShowWeeklyNote(false)
+  }
 
   const saveProg = () => { onUpdate(goal.id, { progress: prog }); setEditProg(false) }
 
   return (
-    <div
-      className="rounded-2xl overflow-hidden transition-all"
-      style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}
-    >
-      {/* Card header */}
+    <div className="rounded-2xl overflow-hidden transition-all" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+      {/* Header */}
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <span
-                className="text-xs font-bold px-2 py-0.5 rounded-full"
-                style={{ background: 'rgba(201,168,76,0.15)', color: '#c9a84c' }}
-              >
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                style={{ background: 'rgba(201,168,76,0.15)', color: '#c9a84c' }}>
                 {goal.timeframe}
               </span>
+              {streak > 0 && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(255,107,53,0.15)', color: '#ff6b35' }}>
+                  🔥 {streak} يوم
+                </span>
+              )}
             </div>
             <h3 className="font-bold text-white text-sm leading-snug">{goal.result}</h3>
           </div>
@@ -45,43 +110,154 @@ function GoalCard({ goal, onUpdate, onDelete, t }) {
           </div>
         </div>
 
-        {/* Progress */}
+        {/* Progress bar */}
         <div className="mt-3">
           <div className="flex justify-between text-xs mb-1">
             <span style={{ color: '#888' }}>{t('goals_progress')}</span>
-            <button onClick={() => setEditProg(true)} style={{ color: '#c9a84c' }}>
-              {goal.progress || 0}%
-            </button>
+            {autoProgress === null ? (
+              <button onClick={() => setEditProg(true)} style={{ color: '#c9a84c' }}>{displayProgress}%</button>
+            ) : (
+              <span style={{ color: '#c9a84c' }}>{displayProgress}%</span>
+            )}
           </div>
           <div className="progress-bar-bg">
-            <div className="progress-bar-fill" style={{ width: `${goal.progress || 0}%` }} />
+            <div className="progress-bar-fill" style={{ width: `${displayProgress}%` }} />
           </div>
         </div>
 
-        {editProg && (
+        {editProg && autoProgress === null && (
           <div className="flex gap-2 mt-2 items-center">
-            <input
-              type="range" min={0} max={100} value={prog}
-              onChange={e => setProg(Number(e.target.value))}
-              className="flex-1"
-            />
+            <input type="range" min={0} max={100} value={prog}
+              onChange={e => setProg(Number(e.target.value))} className="flex-1" />
             <span className="text-xs font-bold w-8 text-center" style={{ color: '#c9a84c' }}>{prog}%</span>
-            <button onClick={saveProg} className="p-1.5 rounded-lg" style={{ background: 'rgba(46,204,113,0.2)', color: '#2ecc71' }}>
+            <button onClick={saveProg} className="p-1.5 rounded-lg"
+              style={{ background: 'rgba(46,204,113,0.2)', color: '#2ecc71' }}>
               <Check size={14} />
             </button>
           </div>
         )}
+
+        {/* 7-day activity dots */}
+        <div className="flex gap-1 mt-2.5 justify-end items-center">
+          <span className="text-xs ml-1" style={{ color: '#444' }}>آخر 7 أيام</span>
+          {last7.map(d => (
+            <div key={d} title={d} className="w-2.5 h-2.5 rounded-full"
+              style={{ background: dailyLog[d] ? '#c9a84c' : '#252525' }} />
+          ))}
+        </div>
       </div>
 
-      {/* Expanded details */}
+      {/* Expanded section */}
       {expanded && (
-        <div className="border-t px-4 pb-4 pt-3 space-y-3 animate-fade-in" style={{ borderColor: '#222' }}>
+        <div className="border-t px-4 pb-4 pt-3 space-y-4 animate-fade-in" style={{ borderColor: '#222' }}>
+
+          {/* Today's Action Check-in */}
+          {goal.todayAction && (
+            <div className="rounded-xl p-3" style={{
+              background: doneToday ? 'rgba(46,204,113,0.07)' : 'rgba(201,168,76,0.07)',
+              border: `1px solid ${doneToday ? 'rgba(46,204,113,0.2)' : 'rgba(201,168,76,0.2)'}`,
+            }}>
+              <div className="flex items-start gap-3">
+                <button
+                  onClick={toggleTodayAction}
+                  className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center mt-0.5 transition-all"
+                  style={{
+                    background: doneToday ? '#2ecc71' : 'transparent',
+                    border: `2px solid ${doneToday ? '#2ecc71' : '#c9a84c'}`,
+                  }}>
+                  {doneToday && <Check size={13} color="white" />}
+                </button>
+                <div className="flex-1">
+                  <p className="text-xs font-bold mb-0.5" style={{ color: doneToday ? '#2ecc71' : '#c9a84c' }}>
+                    {doneToday ? '✓ أنجزت إجراء اليوم!' : '📍 إجراء اليوم — اضغط لتأكيد الإنجاز:'}
+                  </p>
+                  <p className="text-xs leading-relaxed" style={{
+                    color: doneToday ? '#666' : '#ddd',
+                    textDecoration: doneToday ? 'line-through' : 'none',
+                  }}>
+                    {goal.todayAction}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Milestones */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold" style={{ color: '#c9a84c' }}>
+                🏁 المحطات الرئيسية
+                {milestones.length > 0 && (
+                  <span className="mr-1 font-normal" style={{ color: '#666' }}>
+                    ({milestones.filter(m => m.done).length}/{milestones.length})
+                  </span>
+                )}
+              </p>
+              <button
+                onClick={() => setShowMilestoneInput(v => !v)}
+                className="text-xs px-2 py-0.5 rounded-lg"
+                style={{ background: 'rgba(201,168,76,0.1)', color: '#c9a84c' }}>
+                <Plus size={11} style={{ display: 'inline', marginBottom: 1 }} /> أضف محطة
+              </button>
+            </div>
+
+            {milestones.length === 0 && !showMilestoneInput && (
+              <p className="text-xs" style={{ color: '#444' }}>لم تُضف محطات بعد — المحطات تحسب تقدمك تلقائياً</p>
+            )}
+
+            <div className="space-y-1.5">
+              {milestones.map(m => (
+                <div key={m.id} className="flex items-center gap-2 group">
+                  <button
+                    onClick={() => toggleMilestone(m.id)}
+                    className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center transition-all"
+                    style={{
+                      background: m.done ? 'rgba(46,204,113,0.2)' : '#1e1e1e',
+                      border: `1px solid ${m.done ? '#2ecc71' : '#333'}`,
+                    }}>
+                    {m.done && <Check size={10} color="#2ecc71" />}
+                  </button>
+                  <p className="text-xs flex-1" style={{
+                    color: m.done ? '#555' : '#aaa',
+                    textDecoration: m.done ? 'line-through' : 'none',
+                  }}>{m.text}</p>
+                  <button onClick={() => deleteMilestone(m.id)}
+                    className="p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ color: '#444' }}>
+                    <Trash2 size={11} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {showMilestoneInput && (
+              <div className="flex gap-2 mt-2">
+                <input
+                  value={newMilestone}
+                  onChange={e => setNewMilestone(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && addMilestone()}
+                  placeholder="مثال: أنهيت الفصل الأول، وصلت 50%..."
+                  className="input-dark flex-1 text-xs py-1.5"
+                  autoFocus
+                />
+                <button onClick={addMilestone}
+                  className="p-1.5 rounded-lg flex-shrink-0"
+                  style={{ background: 'rgba(201,168,76,0.15)', color: '#c9a84c' }}>
+                  <Check size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Purpose */}
           {goal.purpose && (
             <div>
               <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>⚡ لماذا هذا ضرورة مطلقة:</p>
               <p className="text-xs leading-relaxed" style={{ color: '#bbb' }}>{goal.purpose}</p>
             </div>
           )}
+
+          {/* Actions */}
           {goal.actions && goal.actions.length > 0 && (
             <div>
               <p className="text-xs font-bold mb-2" style={{ color: '#c9a84c' }}>🎯 خطة العمل:</p>
@@ -95,15 +271,41 @@ function GoalCard({ goal, onUpdate, onDelete, t }) {
               </div>
             </div>
           )}
-          {goal.todayAction && (
-            <div
-              className="rounded-xl p-3"
-              style={{ background: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.2)' }}
-            >
-              <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>📍 الإجراء اليومي:</p>
-              <p className="text-xs" style={{ color: '#ddd' }}>{goal.todayAction}</p>
+
+          {/* Weekly note */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-xs font-bold" style={{ color: '#c9a84c' }}>📝 مراجعة أسبوعية:</p>
+              <button
+                onClick={() => { setShowWeeklyNote(v => !v); setWeeklyNote(goal.weeklyNote || '') }}
+                className="text-xs"
+                style={{ color: '#666' }}>
+                {showWeeklyNote ? 'إغلاق' : (goal.weeklyNote ? 'تعديل' : 'أضف ملاحظة')}
+              </button>
             </div>
-          )}
+            {showWeeklyNote ? (
+              <div>
+                <textarea
+                  value={weeklyNote}
+                  onChange={e => setWeeklyNote(e.target.value)}
+                  placeholder="كيف تسير الأمور مع هذا الهدف هذا الأسبوع؟&#10;ما الذي يعمل؟ ما الذي يحتاج تعديل؟"
+                  rows={3}
+                  className="input-dark resize-none text-xs w-full"
+                />
+                <button
+                  onClick={saveWeeklyNote}
+                  className="mt-2 text-xs px-3 py-1.5 rounded-lg"
+                  style={{ background: 'rgba(201,168,76,0.15)', color: '#c9a84c' }}>
+                  حفظ الملاحظة
+                </button>
+              </div>
+            ) : goal.weeklyNote ? (
+              <p className="text-xs leading-relaxed" style={{ color: '#888' }}>{goal.weeklyNote}</p>
+            ) : (
+              <p className="text-xs" style={{ color: '#444' }}>لم تتم مراجعة أسبوعية بعد</p>
+            )}
+          </div>
+
         </div>
       )}
     </div>
@@ -139,9 +341,11 @@ function AddGoalModal({ onClose, onSave, t, lang }) {
             {TF.map(tf => (
               <button key={tf} onClick={() => set('timeframe', tf)}
                 className="py-1.5 rounded-xl text-xs font-bold transition-all"
-                style={{ background: form.timeframe === tf ? 'rgba(201,168,76,0.15)' : '#111',
+                style={{
+                  background: form.timeframe === tf ? 'rgba(201,168,76,0.15)' : '#111',
                   border: `1px solid ${form.timeframe === tf ? 'rgba(201,168,76,0.4)' : '#222'}`,
-                  color: form.timeframe === tf ? '#c9a84c' : '#666' }}>
+                  color: form.timeframe === tf ? '#c9a84c' : '#666',
+                }}>
                 {tf}
               </button>
             ))}
@@ -197,7 +401,7 @@ function AddGoalModal({ onClose, onSave, t, lang }) {
         className="w-full max-w-[480px] rounded-t-3xl animate-slide-up flex flex-col"
         style={{ background: '#141414', border: '1px solid #2a2a2a', maxHeight: '88vh' }}
       >
-        {/* ── Fixed header ── */}
+        {/* Fixed header */}
         <div className="px-5 pt-4 pb-3 flex-shrink-0">
           <div className="w-10 h-1 rounded-full mx-auto mb-4" style={{ background: '#333' }} />
           <div className="flex gap-2 mb-4">
@@ -210,12 +414,12 @@ function AddGoalModal({ onClose, onSave, t, lang }) {
           <p className="text-xs" style={{ color: '#888' }}>{STEP_INFO[step].subtitle}</p>
         </div>
 
-        {/* ── Scrollable content ── */}
+        {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto px-5 py-3" style={{ WebkitOverflowScrolling: 'touch' }}>
           {renderContent()}
         </div>
 
-        {/* ── Fixed footer ── */}
+        {/* Fixed footer */}
         <div className="px-5 pt-3 pb-8 flex-shrink-0 flex gap-3" style={{ borderTop: '1px solid #222' }}>
           {step > 0 && (
             <button onClick={() => setStep(step - 1)} className="btn-dark px-5 py-3 text-sm">← {t('back')}</button>
@@ -254,7 +458,6 @@ function AnnualPlanTab({ lang, t }) {
         <p className="text-xs mt-1" style={{ color: '#888' }}>{lang === 'ar' ? 'خطة السنة' : 'Annual Plan'}</p>
       </div>
 
-      {/* Year Vision */}
       <div className="card">
         <p className="text-sm font-bold text-white mb-2">🌟 {lang === 'ar' ? 'رؤية السنة' : 'Year Vision'}</p>
         <textarea
@@ -266,7 +469,6 @@ function AnnualPlanTab({ lang, t }) {
         />
       </div>
 
-      {/* 3 Themes */}
       <div className="card">
         <p className="text-sm font-bold text-white mb-2">🎯 {lang === 'ar' ? 'ثلاثة موضوعات للسنة' : '3 Themes for the Year'}</p>
         <p className="text-xs mb-3" style={{ color: '#888' }}>{lang === 'ar' ? 'مثال: صحة، مال، علاقات' : 'e.g., Health, Money, Relationships'}</p>
@@ -281,7 +483,6 @@ function AnnualPlanTab({ lang, t }) {
         ))}
       </div>
 
-      {/* Quarterly Goals */}
       <div className="card">
         <p className="text-sm font-bold text-white mb-3">📅 {lang === 'ar' ? 'أهداف ربع سنوية' : 'Quarterly Goals'}</p>
         {['q1', 'q2', 'q3', 'q4'].map((q, i) => (
@@ -300,7 +501,6 @@ function AnnualPlanTab({ lang, t }) {
         ))}
       </div>
 
-      {/* Word of the Year */}
       <div className="card">
         <p className="text-sm font-bold text-white mb-2">✨ {lang === 'ar' ? 'كلمة السنة' : 'Word of the Year'}</p>
         <input
@@ -314,7 +514,6 @@ function AnnualPlanTab({ lang, t }) {
         )}
       </div>
 
-      {/* 3 Challenges */}
       <div className="card">
         <p className="text-sm font-bold text-white mb-2">💪 {lang === 'ar' ? 'ثلاثة تحديات للتغلب عليها' : '3 Challenges to Overcome'}</p>
         {[0, 1, 2].map(i => (
