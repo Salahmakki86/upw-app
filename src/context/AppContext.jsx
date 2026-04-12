@@ -100,6 +100,11 @@ const INITIAL_STATE = {
     monthlyPassive: 0,
     monthlyExpenses: 5000,
     levelNotes: {},
+    buckets: {
+      security: { target: 60, current: 0, items: ['صناديق المؤشرات', 'سندات', 'حساب توفير', 'تأمين'] },
+      growth:   { target: 30, current: 0, items: ['أسهم نمو', 'عقارات', 'أسهم توزيعات', 'صناديق ETF'] },
+      dream:    { target: 10, current: 0, items: ['عملات رقمية', 'شركات ناشئة', 'مشاريع مضاربة'] },
+    },
   },
 
   // Personal Power 30-day
@@ -134,6 +139,33 @@ const INITIAL_STATE = {
   // Magic Questions answers
   magicQuestions: {},
 
+  // 6 Human Needs
+  sixNeedsScores: { certainty: 5, variety: 5, significance: 5, love: 5, growth: 5, contribution: 5 },
+  sixNeedsSources: {},
+  sixNeedsVehicle: '',
+
+  // NAC Sessions
+  nacSessions: [],
+
+  // Compelling Future
+  compellingFuture: { '1yr': {}, '3yr': {}, '5yr': {}, '10yr': {} },
+
+  // Values Hierarchy
+  valuesHierarchy: { selected: [], ranked: [], rules: {}, classification: {} },
+
+  // Three Decisions (keyed by date)
+  threeDecisions: {},
+
+  // Emotional Flooding log
+  floodingLog: [],
+
+  // CANI log (keyed by date)
+  caniLog: {},
+
+  // Incantation practice streak
+  incantationStreak: 0,
+  lastIncantationDate: null,
+
   // Daily Wins
   dailyWins: {},  // { 'YYYY-MM-DD': [{ id, text, category, emoji, ts }] }
 
@@ -158,6 +190,7 @@ const INITIAL_STATE = {
       { person: '', action: '', done: false },
     ],
     needsAnswers: {},
+    blueprints: {},
   },
 
   // Energy Protocol

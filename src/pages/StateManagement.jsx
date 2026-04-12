@@ -179,6 +179,91 @@ const TRANSFORMER_DATA = {
   ]
 }
 
+// ── Emotional Flooding data ──────────────────────────────────────────────────
+const FLOODING_EMOTIONS = [
+  {
+    emoji: '🌟', key: 'gratitude',
+    ar: 'امتنان', en: 'Gratitude',
+    color: '#c9a84c',
+    visualAr: 'أغمض عينيك. تخيّل لحظة شعرت فيها بامتنان عميق — شخص أحببته، نعمة حصلت عليها، لحظة لمستك. اشعر بالدفء ينتشر في صدرك. تنفس بعمق وأغرق نفسك في هذا الامتنان.',
+    visualEn: 'Close your eyes. Recall a moment of deep gratitude — someone you love, a blessing you received, a moment that touched you. Feel the warmth spreading through your chest. Breathe deeply and flood yourself with this gratitude.',
+  },
+  {
+    emoji: '💪', key: 'confidence',
+    ar: 'ثقة', en: 'Confidence',
+    color: '#3498db',
+    visualAr: 'تخيّل نفسك في أقوى لحظاتك — حين نجحت، حين تجاوزت تحدياً، حين كنت في قمتك. اشعر بالقوة تملأ جسدك من أخمص قدميك حتى رأسك. أنت قادر. أنت واثق.',
+    visualEn: 'Picture yourself at your strongest — a time you succeeded, overcame a challenge, stood at your peak. Feel that power filling your body from your feet to the top of your head. You are capable. You are confident.',
+  },
+  {
+    emoji: '😄', key: 'joy',
+    ar: 'سعادة', en: 'Joy',
+    color: '#f39c12',
+    visualAr: 'استحضر أسعد لحظة في حياتك — ابتسامة طفل، نجاح، لقاء عزيز. اشعر بالفرح يتدفق في كل خلية. اسمح لنفسك بالابتسامة الكاملة الآن.',
+    visualEn: 'Bring to mind your happiest moment — a child\'s smile, a success, a reunion. Feel that joy flowing through every cell. Allow yourself a full, genuine smile right now.',
+  },
+  {
+    emoji: '❤️', key: 'love',
+    ar: 'حب', en: 'Love',
+    color: '#e63946',
+    visualAr: 'فكر في من تحبهم أكثر من أي شيء. اشعر بالحب الصادق يملأ قلبك. أرسل هذا الحب إليهم في أفكارك. الحب هو أقوى قوة في الكون.',
+    visualEn: 'Think of those you love most deeply. Feel genuine love filling your heart. Send that love to them in your thoughts. Love is the most powerful force in the universe.',
+  },
+  {
+    emoji: '🔥', key: 'energy',
+    ar: 'طاقة', en: 'Energy',
+    color: '#e67e22',
+    visualAr: 'تخيّل نيراناً داخلية تشتعل في مركز جسدك. كل نفس يضيف وقوداً. طاقتك لا حدود لها. أنت قوة متحركة لا يوقفها شيء.',
+    visualEn: 'Imagine an inner fire blazing in the center of your body. Each breath adds fuel. Your energy has no limits. You are unstoppable momentum.',
+  },
+  {
+    emoji: '🧘', key: 'peace',
+    ar: 'سلام', en: 'Peace',
+    color: '#2ecc71',
+    visualAr: 'تخيّل نفسك في مكان هادئ تماماً — بجوار البحر، في الطبيعة، في مكان آمن. كل نفس يُخرج التوتر. جسدك يسترخي تماماً. أنت بأمان. كل شيء على ما يرام.',
+    visualEn: 'Picture yourself in complete stillness — by the ocean, in nature, in a safe place. Each breath releases tension. Your body fully relaxes. You are safe. Everything is well.',
+  },
+]
+
+function getTodayStr() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function FloodingTimer({ onDone, lang }) {
+  const [seconds, setSeconds] = useState(60)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    ref.current = setInterval(() => {
+      setSeconds(s => {
+        if (s <= 1) { clearInterval(ref.current); onDone(); return 0 }
+        return s - 1
+      })
+    }, 1000)
+    return () => clearInterval(ref.current)
+  }, [])
+
+  const elapsed = 60 - seconds
+  const pct = (elapsed / 60) * 100
+
+  return (
+    <div className="flex flex-col items-center py-4 space-y-3">
+      <div className="relative w-32 h-32 rounded-full flex items-center justify-center"
+        style={{ background: `conic-gradient(#9b59b6 ${pct * 3.6}deg, #1a1a1a 0)` }}>
+        <div className="w-24 h-24 rounded-full flex flex-col items-center justify-center" style={{ background: '#090909' }}>
+          <span className="text-3xl font-black" style={{ color: '#9b59b6' }}>{seconds}</span>
+          <span className="text-xs mt-0.5" style={{ color: '#888' }}>{lang === 'ar' ? 'ثانية' : 'sec'}</span>
+        </div>
+      </div>
+      <div className="progress-bar-bg w-full">
+        <div className="h-1.5 rounded-full transition-all duration-1000"
+          style={{ width: `${pct}%`, background: '#9b59b6' }} />
+      </div>
+    </div>
+  )
+}
+
 function SOSTimer({ onDone, lang }) {
   const [seconds, setSeconds] = useState(60)
   const ref = useRef(null)
@@ -282,9 +367,240 @@ function BreathGuide({ lang, t }) {
   )
 }
 
+// ── Three Decisions component ─────────────────────────────────────────────────
+function ThreeDecisions({ state, update, lang }) {
+  const isAr = lang === 'ar'
+  const [d1, setD1] = useState('')
+  const [d2, setD2] = useState('')
+  const [d3, setD3] = useState('')
+  const [saved, setSaved] = useState(false)
+
+  const today = getTodayStr()
+  const lastSaved = state.threeDecisions ? Object.values(state.threeDecisions).pop() : null
+
+  const handleApply = () => {
+    if (!d1.trim() && !d2.trim() && !d3.trim()) return
+    const existing = state.threeDecisions || {}
+    const newDecisions = {
+      ...existing,
+      [today]: { focus: d1, meaning: d2, action: d3, date: today }
+    }
+    update('threeDecisions', newDecisions)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 3000)
+  }
+
+  const QUESTIONS = isAr
+    ? [
+        { label: 'ما الذي أركز عليه الآن؟', value: d1, set: setD1 },
+        { label: 'ماذا يعني هذا؟', value: d2, set: setD2 },
+        { label: 'ماذا سأفعل الآن؟', value: d3, set: setD3 },
+      ]
+    : [
+        { label: 'What am I focusing on right now?', value: d1, set: setD1 },
+        { label: 'What does this mean?', value: d2, set: setD2 },
+        { label: 'What am I going to do now?', value: d3, set: setD3 },
+      ]
+
+  return (
+    <div className="rounded-2xl p-4" style={{ background: '#111', border: '1px solid #1e1e1e' }}>
+      <h3 className="font-bold text-white mb-1">⚡ {isAr ? 'قرارات القدر الثلاث' : 'The 3 Decisions That Shape Destiny'}</h3>
+      <p className="text-xs mb-4" style={{ color: '#888' }}>
+        {isAr
+          ? 'في كل لحظة تتخذ 3 قرارات غير واعية — اجعلها واعية الآن'
+          : 'In every moment you make 3 unconscious decisions — make them conscious right now'}
+      </p>
+      <div className="space-y-3">
+        {QUESTIONS.map((q, i) => (
+          <div key={i}>
+            <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
+              {i + 1}. {q.label}
+            </p>
+            <input
+              value={q.value}
+              onChange={e => q.set(e.target.value)}
+              placeholder={isAr ? 'اكتب هنا...' : 'Write here...'}
+              className="input-dark w-full text-sm py-2"
+            />
+          </div>
+        ))}
+      </div>
+      <button
+        onClick={handleApply}
+        disabled={!d1.trim() && !d2.trim() && !d3.trim()}
+        className="w-full py-3 rounded-2xl font-bold text-sm mt-4 transition-all active:scale-95 disabled:opacity-40"
+        style={{ background: 'linear-gradient(135deg, #c9a84c, #a07a30)', color: '#000' }}>
+        {saved
+          ? (isAr ? '✓ تم الحفظ!' : '✓ Saved!')
+          : (isAr ? 'تطبيق' : 'Apply')}
+      </button>
+
+      {/* Last saved decisions */}
+      {lastSaved && (
+        <div className="mt-4 rounded-2xl p-3 space-y-2"
+          style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.15)' }}>
+          <p className="text-xs font-bold" style={{ color: 'rgba(201,168,76,0.6)' }}>
+            {isAr ? `آخر قرارات — ${lastSaved.date}` : `Last decisions — ${lastSaved.date}`}
+          </p>
+          {lastSaved.focus && (
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <span style={{ color: 'rgba(201,168,76,0.5)' }}>1. </span>{lastSaved.focus}
+            </p>
+          )}
+          {lastSaved.meaning && (
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <span style={{ color: 'rgba(201,168,76,0.5)' }}>2. </span>{lastSaved.meaning}
+            </p>
+          )}
+          {lastSaved.action && (
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              <span style={{ color: 'rgba(201,168,76,0.5)' }}>3. </span>{lastSaved.action}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Emotional Flooding component ──────────────────────────────────────────────
+function EmotionalFlooding({ state, update, lang }) {
+  const isAr = lang === 'ar'
+  const [activeEmotion, setActiveEmotion] = useState(null)
+  const [phase, setPhase] = useState('idle') // idle | visualizing | timer | rating
+  const [timerDone, setTimerDone] = useState(false)
+
+  const selectEmotion = (em) => {
+    setActiveEmotion(em)
+    setPhase('visualizing')
+    setTimerDone(false)
+  }
+
+  const startTimer = () => setPhase('timer')
+
+  const handleTimerDone = () => {
+    setTimerDone(true)
+    setPhase('rating')
+  }
+
+  const saveRating = (rating) => {
+    const existing = state.floodingLog || []
+    const newLog = [
+      ...existing,
+      { date: getTodayStr(), emotion: activeEmotion.key, rating }
+    ]
+    update('floodingLog', newLog)
+    setPhase('idle')
+    setActiveEmotion(null)
+  }
+
+  const resetFlooding = () => {
+    setPhase('idle')
+    setActiveEmotion(null)
+    setTimerDone(false)
+  }
+
+  return (
+    <div className="rounded-2xl p-4" style={{ background: '#111', border: '1px solid #1e1e1e' }}>
+      <h3 className="font-bold text-white mb-1">🌊 {isAr ? 'الإغراق العاطفي' : 'Emotional Flooding'}</h3>
+      <p className="text-xs mb-4" style={{ color: '#888' }}>
+        {isAr
+          ? 'تقنية التحكم الفوري في مشاعرك — تخيّل ذكرى تملؤك بمشاعر معينة وأغرق جهازك العصبي بها'
+          : 'An immediate emotion control technique — recall a memory that floods you with a specific feeling'}
+      </p>
+
+      {/* Emotion grid */}
+      {phase === 'idle' && (
+        <div className="grid grid-cols-3 gap-2">
+          {FLOODING_EMOTIONS.map(em => (
+            <button
+              key={em.key}
+              onClick={() => selectEmotion(em)}
+              className="py-3 rounded-2xl flex flex-col items-center gap-1 transition-all active:scale-95"
+              style={{ background: `${em.color}12`, border: `1px solid ${em.color}33`, color: em.color }}>
+              <span className="text-2xl">{em.emoji}</span>
+              <span className="text-xs font-bold">{isAr ? em.ar : em.en}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Visualization phase */}
+      {phase === 'visualizing' && activeEmotion && (
+        <div className="space-y-4 animate-fade-in">
+          <div className="flex items-center gap-3 mb-2">
+            <button onClick={resetFlooding} className="text-xs" style={{ color: '#555' }}>← {isAr ? 'رجوع' : 'Back'}</button>
+            <div className="flex items-center gap-2 flex-1">
+              <span className="text-2xl">{activeEmotion.emoji}</span>
+              <span className="font-bold text-white">{isAr ? activeEmotion.ar : activeEmotion.en}</span>
+            </div>
+          </div>
+          <div className="rounded-2xl p-4"
+            style={{ background: `${activeEmotion.color}10`, border: `1px solid ${activeEmotion.color}30` }}>
+            <p className="text-sm text-white leading-relaxed">
+              {isAr ? activeEmotion.visualAr : activeEmotion.visualEn}
+            </p>
+          </div>
+          <button
+            onClick={startTimer}
+            className="w-full py-3 rounded-2xl font-bold text-sm transition-all active:scale-95"
+            style={{ background: `${activeEmotion.color}20`, border: `1px solid ${activeEmotion.color}50`, color: activeEmotion.color }}>
+            {isAr ? 'ابدأ الإغراق — 60 ثانية' : 'Start Flooding — 60 seconds'}
+          </button>
+        </div>
+      )}
+
+      {/* Timer phase */}
+      {phase === 'timer' && activeEmotion && (
+        <div className="animate-fade-in">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-xl">{activeEmotion.emoji}</span>
+            <p className="text-sm font-bold" style={{ color: activeEmotion.color }}>
+              {isAr ? `أغرق نفسك في: ${activeEmotion.ar}` : `Flood yourself with: ${activeEmotion.en}`}
+            </p>
+          </div>
+          <div className="rounded-2xl p-3 mb-3"
+            style={{ background: `${activeEmotion.color}10`, border: `1px solid ${activeEmotion.color}25` }}>
+            <p className="text-xs" style={{ color: activeEmotion.color }}>
+              {isAr ? activeEmotion.visualAr : activeEmotion.visualEn}
+            </p>
+          </div>
+          <FloodingTimer onDone={handleTimerDone} lang={lang} />
+        </div>
+      )}
+
+      {/* Rating phase */}
+      {phase === 'rating' && (
+        <div className="space-y-4 animate-scale-in">
+          <p className="text-sm font-bold text-white text-center">
+            {isAr ? 'كيف تشعر الآن؟' : 'How do you feel now?'}
+          </p>
+          <div className="flex gap-3 justify-center">
+            {[
+              { emoji: '😔', label: isAr ? 'أسوأ' : 'Worse',  val: 'worse',  c: '#e63946' },
+              { emoji: '😐', label: isAr ? 'نفس'  : 'Same',   val: 'same',   c: '#888' },
+              { emoji: '😊', label: isAr ? 'أفضل' : 'Better', val: 'better', c: '#2ecc71' },
+            ].map(opt => (
+              <button
+                key={opt.val}
+                onClick={() => saveRating(opt.val)}
+                className="flex-1 py-3 rounded-2xl flex flex-col items-center gap-1 transition-all active:scale-95"
+                style={{ background: `${opt.c}15`, border: `1px solid ${opt.c}40`, color: opt.c }}>
+                <span className="text-2xl">{opt.emoji}</span>
+                <span className="text-xs font-bold">{opt.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function StateManagement() {
-  const { state, logState, updateMagicQuestions } = useApp()
+  const { state, update, logState, updateMagicQuestions } = useApp()
   const { lang, t } = useLang()
+  const isAr = lang === 'ar'
   const [mode, setMode] = useState('home')
   const [triadTab, setTriadTab] = useState('physiology')
   const [randomInterrupt, setRandomInterrupt] = useState(null)
@@ -412,6 +728,9 @@ export default function StateManagement() {
           )}
         </div>
 
+        {/* Three Decisions */}
+        <ThreeDecisions state={state} update={update} lang={lang} />
+
         {/* Language Transformer */}
         <div className="rounded-2xl p-4" style={{ background: '#111', border: '1px solid #1e1e1e' }}>
           <h3 className="font-bold text-white mb-1">🔄 {t('state_transformer')}</h3>
@@ -496,6 +815,10 @@ export default function StateManagement() {
             </div>
           ))}
         </div>
+
+        {/* Emotional Flooding */}
+        <EmotionalFlooding state={state} update={update} lang={lang} />
+
       </div>
     </Layout>
   )

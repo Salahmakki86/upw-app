@@ -23,16 +23,18 @@ export function isFeatureUnlocked(path, tier) {
     '/morning': 1, '/state': 1, '/evening': 1, '/habits': 1, '/gratitude': 1,
     '/today': 1, '/wins': 1,
     // Tier 2 — After 3 days
-    '/goals': 2, '/wheel': 2, '/sleep': 2, '/beliefs': 2,
+    '/goals': 2, '/wheel': 2, '/sleep': 2, '/beliefs': 2, '/incantations': 2,
     // Tier 3 — After 7 days
     '/insights': 3, '/baseline': 3, '/destiny': 3, '/commitment': 3,
     '/vision': 3, '/reading': 3, '/fear': 3,
     '/biz-scorecard': 3, '/power-hour': 3, '/decisions': 3, '/network': 3,
     '/pipeline': 3, '/biz-dashboard': 3, '/avatar': 3, '/content': 3,
+    '/six-needs': 3, '/nac': 3, '/compelling-future': 3, '/values': 3,
     // Tier 4 — After 21 days
     '/freedom': 4, '/power30': 4, '/time': 4, '/modeling': 4,
     '/relationships': 4, '/protocol': 4, '/letters': 4, '/library': 4,
     '/group-challenge': 4, '/sprint90': 4, '/skills': 4,
+    '/transformation': 4,
   }
 
   const requiredTier = TIER_MAP[path]

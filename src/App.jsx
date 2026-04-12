@@ -58,6 +58,12 @@ import SalesPipeline from './pages/SalesPipeline'
 import BizDashboard from './pages/BizDashboard'
 import CustomerAvatar from './pages/CustomerAvatar'
 import ContentTracker from './pages/ContentTracker'
+import SixHumanNeeds      from './pages/SixHumanNeeds'
+import NACProcess         from './pages/NACProcess'
+import CompellingFuture   from './pages/CompellingFuture'
+import ValuesHierarchy    from './pages/ValuesHierarchy'
+import Incantations       from './pages/Incantations'
+import TransformationDashboard from './pages/TransformationDashboard'
 import ErrorBoundary from './components/ErrorBoundary'
 
 function AppRoutes() {
@@ -136,6 +142,12 @@ function AppRoutes() {
             <Route path="/biz-dashboard"   element={<BizDashboard />}      />
             <Route path="/avatar"          element={<CustomerAvatar />}    />
             <Route path="/content"         element={<ContentTracker />}    />
+            <Route path="/six-needs"          element={<SixHumanNeeds />}          />
+            <Route path="/nac"                element={<NACProcess />}             />
+            <Route path="/compelling-future"  element={<CompellingFuture />}       />
+            <Route path="/values"             element={<ValuesHierarchy />}         />
+            <Route path="/incantations"       element={<Incantations />}           />
+            <Route path="/transformation"     element={<TransformationDashboard />} />
             <Route
               path="/weekly-report"
               element={currentUser.role === 'admin' ? <WeeklyReportPage /> : <Navigate to="/" />}

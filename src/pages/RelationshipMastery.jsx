@@ -27,6 +27,60 @@ const HUMAN_NEEDS = {
   en: ['Certainty', 'Variety', 'Significance', 'Love', 'Growth', 'Contribution'],
 }
 
+const BLUEPRINT_PEOPLE = {
+  ar: [
+    { key: 'partner',   label: 'الشريك',       emoji: '❤️' },
+    { key: 'parent',    label: 'أحد الوالدين',  emoji: '🧡' },
+    { key: 'friend',    label: 'صديق',          emoji: '👫' },
+    { key: 'colleague', label: 'زميل',           emoji: '💼' },
+    { key: 'self',      label: 'نفسي',           emoji: '🌟' },
+  ],
+  en: [
+    { key: 'partner',   label: 'Partner',    emoji: '❤️' },
+    { key: 'parent',    label: 'Parent',     emoji: '🧡' },
+    { key: 'friend',    label: 'Friend',     emoji: '👫' },
+    { key: 'colleague', label: 'Colleague',  emoji: '💼' },
+    { key: 'self',      label: 'Self',       emoji: '🌟' },
+  ],
+}
+
+const LOVE_LANGUAGES = {
+  ar: [
+    { key: 'touch',   label: 'اللمس الجسدي',       emoji: '🤝' },
+    { key: 'time',    label: 'الوقت المشترك',       emoji: '⏳' },
+    { key: 'words',   label: 'كلمات التأكيد',       emoji: '💬' },
+    { key: 'service', label: 'أعمال الخدمة',        emoji: '🛠️' },
+    { key: 'gifts',   label: 'الهدايا',             emoji: '🎁' },
+  ],
+  en: [
+    { key: 'touch',   label: 'Physical Touch',      emoji: '🤝' },
+    { key: 'time',    label: 'Quality Time',         emoji: '⏳' },
+    { key: 'words',   label: 'Words of Affirmation', emoji: '💬' },
+    { key: 'service', label: 'Acts of Service',      emoji: '🛠️' },
+    { key: 'gifts',   label: 'Gifts',                emoji: '🎁' },
+  ],
+}
+
+const BLUEPRINT_EMOTIONS = {
+  ar: [
+    { key: 'happy',     label: 'سعيد',    emoji: '😊' },
+    { key: 'respected', label: 'محترم',   emoji: '🫡' },
+    { key: 'loved',     label: 'محبوب',   emoji: '❤️' },
+  ],
+  en: [
+    { key: 'happy',     label: 'Happy',     emoji: '😊' },
+    { key: 'respected', label: 'Respected', emoji: '🫡' },
+    { key: 'loved',     label: 'Loved',     emoji: '❤️' },
+  ],
+}
+
+const EMPTY_BLUEPRINT = {
+  loveLangs: [],
+  myRules: { happy: '', respected: '', loved: '' },
+  theirRules: { happy: '', respected: '', loved: '' },
+  gapAction: '',
+}
+
 export default function RelationshipMastery() {
   const { state, updateRelationships } = useApp()
   const { lang, t } = useLang()
@@ -46,13 +100,19 @@ export default function RelationshipMastery() {
     needsAnswers: {},
   }
 
-  const ratings = relationships.ratings || {}
-  const givingPlan = relationships.givingPlan || []
-  const needsAnswers = relationships.needsAnswers || {}
+  const ratings      = relationships.ratings      || {}
+  const givingPlan   = relationships.givingPlan   || []
+  const needsAnswers = relationships.needsAnswers  || {}
+  const blueprints   = relationships.blueprints   || {}
+
+  // Blueprint local state
+  const blueprintPeople = BLUEPRINT_PEOPLE[lang]
+  const [selectedPerson, setSelectedPerson] = useState(blueprintPeople[0].key)
+  const currentBp = blueprints[selectedPerson] || { ...EMPTY_BLUEPRINT }
 
   const tabs = isAr
-    ? ['تشخيص العلاقات', 'الاحتياجات', 'خطة العطاء']
-    : ['Diagnosis', 'Needs', 'Giving Plan']
+    ? ['تشخيص العلاقات', 'الاحتياجات', 'خطة العطاء', 'المخطط / Blueprint']
+    : ['Diagnosis', 'Needs', 'Giving Plan', 'Blueprint']
 
   const handleRating = (key, val) => {
     updateRelationships('ratings', { ...ratings, [key]: val })
@@ -66,6 +126,40 @@ export default function RelationshipMastery() {
   const handleNeedsAnswer = (key, val) => {
     updateRelationships('needsAnswers', { ...needsAnswers, [key]: val })
   }
+
+  // Blueprint helpers
+  const updateBp = (patch) => {
+    const updated = { ...blueprints, [selectedPerson]: { ...currentBp, ...patch } }
+    updateRelationships('blueprints', updated)
+  }
+
+  const toggleLoveLang = (key) => {
+    const langs = currentBp.loveLangs || []
+    const next = langs.includes(key) ? langs.filter(k => k !== key) : [...langs, key]
+    updateBp({ loveLangs: next })
+  }
+
+  const updateMyRule = (emotion, val) => {
+    updateBp({ myRules: { ...(currentBp.myRules || {}), [emotion]: val } })
+  }
+
+  const updateTheirRule = (emotion, val) => {
+    updateBp({ theirRules: { ...(currentBp.theirRules || {}), [emotion]: val } })
+  }
+
+  const saveBlueprintSection = () => {
+    // Already saving on each change; this just provides a visual save trigger
+    updateRelationships('blueprints', { ...blueprints, [selectedPerson]: currentBp })
+  }
+
+  const filledCount = Object.keys(blueprints).filter(k => {
+    const bp = blueprints[k]
+    return bp && (
+      (bp.loveLangs && bp.loveLangs.length > 0) ||
+      (bp.myRules && Object.values(bp.myRules).some(v => v)) ||
+      (bp.gapAction && bp.gapAction.trim())
+    )
+  }).length
 
   const relTypes = RELATIONSHIP_TYPES[lang]
   const lowestKey = Object.entries(ratings).sort((a, b) => a[1] - b[1])[0]?.[0]
@@ -87,7 +181,11 @@ export default function RelationshipMastery() {
           {tabs.map((tab_label, i) => (
             <button key={i} onClick={() => setTab(i)}
               className="flex-1 py-2.5 text-xs font-bold transition-all"
-              style={{ background: tab === i ? 'rgba(233,30,140,0.12)' : 'transparent', color: tab === i ? '#e91e8c' : '#666', borderRight: i < 2 ? '1px solid #2a2a2a' : 'none' }}>
+              style={{
+                background: tab === i ? 'rgba(233,30,140,0.12)' : 'transparent',
+                color: tab === i ? '#e91e8c' : '#666',
+                borderRight: i < tabs.length - 1 ? '1px solid #2a2a2a' : 'none',
+              }}>
               {tab_label}
             </button>
           ))}
@@ -224,6 +322,188 @@ export default function RelationshipMastery() {
                 </span>
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Tab 3: Blueprint */}
+        {tab === 3 && (
+          <div className="space-y-4">
+
+            {/* Intro */}
+            <div className="rounded-2xl p-4" style={{ background: 'linear-gradient(135deg, #0d1a2e, #1a1a1a)', border: '1px solid rgba(52,152,219,0.25)' }}>
+              <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: '#3498db' }}>
+                🗺️ {isAr ? 'مخطط العلاقة' : 'Relationship Blueprint'}
+              </p>
+              <p className="text-xs leading-relaxed" style={{ color: '#888' }}>
+                {isAr
+                  ? 'لكل شخص "مخطط" — قواعد داخلية لمتى يشعر بالحب والاحترام والسعادة. التعارض بين المخططات = الألم.'
+                  : 'Every person has a "blueprint" — internal rules for when they feel loved, respected, and happy. Mismatched blueprints = pain.'}
+              </p>
+            </div>
+
+            {/* Person Selector */}
+            <div>
+              <p className="text-xs font-bold mb-2" style={{ color: '#888' }}>
+                {isAr ? 'اختر العلاقة:' : 'Select relationship:'}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {blueprintPeople.map(person => (
+                  <button
+                    key={person.key}
+                    onClick={() => setSelectedPerson(person.key)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all"
+                    style={{
+                      background: selectedPerson === person.key ? 'rgba(52,152,219,0.2)' : '#1a1a1a',
+                      border: `1px solid ${selectedPerson === person.key ? '#3498db' : '#2a2a2a'}`,
+                      color: selectedPerson === person.key ? '#3498db' : '#666',
+                    }}>
+                    <span>{person.emoji}</span>
+                    <span>{person.label}</span>
+                    {blueprints[person.key] && (
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#2ecc71', display: 'inline-block' }} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Section 1: Love Languages */}
+            <div className="rounded-2xl p-4" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+              <p className="font-bold text-white text-sm mb-1">
+                {isAr ? '💝 متى تشعر أن هذا الشخص يحبك؟' : '💝 When do you feel this person loves you?'}
+              </p>
+              <p className="text-xs mb-3" style={{ color: '#666' }}>
+                {isAr ? 'اختر كل ما ينطبق (اختيار متعدد)' : 'Select all that apply (multi-select)'}
+              </p>
+              <div className="space-y-2">
+                {LOVE_LANGUAGES[lang].map(ll => {
+                  const selected = (currentBp.loveLangs || []).includes(ll.key)
+                  return (
+                    <button
+                      key={ll.key}
+                      onClick={() => toggleLoveLang(ll.key)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all"
+                      style={{
+                        background: selected ? 'rgba(233,30,140,0.1)' : '#111',
+                        border: `1px solid ${selected ? 'rgba(233,30,140,0.4)' : '#2a2a2a'}`,
+                        color: selected ? '#e91e8c' : '#888',
+                        textAlign: isAr ? 'right' : 'left',
+                      }}>
+                      <span className="text-base flex-shrink-0">{ll.emoji}</span>
+                      <span className="flex-1 font-medium">{ll.label}</span>
+                      {selected && <span className="text-xs font-black">✓</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Section 2: My Rules */}
+            <div className="rounded-2xl p-4" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+              <p className="font-bold text-white text-sm mb-1">
+                {isAr ? '📋 قواعدك: ما الذي يجب أن يحدث لتشعر بالرضا؟' : '📋 Your rules: what must happen for you to feel satisfied?'}
+              </p>
+              <p className="text-xs mb-3" style={{ color: '#666' }}>
+                {isAr ? 'أكمل الجملة: "أشعر بـ... عندما..."' : 'Complete the sentence: "I feel... when..."'}
+              </p>
+              <div className="space-y-3">
+                {BLUEPRINT_EMOTIONS[lang].map(em => (
+                  <div key={em.key}>
+                    <p className="text-xs font-bold mb-1.5" style={{ color: '#c9a84c' }}>
+                      {em.emoji} {isAr ? `أشعر أنني ${em.label} عندما:` : `I feel ${em.label} when:`}
+                    </p>
+                    <textarea
+                      value={(currentBp.myRules || {})[em.key] || ''}
+                      onChange={e => updateMyRule(em.key, e.target.value)}
+                      placeholder={isAr ? 'اكتب قاعدتك هنا...' : 'Write your rule here...'}
+                      rows={2}
+                      style={{ background: '#111', border: '1px solid #333', color: 'white', borderRadius: 8, padding: '8px 12px', width: '100%', fontSize: 12, resize: 'none' }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Section 3: Their Blueprint */}
+            <div className="rounded-2xl p-4" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+              <p className="font-bold text-white text-sm mb-1">
+                {isAr ? '🔍 ما قواعد هذا الشخص كما تفهمها؟' : "🔍 What are this person's rules as you understand them?"}
+              </p>
+              <p className="text-xs mb-3" style={{ color: '#666' }}>
+                {isAr ? 'ما الذي يجعلهم يشعرون بهذه المشاعر؟' : 'What makes them feel these emotions?'}
+              </p>
+              <div className="space-y-3">
+                {BLUEPRINT_EMOTIONS[lang].map(em => (
+                  <div key={em.key}>
+                    <p className="text-xs font-bold mb-1.5" style={{ color: '#3498db' }}>
+                      {em.emoji} {isAr ? `يشعر بـ ${em.label} عندما:` : `They feel ${em.label} when:`}
+                    </p>
+                    <textarea
+                      value={(currentBp.theirRules || {})[em.key] || ''}
+                      onChange={e => updateTheirRule(em.key, e.target.value)}
+                      placeholder={isAr ? 'اكتب فهمك لقواعدهم...' : 'Write your understanding of their rules...'}
+                      rows={2}
+                      style={{ background: '#111', border: '1px solid #333', color: 'white', borderRadius: 8, padding: '8px 12px', width: '100%', fontSize: 12, resize: 'none' }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Section 4: Gap Analysis */}
+            <div className="rounded-2xl p-4" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+              <p className="font-bold text-white text-sm mb-1">
+                {isAr ? '🎯 أين الفجوة؟' : '🎯 Where is the gap?'}
+              </p>
+              <p className="text-xs mb-3" style={{ color: '#666' }}>
+                {isAr ? 'ما الذي يمكنك فعله لتلبية قواعدهم؟' : 'What can you do to meet their rules?'}
+              </p>
+              <textarea
+                value={currentBp.gapAction || ''}
+                onChange={e => updateBp({ gapAction: e.target.value })}
+                placeholder={isAr ? 'اكتب خطة عملك هنا...' : 'Write your action plan here...'}
+                rows={4}
+                style={{ background: '#111', border: '1px solid #333', color: 'white', borderRadius: 8, padding: '8px 12px', width: '100%', fontSize: 12, resize: 'none' }}
+              />
+            </div>
+
+            {/* Save Button */}
+            <button
+              onClick={saveBlueprintSection}
+              className="w-full py-3 rounded-2xl text-sm font-black transition-all"
+              style={{ background: 'linear-gradient(135deg, rgba(52,152,219,0.2), rgba(52,152,219,0.1))', border: '1px solid rgba(52,152,219,0.4)', color: '#3498db' }}>
+              {isAr ? '💾 حفظ المخطط' : '💾 Save Blueprint'}
+            </button>
+
+            {/* Summary Card */}
+            {filledCount > 0 && (
+              <div className="rounded-2xl p-4" style={{ background: 'rgba(46,204,113,0.06)', border: '1px solid rgba(46,204,113,0.2)' }}>
+                <p className="text-xs font-bold mb-3" style={{ color: '#2ecc71' }}>
+                  ✅ {isAr ? `المخططات المكتملة: ${filledCount}` : `Completed Blueprints: ${filledCount}`}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {blueprintPeople.map(person => {
+                    const bp = blueprints[person.key]
+                    const hasBp = bp && (
+                      (bp.loveLangs && bp.loveLangs.length > 0) ||
+                      (bp.myRules && Object.values(bp.myRules).some(v => v)) ||
+                      (bp.gapAction && bp.gapAction.trim())
+                    )
+                    if (!hasBp) return null
+                    return (
+                      <div
+                        key={person.key}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium"
+                        style={{ background: 'rgba(46,204,113,0.12)', border: '1px solid rgba(46,204,113,0.25)', color: '#2ecc71' }}>
+                        <span>{person.emoji}</span>
+                        <span>{person.label}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
           </div>
         )}
 

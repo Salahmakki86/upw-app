@@ -170,6 +170,10 @@ export default function Dashboard() {
         { path: '/power30',  icon: Zap,        labelKey: 'dash_link_power30',   color: '#e67e22' },
         { path: '/fear',     icon: Shield,     labelKey: 'dash_link_fear',      color: '#9b59b6' },
         { path: '/time',     icon: Clock,      labelKey: 'dash_link_time',      color: '#1abc9c' },
+        { path: '/six-needs',         icon: Heart,       labelKey: 'dash_link_six_needs',         color: '#e91e8c' },
+        { path: '/values',            icon: Star,        labelKey: 'dash_link_values',             color: '#f1c40f' },
+        { path: '/compelling-future', icon: Eye,         labelKey: 'dash_link_compelling_future',  color: '#3498db' },
+        { path: '/transformation',    icon: BarChart2,   labelKey: 'dash_link_transformation',     color: '#2ecc71' },
       ],
     },
     {
@@ -187,6 +191,8 @@ export default function Dashboard() {
         { path: '/commitment',   icon: FileText,    labelKey: 'dash_link_commitment',    color: '#e91e8c' },
         { path: '/letters',      icon: Mail,        labelKey: 'dash_link_letters',       color: '#3498db' },
         { path: '/library',      icon: BookOpen,    labelKey: 'dash_link_library',       color: '#1abc9c' },
+        { path: '/nac',           icon: Zap,      labelKey: 'dash_link_nac',           color: '#e63946' },
+        { path: '/incantations',  icon: Sparkles, labelKey: 'dash_link_incantations',  color: '#c9a84c' },
       ],
     },
     {

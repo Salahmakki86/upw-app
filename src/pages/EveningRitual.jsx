@@ -21,6 +21,45 @@ const EVENING_QUESTIONS = {
   ]
 }
 
+const CANI_AREAS = [
+  { ar: 'الصحة',    en: 'Health',         emoji: '💪' },
+  { ar: 'العلاقات', en: 'Relationships',  emoji: '❤️' },
+  { ar: 'المال',    en: 'Money',          emoji: '💰' },
+  { ar: 'العقلية',  en: 'Mindset',        emoji: '🧠' },
+  { ar: 'المهارات', en: 'Skills',         emoji: '🎯' },
+  { ar: 'الطاقة',   en: 'Energy',         emoji: '⚡' },
+]
+
+function getTodayStr() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function computeCANIStreak(caniLog) {
+  if (!caniLog) return 0
+  const dates = Object.keys(caniLog).sort()
+  if (dates.length === 0) return 0
+  let streak = 1
+  for (let i = dates.length - 1; i > 0; i--) {
+    const cur = new Date(dates[i])
+    const prev = new Date(dates[i - 1])
+    const diff = (cur - prev) / (1000 * 60 * 60 * 24)
+    if (diff === 1) streak++
+    else break
+  }
+  // streak only counts if today is included
+  const today = getTodayStr()
+  const lastDate = dates[dates.length - 1]
+  if (lastDate !== today) return 0
+  return streak
+}
+
+function getMeterColor(val) {
+  if (val <= 3) return '#e63946'
+  if (val <= 6) return '#f39c12'
+  return '#2ecc71'
+}
+
 export default function EveningRitual() {
   const { state, update } = useApp()
   const { lang, t } = useLang()
@@ -33,6 +72,12 @@ export default function EveningRitual() {
   const [tomorrow, setTomorrow] = useState(['', '', ''])
   const [reflection, setReflection] = useState('')
   const [view, setView] = useState('questions')
+
+  // CANI state
+  const [caniQ1, setCaniQ1] = useState('')
+  const [caniQ2, setCaniQ2] = useState('')
+  const [caniArea, setCaniArea] = useState('')
+  const [caniMeter, setCaniMeter] = useState(5)
 
   const QUESTIONS = EVENING_QUESTIONS[lang]
 
@@ -60,11 +105,25 @@ export default function EveningRitual() {
     else setView('gratitude')
   }
 
+  const saveCANI = () => {
+    const today = getTodayStr()
+    const existingLog = state.caniLog || {}
+    const newLog = {
+      ...existingLog,
+      [today]: { q1: caniQ1, q2: caniQ2, area: caniArea, meter: caniMeter, date: today }
+    }
+    update('caniLog', newLog)
+    setView('tomorrow')
+  }
+
   const finishEvening = () => {
     update('eveningDone', true)
     update('eveningAnswers', answers)
     setView('done')
   }
+
+  // CANI streak
+  const caniStreak = computeCANIStreak(state.caniLog)
 
   if (view === 'done') {
     return (
@@ -122,6 +181,155 @@ export default function EveningRitual() {
     )
   }
 
+  if (view === 'cani') {
+    const meterColor = getMeterColor(caniMeter)
+    const canProceed = caniQ1.trim() || caniQ2.trim() || caniArea
+
+    return (
+      <Layout
+        title={isAr ? 'التحسين المستمر' : 'Constant And Never-Ending Improvement'}
+        subtitle="CANI">
+        <div className="space-y-5 pt-2">
+
+          {/* Streak badge */}
+          {caniStreak >= 3 && (
+            <div className="rounded-2xl p-3 flex items-center gap-3 animate-scale-in"
+              style={{ background: 'rgba(46,204,113,0.08)', border: '1px solid rgba(46,204,113,0.25)' }}>
+              <span className="text-2xl">🔥</span>
+              <div>
+                <p className="text-xs font-black" style={{ color: '#2ecc71' }}>
+                  {isAr ? `سلسلة CANI: ${caniStreak} أيام متواصلة!` : `CANI Streak: ${caniStreak} days in a row!`}
+                </p>
+                <p className="text-xs" style={{ color: '#888' }}>
+                  {isAr ? 'أنت تتحسن كل يوم — استمر!' : 'You are improving every day — keep going!'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Principle card */}
+          <div className="rounded-2xl p-4"
+            style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
+            <p className="text-xs font-black mb-1" style={{ color: '#c9a84c' }}>
+              {isAr ? '— توني روبنز' : '— Tony Robbins'}
+            </p>
+            <p className="text-sm text-white leading-relaxed" style={{ fontStyle: 'italic' }}>
+              {isAr
+                ? '"التحسين بنسبة 1% كل يوم يعني أنك ستكون 37 ضعفاً أفضل في نهاية العام."'
+                : '"Improving just 1% every day means you will be 37x better by the end of the year."'}
+            </p>
+          </div>
+
+          {/* Q1 */}
+          <div>
+            <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
+              1. {isAr
+                ? 'ما الشيء الواحد الذي تحسّنت فيه اليوم ولو بنسبة 1%؟'
+                : 'What is one thing you improved by even 1% today?'}
+            </p>
+            <textarea
+              value={caniQ1}
+              onChange={e => setCaniQ1(e.target.value)}
+              placeholder={isAr ? 'اكتب هنا...' : 'Write here...'}
+              rows={2}
+              className="input-dark resize-none text-sm w-full"
+            />
+          </div>
+
+          {/* Q2 */}
+          <div>
+            <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
+              2. {isAr
+                ? 'ما عادة صغيرة يمكنك إضافتها غداً لتكون أفضل؟'
+                : 'What small habit can you add tomorrow to be 1% better?'}
+            </p>
+            <textarea
+              value={caniQ2}
+              onChange={e => setCaniQ2(e.target.value)}
+              placeholder={isAr ? 'اكتب هنا...' : 'Write here...'}
+              rows={2}
+              className="input-dark resize-none text-sm w-full"
+            />
+          </div>
+
+          {/* Q3 — Area chips */}
+          <div>
+            <p className="text-xs font-bold mb-2" style={{ color: '#c9a84c' }}>
+              3. {isAr
+                ? 'في أي مجال من مجالات حياتك تريد التحسين الأسرع؟'
+                : 'In which life area do you want to improve the fastest?'}
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {CANI_AREAS.map(area => {
+                const label = isAr ? area.ar : area.en
+                const isSelected = caniArea === label
+                return (
+                  <button
+                    key={label}
+                    onClick={() => setCaniArea(isSelected ? '' : label)}
+                    className="py-2.5 rounded-2xl text-xs font-bold transition-all active:scale-95 flex flex-col items-center gap-1"
+                    style={{
+                      background: isSelected ? 'rgba(201,168,76,0.18)' : '#111',
+                      border: `1px solid ${isSelected ? 'rgba(201,168,76,0.5)' : '#1e1e1e'}`,
+                      color: isSelected ? '#c9a84c' : '#666',
+                    }}>
+                    <span className="text-lg">{area.emoji}</span>
+                    <span>{label}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Improvement Meter */}
+          <div className="rounded-2xl p-4"
+            style={{ background: '#111', border: '1px solid #1e1e1e' }}>
+            <p className="text-xs font-bold mb-3 text-white">
+              📊 {isAr ? 'متر التحسين — كم حسّنت نفسك اليوم؟' : 'Improvement Meter — How much did you improve today?'}
+            </p>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs" style={{ color: '#888' }}>1</span>
+              <span className="text-2xl font-black" style={{ color: meterColor }}>{caniMeter}</span>
+              <span className="text-xs" style={{ color: '#888' }}>10</span>
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={10}
+              value={caniMeter}
+              onChange={e => setCaniMeter(Number(e.target.value))}
+              style={{ accentColor: meterColor }}
+              className="w-full"
+            />
+            <div className="flex justify-between mt-1">
+              <span className="text-xs" style={{ color: '#e63946' }}>{isAr ? 'ضعيف' : 'Weak'}</span>
+              <span className="text-xs" style={{ color: '#f39c12' }}>{isAr ? 'متوسط' : 'Average'}</span>
+              <span className="text-xs" style={{ color: '#2ecc71' }}>{isAr ? 'قوي' : 'Strong'}</span>
+            </div>
+            {/* Color bar */}
+            <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ background: '#1a1a1a' }}>
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{ width: `${(caniMeter / 10) * 100}%`, background: meterColor }}
+              />
+            </div>
+          </div>
+
+          {/* CTA */}
+          <button
+            onClick={saveCANI}
+            disabled={!canProceed}
+            className="w-full btn-gold py-3 text-sm disabled:opacity-40">
+            {isAr ? 'حفظ والمتابعة لتخطيط الغد →' : 'Save & Continue to Tomorrow Planning →'}
+          </button>
+          <button onClick={() => setView('tomorrow')} className="w-full text-xs py-1" style={{ color: '#444' }}>
+            {t('skip')} →
+          </button>
+        </div>
+      </Layout>
+    )
+  }
+
   if (view === 'gratitude') {
     return (
       <Layout title={t('evening_gratitude')} subtitle={t('evening_gratitude_desc')}>
@@ -140,9 +348,9 @@ export default function EveningRitual() {
                 placeholder={t('evening_gratitude_placeholder')} rows={2} className="input-dark resize-none text-sm" />
             </div>
           ))}
-          <button onClick={() => setView('tomorrow')} disabled={!gratitude.some(g => g.trim())}
+          <button onClick={() => setView('cani')} disabled={!gratitude.some(g => g.trim())}
             className="w-full btn-gold py-3 text-sm disabled:opacity-40">
-            {t('evening_planning')} →
+            {isAr ? 'CANI — التحسين المستمر →' : 'CANI — Improvement →'}
           </button>
         </div>
       </Layout>
@@ -152,6 +360,17 @@ export default function EveningRitual() {
   return (
     <Layout title={t('evening_title')} subtitle={t('evening_subtitle')} helpKey="evening">
       <div className="space-y-4 pt-2">
+
+        {/* CANI Streak badge (shown on questions screen too) */}
+        {caniStreak >= 3 && (
+          <div className="rounded-2xl p-2.5 flex items-center gap-2"
+            style={{ background: 'rgba(46,204,113,0.06)', border: '1px solid rgba(46,204,113,0.2)' }}>
+            <span className="text-lg">🔥</span>
+            <p className="text-xs font-bold" style={{ color: '#2ecc71' }}>
+              {isAr ? `سلسلة CANI: ${caniStreak} أيام` : `CANI Streak: ${caniStreak} days`}
+            </p>
+          </div>
+        )}
 
         {/* #7 — Morning Reference */}
         {morningCommitment && (

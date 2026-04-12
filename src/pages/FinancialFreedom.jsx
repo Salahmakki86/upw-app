@@ -136,6 +136,73 @@ const LEVELS_DATA = {
   ],
 }
 
+const BUCKET_CONFIG = {
+  ar: [
+    {
+      key: 'security',
+      label: 'الأمان',
+      sublabel: 'Bucket 1',
+      desc: 'مخاطرة منخفضة، نمو ثابت — سندات، أسواق المال، المعاشات. الهدف: لا تخسر أصلك أبداً.',
+      emoji: '🛡️',
+      color: '#2ecc71',
+      defaultTarget: 60,
+      defaultItems: ['سندات حكومية', 'صناديق سوق المال', 'معاشات'],
+    },
+    {
+      key: 'growth',
+      label: 'النمو والمخاطرة',
+      sublabel: 'Bucket 2',
+      desc: 'مخاطرة أعلى، عوائد أعلى — أسهم، عقارات، أسهم خاصة.',
+      emoji: '📈',
+      color: '#3498db',
+      defaultTarget: 30,
+      defaultItems: ['أسهم النمو', 'صناديق الاستثمار العقاري', 'أسهم خاصة'],
+    },
+    {
+      key: 'dream',
+      label: 'الأحلام',
+      sublabel: 'Bucket 3',
+      desc: 'مخاطرة عالية / مضاربة / متعة — كريبتو، ستارتأب، استثمارات جريئة.',
+      emoji: '🚀',
+      color: '#e67e22',
+      defaultTarget: 10,
+      defaultItems: ['عملات مشفرة', 'شركات ناشئة', 'استثمارات بديلة'],
+    },
+  ],
+  en: [
+    {
+      key: 'security',
+      label: 'Security',
+      sublabel: 'Bucket 1',
+      desc: 'Low-risk, steady growth — bonds, money market, annuities. Goal: never lose your principal.',
+      emoji: '🛡️',
+      color: '#2ecc71',
+      defaultTarget: 60,
+      defaultItems: ['Government bonds', 'Money market funds', 'Annuities'],
+    },
+    {
+      key: 'growth',
+      label: 'Risk / Growth',
+      sublabel: 'Bucket 2',
+      desc: 'Higher risk/reward — stocks, real estate, private equity.',
+      emoji: '📈',
+      color: '#3498db',
+      defaultTarget: 30,
+      defaultItems: ['Growth stocks', 'REITs', 'Private equity'],
+    },
+    {
+      key: 'dream',
+      label: 'Dream',
+      sublabel: 'Bucket 3',
+      desc: 'Risky / speculative / fun money — crypto, startups, bold bets.',
+      emoji: '🚀',
+      color: '#e67e22',
+      defaultTarget: 10,
+      defaultItems: ['Crypto', 'Startup investments', 'Alternative assets'],
+    },
+  ],
+}
+
 function calcLevel(monthlyPassive, monthlyExpenses) {
   const ratio = monthlyExpenses > 0 ? monthlyPassive / monthlyExpenses : 0
   if (ratio <= 0) return 1
@@ -161,10 +228,47 @@ export default function FinancialFreedom() {
 
   const autoLevel = calcLevel(monthlyPassive, monthlyExpenses)
   const LEVELS    = LEVELS_DATA[lang]
+  const BUCKETS   = BUCKET_CONFIG[lang]
 
   const [expandedLevel, setExpandedLevel] = useState(null)
   const [editNote, setEditNote] = useState(null)
   const [noteText, setNoteText] = useState('')
+
+  // Bucket state helpers
+  const [newBucketItem, setNewBucketItem] = useState({ security: '', growth: '', dream: '' })
+
+  const rawBuckets = ff.buckets || {}
+  const getBucket = (key, cfg) => ({
+    target:  rawBuckets[key]?.target  ?? cfg.defaultTarget,
+    current: rawBuckets[key]?.current ?? 0,
+    items:   rawBuckets[key]?.items   ?? [...cfg.defaultItems],
+  })
+
+  const bucketData = BUCKETS.reduce((acc, cfg) => {
+    acc[cfg.key] = getBucket(cfg.key, cfg)
+    return acc
+  }, {})
+
+  const updateBucket = (key, patch) => {
+    const updated = {
+      ...BUCKETS.reduce((a, c) => ({ ...a, [c.key]: bucketData[c.key] }), {}),
+      [key]: { ...bucketData[key], ...patch },
+    }
+    updateFinancialFreedom('buckets', updated)
+  }
+
+  const addBucketItem = (key) => {
+    const text = newBucketItem[key]?.trim()
+    if (!text) return
+    const items = [...bucketData[key].items, text]
+    updateBucket(key, { items })
+    setNewBucketItem(prev => ({ ...prev, [key]: '' }))
+  }
+
+  const removeBucketItem = (key, idx) => {
+    const items = bucketData[key].items.filter((_, i) => i !== idx)
+    updateBucket(key, { items })
+  }
 
   const pct = monthlyExpenses > 0 ? Math.min((monthlyPassive / monthlyExpenses) * 100, 100) : 0
 
@@ -174,6 +278,20 @@ export default function FinancialFreedom() {
     setEditNote(null)
     setNoteText('')
   }
+
+  // Bucket calculations
+  const totalPortfolio = BUCKETS.reduce((sum, cfg) => sum + Number(bucketData[cfg.key].current || 0), 0)
+
+  const getBucketActualPct = (key) => {
+    if (totalPortfolio <= 0) return 0
+    return (Number(bucketData[key].current || 0) / totalPortfolio) * 100
+  }
+
+  const rebalanceAlerts = BUCKETS.filter(cfg => {
+    const actual = getBucketActualPct(cfg.key)
+    const target = Number(bucketData[cfg.key].target || 0)
+    return totalPortfolio > 0 && Math.abs(actual - target) > 10
+  })
 
   return (
     <Layout title={t('freedom_title')} subtitle={t('freedom_subtitle')} helpKey="freedom">
@@ -347,6 +465,248 @@ export default function FinancialFreedom() {
             <p className="text-xs" style={{ color: '#888' }}>{LEVELS[autoLevel].requirements}</p>
           </div>
         )}
+
+        {/* ─────────────────────────────────────────────── */}
+        {/* 3-Bucket System */}
+        {/* ─────────────────────────────────────────────── */}
+        <div>
+          <div className="rounded-2xl p-4 mb-4" style={{ background: 'linear-gradient(135deg, #0d1a0d, #1a1a1a)', border: '1px solid rgba(46,204,113,0.2)' }}>
+            <p className="text-xs font-black uppercase tracking-widest mb-1" style={{ color: '#2ecc71' }}>
+              🪣 {isAr ? 'نظام الدلاء الثلاثة' : '3-Bucket System'}
+            </p>
+            <p className="text-xs leading-relaxed" style={{ color: '#888' }}>
+              {isAr
+                ? 'من كتاب "MONEY Master the Game" لتوني روبينز — قسّم محفظتك إلى ثلاثة دلاء بحسب المخاطرة والهدف.'
+                : 'From Tony Robbins\' "MONEY Master the Game" — divide your portfolio into 3 buckets by risk level and purpose.'}
+            </p>
+          </div>
+
+          {/* Bucket Cards */}
+          <div className="space-y-4">
+            {BUCKETS.map(cfg => {
+              const bd = bucketData[cfg.key]
+              const currentNum = Number(bd.current || 0)
+              const targetPct  = Number(bd.target  || 0)
+              const actualPct  = getBucketActualPct(cfg.key)
+              const fillPct    = targetPct > 0 ? Math.min((actualPct / targetPct) * 100, 100) : 0
+
+              return (
+                <div key={cfg.key} className="rounded-2xl overflow-hidden"
+                  style={{ background: '#1a1a1a', border: `1px solid ${cfg.color}33` }}>
+
+                  {/* Bucket Header */}
+                  <div className="px-4 pt-4 pb-3 flex items-center gap-3"
+                    style={{ borderBottom: `1px solid ${cfg.color}22` }}>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-xl"
+                      style={{ background: `${cfg.color}18`, border: `1px solid ${cfg.color}33` }}>
+                      {cfg.emoji}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold px-1.5 py-0.5 rounded"
+                          style={{ background: `${cfg.color}20`, color: cfg.color }}>
+                          {cfg.sublabel}
+                        </span>
+                        <span className="font-black text-white text-sm">{cfg.label}</span>
+                      </div>
+                      <p className="text-xs mt-0.5 leading-relaxed" style={{ color: '#666' }}>{cfg.desc}</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 space-y-4">
+
+                    {/* Target % and Current Amount */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs mb-1.5" style={{ color: '#888' }}>
+                          {isAr ? 'النسبة المستهدفة (%)' : 'Target % of portfolio'}
+                        </p>
+                        <input
+                          type="number"
+                          min="0" max="100"
+                          value={bd.target}
+                          onChange={e => updateBucket(cfg.key, { target: Number(e.target.value) })}
+                          style={{ background: '#111', border: `1px solid ${cfg.color}33`, color: 'white', borderRadius: 8, padding: '8px 12px', width: '100%', fontSize: 13 }}
+                        />
+                      </div>
+                      <div>
+                        <p className="text-xs mb-1.5" style={{ color: '#888' }}>
+                          {isAr ? 'المبلغ الحالي' : 'Current amount'}
+                        </p>
+                        <input
+                          type="number"
+                          min="0"
+                          value={bd.current}
+                          onChange={e => updateBucket(cfg.key, { current: Number(e.target.value) })}
+                          style={{ background: '#111', border: `1px solid ${cfg.color}33`, color: 'white', borderRadius: 8, padding: '8px 12px', width: '100%', fontSize: 13 }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Fill the Bucket Progress Bar */}
+                    <div>
+                      <div className="flex justify-between items-center mb-1.5">
+                        <p className="text-xs font-bold" style={{ color: cfg.color }}>
+                          {isAr ? 'امتلاء الدلو' : 'Fill the Bucket'}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs" style={{ color: '#888' }}>
+                          <span style={{ color: cfg.color, fontWeight: 'bold' }}>{actualPct.toFixed(1)}%</span>
+                          <span>{isAr ? 'من' : '/'}</span>
+                          <span>{targetPct}%</span>
+                        </div>
+                      </div>
+                      <div className="w-full h-4 rounded-full overflow-hidden relative" style={{ background: '#111' }}>
+                        <div
+                          className="h-4 rounded-full transition-all duration-700"
+                          style={{
+                            width: `${fillPct}%`,
+                            background: `linear-gradient(90deg, ${cfg.color}99, ${cfg.color})`,
+                          }}
+                        />
+                        {fillPct >= 100 && (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-xs font-black text-white" style={{ textShadow: '0 0 4px rgba(0,0,0,0.8)' }}>
+                              {isAr ? '✓ مكتمل' : '✓ Full'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* What goes in this bucket */}
+                    <div>
+                      <p className="text-xs font-bold mb-2" style={{ color: '#888' }}>
+                        {isAr ? 'محتويات هذا الدلو:' : 'What goes in this bucket:'}
+                      </p>
+                      <div className="space-y-1.5 mb-2">
+                        {bd.items.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
+                              style={{ background: '#111', border: `1px solid ${cfg.color}22`, color: '#aaa' }}>
+                              <span style={{ color: cfg.color }}>•</span>
+                              {item}
+                            </div>
+                            <button
+                              onClick={() => removeBucketItem(cfg.key, idx)}
+                              className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 text-xs transition-all"
+                              style={{ background: 'rgba(230,57,70,0.1)', color: '#e63946', border: '1px solid rgba(230,57,70,0.2)' }}>
+                              −
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          value={newBucketItem[cfg.key] || ''}
+                          onChange={e => setNewBucketItem(prev => ({ ...prev, [cfg.key]: e.target.value }))}
+                          onKeyDown={e => e.key === 'Enter' && addBucketItem(cfg.key)}
+                          placeholder={isAr ? 'أضف عنصراً...' : 'Add item...'}
+                          style={{ background: '#111', border: `1px solid ${cfg.color}33`, color: 'white', borderRadius: 8, padding: '7px 12px', flex: 1, fontSize: 12 }}
+                        />
+                        <button
+                          onClick={() => addBucketItem(cfg.key)}
+                          className="px-3 rounded-lg text-sm font-black transition-all"
+                          style={{ background: `${cfg.color}20`, color: cfg.color, border: `1px solid ${cfg.color}33` }}>
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Portfolio Summary */}
+          <div className="mt-4 rounded-2xl p-4" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-black text-white">
+                {isAr ? '📊 إجمالي المحفظة' : '📊 Total Portfolio'}
+              </p>
+              <p className="text-lg font-black" style={{ color: '#c9a84c' }}>
+                {totalPortfolio.toLocaleString()}
+              </p>
+            </div>
+
+            {/* Allocation Pie Bar */}
+            {totalPortfolio > 0 ? (
+              <div>
+                <p className="text-xs mb-2" style={{ color: '#666' }}>
+                  {isAr ? 'توزيع المحفظة:' : 'Portfolio allocation:'}
+                </p>
+                <div className="flex w-full h-8 rounded-xl overflow-hidden">
+                  {BUCKETS.map(cfg => {
+                    const pctVal = getBucketActualPct(cfg.key)
+                    if (pctVal <= 0) return null
+                    return (
+                      <div
+                        key={cfg.key}
+                        className="flex items-center justify-center transition-all duration-500"
+                        style={{
+                          width: `${pctVal}%`,
+                          background: cfg.color,
+                          minWidth: pctVal > 0 ? 2 : 0,
+                        }}>
+                        {pctVal > 8 && (
+                          <span className="text-xs font-black text-white" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+                            {pctVal.toFixed(0)}%
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+                {/* Legend */}
+                <div className="flex flex-wrap gap-3 mt-2">
+                  {BUCKETS.map(cfg => (
+                    <div key={cfg.key} className="flex items-center gap-1.5 text-xs" style={{ color: '#888' }}>
+                      <div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: cfg.color }} />
+                      <span>{cfg.emoji} {cfg.label}</span>
+                      <span style={{ color: cfg.color, fontWeight: 'bold' }}>{getBucketActualPct(cfg.key).toFixed(1)}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-center py-2" style={{ color: '#444' }}>
+                {isAr ? 'أضف مبالغ للدلاء لرؤية التوزيع' : 'Add amounts to buckets to see allocation'}
+              </p>
+            )}
+          </div>
+
+          {/* Rebalancing Alerts */}
+          {rebalanceAlerts.length > 0 && (
+            <div className="mt-3 rounded-2xl p-4" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.25)' }}>
+              <p className="text-xs font-black mb-2" style={{ color: '#c9a84c' }}>
+                ⚖️ {isAr ? 'تنبيه: إعادة التوازن مطلوبة' : 'Rebalancing Alert'}
+              </p>
+              <div className="space-y-2">
+                {rebalanceAlerts.map(cfg => {
+                  const actual = getBucketActualPct(cfg.key)
+                  const target = Number(bucketData[cfg.key].target || 0)
+                  const diff   = actual - target
+                  return (
+                    <div key={cfg.key} className="flex items-center gap-2 text-xs" style={{ color: '#aaa' }}>
+                      <span>{cfg.emoji}</span>
+                      <span className="font-bold" style={{ color: cfg.color }}>{cfg.label}:</span>
+                      <span>
+                        {isAr
+                          ? `${actual.toFixed(1)}% (الهدف: ${target}%) — ${diff > 0 ? 'أعلى' : 'أدنى'} بـ ${Math.abs(diff).toFixed(1)}%`
+                          : `${actual.toFixed(1)}% (target: ${target}%) — ${diff > 0 ? 'over' : 'under'} by ${Math.abs(diff).toFixed(1)}%`}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+              <p className="text-xs mt-2" style={{ color: '#666' }}>
+                {isAr
+                  ? 'يُوصى بإعادة التوازن عند تجاوز الفجوة 10% من الهدف.'
+                  : 'Rebalancing is recommended when any bucket drifts more than 10% from its target.'}
+              </p>
+            </div>
+          )}
+        </div>
 
       </div>
     </Layout>
