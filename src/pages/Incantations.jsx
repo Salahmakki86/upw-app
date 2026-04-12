@@ -32,7 +32,9 @@ function PracticeSession({ incantations, onClose, isAr }) {
   const [completed, setCompleted] = useState(false)
   const timerRef = useRef(null)
 
-  const subset = count === 'all' ? incantations : incantations.slice(0, Number(count))
+  const subset = count === 'all'
+    ? incantations
+    : incantations.slice(0, Math.min(Number(count), incantations.length))
 
   useEffect(() => {
     if (!started || completed) return
@@ -149,15 +151,30 @@ function PracticeSession({ incantations, onClose, isAr }) {
             {isAr ? '🗣️ قل كل إيحاء بصوت عالٍ مع الحركة!' : '🗣️ Say each incantation out loud with movement!'}
           </div>
 
-          <button
-            onClick={() => { setCurrent(0); setTimeLeft(duration); setStarted(true) }}
-            disabled={incantations.length === 0}
-            className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #c9a84c, #a88930)', color: '#090909' }}
-          >
-            <Play size={18} />
-            {isAr ? 'ابدأ التمرين' : 'Start Practice'}
-          </button>
+          {incantations.length === 0 ? (
+            <div
+              className="w-full py-3 rounded-xl text-center text-sm"
+              style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.25)', color: '#f87171' }}
+            >
+              {isAr ? 'أضف تكرارات أولاً' : 'Add incantations first'}
+            </div>
+          ) : subset.length === 0 ? (
+            <div
+              className="w-full py-3 rounded-xl text-center text-sm"
+              style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.25)', color: '#f87171' }}
+            >
+              {isAr ? 'أضف تكرارات أولاً' : 'Add incantations first'}
+            </div>
+          ) : (
+            <button
+              onClick={() => { setCurrent(0); setTimeLeft(duration); setStarted(true) }}
+              className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+              style={{ background: 'linear-gradient(135deg, #c9a84c, #a88930)', color: '#090909' }}
+            >
+              <Play size={18} />
+              {isAr ? 'ابدأ التمرين' : 'Start Practice'}
+            </button>
+          )}
 
           <button onClick={onClose} className="w-full py-2 text-sm text-gray-500">
             {isAr ? 'إلغاء' : 'Cancel'}

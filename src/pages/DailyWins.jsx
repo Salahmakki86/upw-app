@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
@@ -33,12 +34,14 @@ const MOTIVATIONAL = {
 export default function DailyWins() {
   const { state, addWin, deleteWin, today } = useApp()
   const { lang, t } = useLang()
+  const navigate = useNavigate()
   const isAr = lang === 'ar'
 
   const [text, setText] = useState('')
   const [category, setCategory] = useState('personal')
   const [emoji, setEmoji] = useState('🏆')
   const [showForm, setShowForm] = useState(false)
+  const [showCelebration, setShowCelebration] = useState(false)
 
   const dailyWins = state.dailyWins || {}
   const todayWins = dailyWins[today] || []
@@ -92,11 +95,15 @@ export default function DailyWins() {
     return msgs.find(m => todayWins.length <= m.max)?.msg || msgs[msgs.length - 1].msg
   }, [todayWins.length, lang])
 
+  const topRitual = state.celebrationRituals?.selectedRituals?.[0] ?? null
+
   const handleAdd = () => {
     if (!text.trim()) return
     addWin(today, { text: text.trim(), category, emoji })
     setText('')
     setShowForm(false)
+    setShowCelebration(true)
+    setTimeout(() => setShowCelebration(false), 4000)
   }
 
   const pastDays = last14.filter(d => d !== today && (dailyWins[d] || []).length > 0).reverse()
@@ -317,6 +324,38 @@ export default function DailyWins() {
         )}
 
       </div>
+
+      {/* CROSS-LINK 3: Celebration pop-up overlay after adding a win */}
+      {showCelebration && (
+        <div
+          className="fixed inset-0 flex items-end justify-center pb-24 px-4 pointer-events-none"
+          style={{ zIndex: 9999 }}>
+          <div
+            className="w-full max-w-sm rounded-2xl p-4 animate-scale-in pointer-events-auto"
+            style={{ background: 'linear-gradient(135deg, #1a1500, #1a1a1a)', border: '1px solid rgba(201,168,76,0.5)', boxShadow: '0 8px 32px rgba(0,0,0,0.6)' }}>
+            {topRitual ? (
+              <>
+                <p className="text-base font-black text-white mb-1">
+                  🎉 {isAr ? 'احتفل الآن! / Celebrate now!' : 'Celebrate now!'}
+                </p>
+                <p className="text-sm" style={{ color: '#c9a84c' }}>{topRitual}</p>
+              </>
+            ) : (
+              <>
+                <p className="text-base font-black text-white mb-2">
+                  🎉 {isAr ? 'هل تعرف احتفالات النصر؟' : 'Do you know victory celebrations?'}
+                </p>
+                <button
+                  onClick={() => { setShowCelebration(false); navigate('/celebration') }}
+                  className="text-xs font-bold px-4 py-2 rounded-xl"
+                  style={{ background: 'linear-gradient(135deg, #c9a84c, #f0c96e)', color: '#000' }}>
+                  {isAr ? 'اكتشف احتفالاتك' : 'Discover your rituals'}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </Layout>
   )
 }

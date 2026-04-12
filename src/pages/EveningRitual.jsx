@@ -93,6 +93,20 @@ export default function EveningRitual() {
   const wheelScores = state.wheelScores || {}
   const wheelEntries = Object.entries(wheelScores).filter(([, v]) => v !== 5)
   const lowestArea = wheelEntries.length > 0 ? wheelEntries.reduce((a, b) => a[1] < b[1] ? a : b) : null
+
+  // CROSS-LINK 6: Map wheel areas → CANI areas
+  const WHEEL_TO_CANI = {
+    body:         { ar: 'الصحة',    en: 'Health' },
+    emotions:     { ar: 'العقلية',  en: 'Mindset' },
+    relationships:{ ar: 'العلاقات', en: 'Relationships' },
+    money:        { ar: 'المال',    en: 'Money' },
+    career:       { ar: 'المهارات', en: 'Skills' },
+    contribution: { ar: 'الصحة',    en: 'Health' },
+    time:         { ar: 'الطاقة',   en: 'Energy' },
+  }
+  const wheelSuggestedCaniLabel = lowestArea
+    ? (isAr ? WHEEL_TO_CANI[lowestArea[0]]?.ar : WHEEL_TO_CANI[lowestArea[0]]?.en) || null
+    : null
   const setGrat = (i, v) => { const g = [...gratitude]; g[i] = v; setGratitude(g) }
   const setTom  = (i, v) => { const tt = [...tomorrow]; tt[i] = v; setTomorrow(tt) }
 
@@ -259,22 +273,36 @@ export default function EveningRitual() {
                 ? 'في أي مجال من مجالات حياتك تريد التحسين الأسرع؟'
                 : 'In which life area do you want to improve the fastest?'}
             </p>
+            {/* CROSS-LINK 6: Wheel suggestion hint */}
+            {wheelSuggestedCaniLabel && (
+              <p className="text-xs mb-2" style={{ color: '#888' }}>
+                📊 {isAr
+                  ? `مقترح من Wheel of Life: "${wheelSuggestedCaniLabel}" يحتاج أكثر اهتماماً`
+                  : `Suggested from Wheel of Life: "${wheelSuggestedCaniLabel}" needs the most attention`}
+              </p>
+            )}
             <div className="grid grid-cols-3 gap-2">
               {CANI_AREAS.map(area => {
                 const label = isAr ? area.ar : area.en
                 const isSelected = caniArea === label
+                const isSuggested = wheelSuggestedCaniLabel === label
                 return (
                   <button
                     key={label}
                     onClick={() => setCaniArea(isSelected ? '' : label)}
-                    className="py-2.5 rounded-2xl text-xs font-bold transition-all active:scale-95 flex flex-col items-center gap-1"
+                    className="py-2.5 rounded-2xl text-xs font-bold transition-all active:scale-95 flex flex-col items-center gap-1 relative"
                     style={{
-                      background: isSelected ? 'rgba(201,168,76,0.18)' : '#111',
-                      border: `1px solid ${isSelected ? 'rgba(201,168,76,0.5)' : '#1e1e1e'}`,
-                      color: isSelected ? '#c9a84c' : '#666',
+                      background: isSelected ? 'rgba(201,168,76,0.18)' : isSuggested ? 'rgba(52,152,219,0.1)' : '#111',
+                      border: `1px solid ${isSelected ? 'rgba(201,168,76,0.5)' : isSuggested ? 'rgba(52,152,219,0.4)' : '#1e1e1e'}`,
+                      color: isSelected ? '#c9a84c' : isSuggested ? '#3498db' : '#666',
                     }}>
                     <span className="text-lg">{area.emoji}</span>
                     <span>{label}</span>
+                    {isSuggested && !isSelected && (
+                      <span className="text-[9px] font-bold" style={{ color: '#3498db' }}>
+                        📊 {isAr ? 'مقترح' : 'suggested'}
+                      </span>
+                    )}
                   </button>
                 )
               })}

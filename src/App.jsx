@@ -67,6 +67,8 @@ import TransformationDashboard from './pages/TransformationDashboard'
 import UPWProgram from './pages/UPWProgram'
 import CelebrationRituals from './pages/CelebrationRituals'
 import LifeStoryReframing from './pages/LifeStoryReframing'
+import EmergencyToolkit from './pages/EmergencyToolkit'
+import WeeklyPulse from './pages/WeeklyPulse'
 import ErrorBoundary from './components/ErrorBoundary'
 
 function AppRoutes() {
@@ -154,6 +156,8 @@ function AppRoutes() {
             <Route path="/upw-program"        element={<UPWProgram />}             />
             <Route path="/celebration"        element={<CelebrationRituals />}     />
             <Route path="/life-story"         element={<LifeStoryReframing />}     />
+            <Route path="/emergency"          element={<EmergencyToolkit />}       />
+            <Route path="/weekly-pulse"       element={<WeeklyPulse />}            />
             <Route
               path="/weekly-report"
               element={currentUser.role === 'admin' ? <WeeklyReportPage /> : <Navigate to="/" />}

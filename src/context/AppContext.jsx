@@ -279,6 +279,9 @@ const INITIAL_STATE = {
   contentIdeas: [],      // [{ id, idea, used, createdAt }]
   leadMagnets: [],       // [{ id, name, type, createdDate, signups, conversionPct }]
 
+  // Library concept notes: { [conceptTitle]: noteText }
+  conceptNotes: {},
+
   // UPW 4-day program
   upwProgram: {
     daysDone: { day1: false, day2: false, day3: false, day4: false },
@@ -287,6 +290,12 @@ const INITIAL_STATE = {
     reflections: { day1: '', day2: '', day3: '', day4: '' },
     startDate: null,
   },
+
+  // Emergency Toolkit usage log
+  emergencyLog: [],   // [{ date, tool, ts }]
+
+  // Weekly Pulse check-ins: { 'YYYY-WW': { energy, word, win, challenge, reframe, intentions, weekStar, completedAt } }
+  weeklyPulse: {},
 }
 
 const AppContext = createContext(null)

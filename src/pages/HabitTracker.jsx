@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
@@ -13,6 +13,20 @@ const DEFAULT_HABITS = [
 
 const EMOJI_OPTIONS = ['🌅','💪','📚','🧘','💧','🔥','🎯','🏃','✍️','🎨','🧠','💼','🌱','🎵','🤸','🥗','😴','🧹','🙏','⭐']
 const COLOR_OPTIONS = ['#c9a84c','#2ecc71','#3498db','#9b59b6','#1abc9c','#e74c3c']
+
+// Tony Robbins suggested habits
+const TR_SUGGESTIONS = [
+  { nameAr: 'التحضير الذهني (Priming)', nameEn: 'Daily Priming',      emoji: '🧠', color: '#c9a84c' },
+  { nameAr: 'دش بارد',                  nameEn: 'Cold Shower',         emoji: '🚿', color: '#3498db' },
+  { nameAr: 'الامتنان اليومي',           nameEn: 'Daily Gratitude',     emoji: '🙏', color: '#f1c40f' },
+  { nameAr: 'التمرين',                   nameEn: 'Exercise',            emoji: '💪', color: '#2ecc71' },
+  { nameAr: 'القراءة',                   nameEn: 'Reading',             emoji: '📚', color: '#3498db' },
+  { nameAr: 'التأمل',                    nameEn: 'Meditation',          emoji: '🧘', color: '#9b59b6' },
+  { nameAr: 'التأكيدات الإيجابية',       nameEn: 'Affirmations',        emoji: '⭐', color: '#e91e8c' },
+  { nameAr: 'كتابة اليوميات',            nameEn: 'Journaling',          emoji: '✍️', color: '#1abc9c' },
+  { nameAr: 'التواصل العميق',             nameEn: 'Deep Connection',     emoji: '❤️', color: '#e74c3c' },
+  { nameAr: 'العطاء والمساهمة',          nameEn: 'Giving / Contribution',emoji: '🌟', color: '#c9a84c' },
+]
 
 function getLast7Days() {
   return Array.from({ length: 7 }, (_, i) => {
@@ -56,6 +70,10 @@ export default function HabitTracker() {
   const [showForm, setShowForm]   = useState(false)
   const [form, setForm]           = useState(EMPTY_FORM)
   const [confirmDelete, setConfirmDelete] = useState(null)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [editMode, setEditMode] = useState(false)
+  const [showCelebration, setShowCelebration] = useState(false)
+  const [celebrationShownFor, setCelebrationShownFor] = useState(null)
 
   const last7 = useMemo(() => getLast7Days(), [])
 
@@ -86,6 +104,18 @@ export default function HabitTracker() {
     setShowForm(false)
   }
 
+  function addSuggestedHabit(suggestion) {
+    const newHabit = {
+      id: `h_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      nameAr: suggestion.nameAr,
+      nameEn: suggestion.nameEn,
+      emoji: suggestion.emoji,
+      color: suggestion.color,
+    }
+    const baseList = rawTracker.list && rawTracker.list.length > 0 ? list : DEFAULT_HABITS
+    saveTracker([...baseList, newHabit], log)
+  }
+
   function deleteHabit(habitId) {
     const newList = list.filter(h => h.id !== habitId)
     const newLog = {}
@@ -96,9 +126,29 @@ export default function HabitTracker() {
     setConfirmDelete(null)
   }
 
+  function moveHabit(index, direction) {
+    const newList = [...list]
+    const targetIndex = index + direction
+    if (targetIndex < 0 || targetIndex >= newList.length) return
+    const temp = newList[index]
+    newList[index] = newList[targetIndex]
+    newList[targetIndex] = temp
+    saveTracker(newList, log)
+  }
+
   const doneCount = todayLog.length
   const totalCount = list.length
   const progressPct = totalCount > 0 ? (doneCount / totalCount) * 100 : 0
+
+  // Celebration: when all habits are done for today
+  useEffect(() => {
+    if (progressPct === 100 && totalCount > 0 && celebrationShownFor !== today) {
+      setShowCelebration(true)
+      setCelebrationShownFor(today)
+      const timer = setTimeout(() => setShowCelebration(false), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [progressPct, totalCount, today, celebrationShownFor])
 
   // #10 — Detect broken streaks for failure recovery messaging
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
@@ -123,6 +173,9 @@ export default function HabitTracker() {
     return d.toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { weekday: 'short' })
   }
 
+  // Already-added suggestion IDs (match by nameEn)
+  const addedSuggestionNames = new Set(list.map(h => h.nameEn))
+
   return (
     <Layout
       title={isAr ? 'متتبّع العادات' : 'Habit Tracker'}
@@ -130,6 +183,22 @@ export default function HabitTracker() {
       helpKey="habits"
     >
       <div className="space-y-4 pt-2" dir={isAr ? 'rtl' : 'ltr'}>
+
+        {/* Celebration Banner */}
+        {showCelebration && (
+          <div
+            className="rounded-2xl p-4 text-center animate-scale-in"
+            style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.25), rgba(240,201,110,0.15))', border: '2px solid rgba(201,168,76,0.6)' }}
+          >
+            <p className="text-2xl mb-1">🎉</p>
+            <p className="text-sm font-black text-white">
+              {isAr ? 'يوم مثالي! كل عاداتك مكتملة!' : 'Perfect day! All habits complete!'}
+            </p>
+            <p className="text-xs mt-1" style={{ color: '#c9a84c' }}>
+              {isAr ? 'أنت بطل حقيقي! استمر على هذا المستوى!' : "You're a true champion! Keep it up!"}
+            </p>
+          </div>
+        )}
 
         {/* #10 — Failure Recovery Message */}
         {missedYesterday && (
@@ -205,11 +274,25 @@ export default function HabitTracker() {
           className="rounded-2xl p-4"
           style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}
         >
-          <p className="text-xs font-black uppercase tracking-widest mb-3" style={{ color: '#c9a84c' }}>
-            ✦ {isAr ? 'عادات اليوم' : "Today's Habits"}
-          </p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-black uppercase tracking-widest" style={{ color: '#c9a84c' }}>
+              ✦ {isAr ? 'عادات اليوم' : "Today's Habits"}
+            </p>
+            {/* Edit mode toggle */}
+            <button
+              onClick={() => setEditMode(v => !v)}
+              className="text-xs px-3 py-1 rounded-lg font-bold transition-all"
+              style={{
+                background: editMode ? 'rgba(201,168,76,0.15)' : '#1a1a1a',
+                color: editMode ? '#c9a84c' : '#666',
+                border: `1px solid ${editMode ? 'rgba(201,168,76,0.4)' : '#2a2a2a'}`,
+              }}
+            >
+              {isAr ? (editMode ? '✓ تم' : '✎ ترتيب') : (editMode ? '✓ Done' : '✎ Reorder')}
+            </button>
+          </div>
           <div className="space-y-2">
-            {list.map(habit => {
+            {list.map((habit, index) => {
               const done = todayLog.includes(habit.id)
               const streak = calcHabitStreak(log, habit.id)
               return (
@@ -223,16 +306,45 @@ export default function HabitTracker() {
                   }}
                 >
                   <div className="flex items-center gap-3 p-3">
-                    {/* Checkbox */}
+                    {/* Reorder buttons in edit mode */}
+                    {editMode && (
+                      <div className="flex flex-col gap-0.5 flex-shrink-0">
+                        <button
+                          onClick={() => moveHabit(index, -1)}
+                          disabled={index === 0}
+                          className="w-6 h-6 rounded flex items-center justify-center text-xs transition-all"
+                          style={{
+                            background: index === 0 ? '#1a1a1a' : 'rgba(201,168,76,0.12)',
+                            color: index === 0 ? '#333' : '#c9a84c',
+                          }}
+                        >
+                          ▲
+                        </button>
+                        <button
+                          onClick={() => moveHabit(index, 1)}
+                          disabled={index === list.length - 1}
+                          className="w-6 h-6 rounded flex items-center justify-center text-xs transition-all"
+                          style={{
+                            background: index === list.length - 1 ? '#1a1a1a' : 'rgba(201,168,76,0.12)',
+                            color: index === list.length - 1 ? '#333' : '#c9a84c',
+                          }}
+                        >
+                          ▼
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Checkbox — min 44x44 touch target */}
                     <button
                       onClick={() => toggleHabit(habit.id)}
-                      className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all active:scale-90"
+                      className="flex-shrink-0 rounded-lg flex items-center justify-center transition-all active:scale-90"
                       style={{
+                        width: 44, height: 44,
                         background: done ? habit.color : '#2a2a2a',
                         border: `2px solid ${done ? habit.color : '#3a3a3a'}`,
                       }}
                     >
-                      {done && <span className="text-xs font-black text-black">✓</span>}
+                      {done && <span className="text-sm font-black text-black">✓</span>}
                     </button>
 
                     {/* Emoji + Name */}
@@ -270,7 +382,7 @@ export default function HabitTracker() {
                     ) : (
                       <button
                         onClick={() => setConfirmDelete(habit.id)}
-                        className="text-xs w-7 h-7 rounded-lg flex items-center justify-center"
+                        className="text-xs w-8 h-8 rounded-lg flex items-center justify-center"
                         style={{ background: '#2a2a2a', color: '#555' }}
                       >
                         ✕
@@ -379,6 +491,63 @@ export default function HabitTracker() {
           )}
         </div>
 
+        {/* Habit Suggestions */}
+        <div className="rounded-2xl overflow-hidden" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
+          <button
+            onClick={() => setShowSuggestions(v => !v)}
+            className="w-full flex items-center justify-between p-4"
+          >
+            <div className="flex items-center gap-2">
+              <span>💡</span>
+              <span className="text-xs font-black uppercase tracking-widest" style={{ color: '#c9a84c' }}>
+                {isAr ? 'اقتراحات / Suggestions' : 'Suggestions / اقتراحات'}
+              </span>
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(201,168,76,0.12)', color: '#c9a84c' }}>
+                {TR_SUGGESTIONS.length}
+              </span>
+            </div>
+            <span style={{ color: '#555', fontSize: 12 }}>{showSuggestions ? '▲' : '▼'}</span>
+          </button>
+
+          {showSuggestions && (
+            <div className="px-4 pb-4 space-y-2 animate-fade-in" style={{ borderTop: '1px solid #1a1a1a' }}>
+              <p className="text-xs pt-2" style={{ color: '#666' }}>
+                {isAr ? 'عادات توني روبنز الأساسية — اضغط لإضافة فوراً' : "Tony Robbins' core habits — tap to add instantly"}
+              </p>
+              {TR_SUGGESTIONS.map((sug, i) => {
+                const alreadyAdded = addedSuggestionNames.has(sug.nameEn)
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between rounded-xl px-3 py-2"
+                    style={{ background: '#111', border: '1px solid #1e1e1e' }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>{sug.emoji}</span>
+                      <span className="text-sm" style={{ color: alreadyAdded ? '#555' : '#ddd' }}>
+                        {isAr ? sug.nameAr : sug.nameEn}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => !alreadyAdded && addSuggestedHabit(sug)}
+                      disabled={alreadyAdded}
+                      className="text-xs px-3 py-1.5 rounded-lg font-bold transition-all active:scale-95"
+                      style={{
+                        background: alreadyAdded ? '#1a1a1a' : `${sug.color}20`,
+                        color: alreadyAdded ? '#444' : sug.color,
+                        border: `1px solid ${alreadyAdded ? '#2a2a2a' : sug.color + '44'}`,
+                        cursor: alreadyAdded ? 'default' : 'pointer',
+                      }}
+                    >
+                      {alreadyAdded ? (isAr ? '✓ مضاف' : '✓ Added') : (isAr ? '+ أضف' : '+ Add')}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
         {/* 7-Day Grid */}
         <div
           className="rounded-2xl p-4"
@@ -389,10 +558,10 @@ export default function HabitTracker() {
           </p>
 
           {/* Day headers */}
-          <div className="grid mb-2" style={{ gridTemplateColumns: `1fr repeat(7, 28px)`, gap: '4px' }}>
+          <div className="grid mb-2" style={{ gridTemplateColumns: `1fr repeat(7, 44px)`, gap: '4px' }}>
             <div />
             {last7.map(date => (
-              <div key={date} className="text-center">
+              <div key={date} className="text-center" style={{ width: 44 }}>
                 <span
                   className="text-xs font-bold"
                   style={{ color: date === today ? '#c9a84c' : '#555' }}
@@ -409,7 +578,7 @@ export default function HabitTracker() {
               <div
                 key={habit.id}
                 className="grid items-center"
-                style={{ gridTemplateColumns: `1fr repeat(7, 28px)`, gap: '4px' }}
+                style={{ gridTemplateColumns: `1fr repeat(7, 44px)`, gap: '4px' }}
               >
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className="text-sm flex-shrink-0">{habit.emoji}</span>
@@ -422,16 +591,16 @@ export default function HabitTracker() {
                   return (
                     <div
                       key={date}
-                      className="rounded-md flex items-center justify-center"
+                      className="rounded-md flex items-center justify-center transition-all active:scale-90"
                       style={{
-                        width: 28, height: 28,
+                        width: 44, height: 44,
                         background: done ? `${habit.color}30` : '#1a1a1a',
                         border: `1px solid ${done ? habit.color + '60' : '#2a2a2a'}`,
                       }}
                     >
                       {done
-                        ? <span className="text-xs" style={{ color: habit.color }}>✓</span>
-                        : <span className="text-xs" style={{ color: '#333' }}>·</span>
+                        ? <span className="text-sm font-bold" style={{ color: habit.color }}>✓</span>
+                        : <span className="text-base" style={{ color: '#333' }}>·</span>
                       }
                     </div>
                   )

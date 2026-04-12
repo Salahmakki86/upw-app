@@ -52,6 +52,13 @@ function GoalCard({ goal, onUpdate, onDelete, t }) {
     : null
   const displayProgress = autoProgress !== null ? autoProgress : (goal.progress || 0)
 
+  // Overdue detection
+  const isOverdue = goal.dueDate && goal.dueDate < today && displayProgress < 100
+
+  // No-progress-in-7-days detection
+  const sevenDaysAgo = Date.now() - 7 * 86400000
+  const stale = goal.updatedAt && goal.updatedAt < sevenDaysAgo && displayProgress < 100
+
   // Save today's daily goal task
   const saveDailyTask = () => {
     if (!dailyInput.trim()) return
@@ -74,6 +81,7 @@ function GoalCard({ goal, onUpdate, onDelete, t }) {
     onUpdate(goal.id, {
       actionsDone: updated,
       progress: Math.round((Object.values(updated).filter(Boolean).length / actions.length) * 100),
+      updatedAt: Date.now(),
     })
   }
 
@@ -97,10 +105,17 @@ function GoalCard({ goal, onUpdate, onDelete, t }) {
   }
 
   const saveWeeklyNote = () => { onUpdate(goal.id, { weeklyNote }); setShowWeeklyNote(false) }
-  const saveProg = () => { onUpdate(goal.id, { progress: prog }); setEditProg(false) }
+  const saveProg = () => {
+    onUpdate(goal.id, { progress: prog, updatedAt: Date.now() })
+    setEditProg(false)
+  }
+
+  const cardBorderStyle = isOverdue
+    ? { background: '#1a1a1a', border: '1px solid rgba(230,57,70,0.4)' }
+    : { background: '#1a1a1a', border: '1px solid #2a2a2a' }
 
   return (
-    <div className="rounded-2xl overflow-hidden transition-all" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+    <div className="rounded-2xl overflow-hidden transition-all" style={cardBorderStyle}>
       {/* Header */}
       <div className="p-4">
         <div className="flex items-start justify-between gap-2">
@@ -116,8 +131,28 @@ function GoalCard({ goal, onUpdate, onDelete, t }) {
                   🔥 {streak} يوم
                 </span>
               )}
+              {/* Overdue badge */}
+              {isOverdue && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(230,57,70,0.18)', color: '#e63946' }}>
+                  ⚠️ متأخر / Overdue
+                </span>
+              )}
+              {/* Stale progress badge */}
+              {stale && (
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(255,193,7,0.12)', color: '#ffc107' }}>
+                  💡 لم يتغير منذ 7 أيام / No progress in 7 days
+                </span>
+              )}
             </div>
             <h3 className="font-bold text-white text-sm leading-snug">{goal.result}</h3>
+            {/* Due date display */}
+            {goal.dueDate && (
+              <p className="text-xs mt-1" style={{ color: isOverdue ? '#e63946' : '#888' }}>
+                📅 {goal.dueDate}
+              </p>
+            )}
           </div>
           <div className="flex gap-1 flex-shrink-0">
             <button onClick={() => setExpanded(!expanded)} className="p-1.5" style={{ color: '#666' }}>
@@ -370,6 +405,7 @@ function AddGoalModal({ onClose, onSave, t, lang }) {
   const [form, setForm] = useState({
     result: '', purpose: '', timeframe: TF[1],
     pain: '', pleasure: '', actions: ['', '', ''],
+    dueDate: '',
   })
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
@@ -401,6 +437,25 @@ function AddGoalModal({ onClose, onSave, t, lang }) {
               </button>
             ))}
           </div>
+        </div>
+        {/* Due Date */}
+        <div>
+          <p className="text-xs mb-1.5" style={{ color: '#888' }}>
+            {lang === 'ar' ? '📅 تاريخ الاستحقاق (اختياري)' : '📅 Due Date (optional)'}
+          </p>
+          <input
+            type="date"
+            value={form.dueDate}
+            onChange={e => set('dueDate', e.target.value)}
+            className="w-full rounded-xl px-3 py-2.5 text-sm"
+            style={{
+              background: '#111',
+              border: '1px solid #333',
+              color: form.dueDate ? '#ddd' : '#666',
+              outline: 'none',
+              colorScheme: 'dark',
+            }}
+          />
         </div>
       </div>
     )
@@ -475,7 +530,7 @@ function AddGoalModal({ onClose, onSave, t, lang }) {
               {t('next')} →
             </button>
           ) : (
-            <button onClick={() => onSave({ ...form, actions: form.actions.filter(a => a.trim()) })}
+            <button onClick={() => onSave({ ...form, actions: form.actions.filter(a => a.trim()), updatedAt: Date.now() })}
               className="flex-1 btn-gold py-3 text-sm">
               ✓ {t('goals_add')}
             </button>
@@ -570,8 +625,24 @@ export default function Goals() {
 
   const handleSave = (goal) => { addGoal(goal); setShowAdd(false) }
 
-  const activeGoals = state.goals.filter(g => (g.progress || 0) < 100)
-  const doneGoals   = state.goals.filter(g => (g.progress || 0) >= 100)
+  const today = new Date().toISOString().split('T')[0]
+  const sevenDaysAgo = Date.now() - 7 * 86400000
+
+  // Sort goals: overdue first (red border), then in-progress, then completed
+  const sortedGoals = [...state.goals].sort((a, b) => {
+    const aOverdue = a.dueDate && a.dueDate < today && (a.progress || 0) < 100
+    const bOverdue = b.dueDate && b.dueDate < today && (b.progress || 0) < 100
+    const aDone = (a.progress || 0) >= 100
+    const bDone = (b.progress || 0) >= 100
+    if (aOverdue && !bOverdue) return -1
+    if (!aOverdue && bOverdue) return 1
+    if (!aDone && bDone) return -1
+    if (aDone && !bDone) return 1
+    return 0
+  })
+
+  const activeGoals = sortedGoals.filter(g => (g.progress || 0) < 100)
+  const doneGoals   = sortedGoals.filter(g => (g.progress || 0) >= 100)
 
   const RPM_TIPS = {
     ar: ['حدد هدفك بوضوح تام', 'اعرف أسبابك العميقة', 'اتخذ إجراءات ضخمة وفورية', 'راقب النتائج باستمرار', 'غيّر نهجك حتى تنجح'],

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
+import { useToast } from '../context/ToastContext'
 import Layout from '../components/Layout'
 
 const COMMON_LIMITING = {
@@ -90,6 +91,8 @@ const DICKENS_TIMEFRAMES = {
 
 function DickensProcess({ belief, onClose, lang, t }) {
   const isAr = lang === 'ar'
+  const { state: appState, update } = useApp()
+  const { showToast } = useToast()
   const [phase, setPhase] = useState('pain')   // pain | joy | decision
   const [tfIndex, setTfIndex] = useState(0)
   const [answers, setAnswers] = useState({})
@@ -97,6 +100,8 @@ function DickensProcess({ belief, onClose, lang, t }) {
   const [qIndex, setQIndex] = useState(0)
   const [newBelief, setNewBelief] = useState('')
   const [committed, setCommitted] = useState(false)
+  const [joyText, setJoyText] = useState('')
+  const [incantationAdded, setIncantationAdded] = useState(false)
 
   const TIMEFRAMES = DICKENS_TIMEFRAMES[lang]
   const currentTF = TIMEFRAMES[tfIndex]
@@ -144,6 +149,26 @@ function DickensProcess({ belief, onClose, lang, t }) {
         <button onClick={onClose} className="btn-gold px-8 py-3 mt-2">
           {isAr ? 'مكتمل ✓' : 'Complete ✓'}
         </button>
+
+        {/* CROSS-LINK 5: Add new belief to Morning Incantations */}
+        {newBelief.trim() && (
+          incantationAdded ? (
+            <p className="text-xs font-bold" style={{ color: '#2ecc71' }}>
+              ✓ {isAr ? 'تمت الإضافة للتكرارات الصباحية!' : 'Added to morning incantations!'}
+            </p>
+          ) : (
+            <button
+              onClick={() => {
+                update('incantations', [...(appState.incantations || []), newBelief.trim()])
+                setIncantationAdded(true)
+                showToast(isAr ? 'تمت الإضافة للتكرارات الصباحية!' : 'Added to morning incantations!', 'success')
+              }}
+              className="px-6 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-[0.98]"
+              style={{ background: 'rgba(201,168,76,0.15)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.4)' }}>
+              ⚡ {isAr ? 'أضف لتكراراتي الصباحية' : 'Add to Morning Incantations'}
+            </button>
+          )
+        )}
       </div>
     )
   }
@@ -217,6 +242,8 @@ function DickensProcess({ belief, onClose, lang, t }) {
             : 'Close your eyes and imagine: a year from now living without this limiting belief — what does your life look like? How do you feel? What have you achieved? How are your relationships?'}
         </p>
         <textarea
+          value={joyText}
+          onChange={e => setJoyText(e.target.value)}
           placeholder={isAr
             ? 'صِف مستقبلك المشرق بكل تفاصيله...'
             : 'Describe your bright future in vivid detail...'}
@@ -224,7 +251,10 @@ function DickensProcess({ belief, onClose, lang, t }) {
           className="input-dark resize-none text-sm"
         />
         <button
-          onClick={() => setPhase('decision')}
+          onClick={() => {
+            setAnswers(a => ({ ...a, joy: joyText }))
+            setPhase('decision')
+          }}
           className="w-full btn-gold py-3 text-sm"
         >
           {isAr ? 'القرار الحاسم →' : 'The Decisive Decision →'}

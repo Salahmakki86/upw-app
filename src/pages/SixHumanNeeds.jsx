@@ -141,10 +141,11 @@ export default function SixHumanNeeds() {
   const [sources, setSources] = useState(state.sixNeedsSources || {})
   const [vehicle, setVehicle] = useState(state.sixNeedsVehicle || '')
 
-  const sortedNeeds = [...NEED_META].sort((a, b) => (scores[b.key] || 0) - (scores[a.key] || 0))
+  const sortedNeeds = [...NEED_META].map((n, index) => ({ ...n, index }))
+    .sort((a, b) => (scores[b.key] || 0) - (scores[a.key] || 0) || a.index - b.index)
   const dominant = sortedNeeds[0]
   const shadow = sortedNeeds[sortedNeeds.length - 1]
-  const top2Keys = [sortedNeeds[0].key, sortedNeeds[1].key]
+  const top2Keys = [sortedNeeds[0].key, sortedNeeds[1].key].sort()
   const insight = getInsight(top2Keys[0], top2Keys[1])
 
   function handleScoreChange(key, val) {

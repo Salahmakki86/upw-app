@@ -102,6 +102,7 @@ export default function NACProcess() {
   const [checkedDays, setCheckedDays] = useState({})
   const [testResponse, setTestResponse] = useState('')
   const [completed, setCompleted] = useState(false)
+  const [incantationAdded, setIncantationAdded] = useState(false)
 
   const days = getTodayAndNext6()
 
@@ -401,7 +402,7 @@ export default function NACProcess() {
                 </label>
                 <textarea
                   value={newBehavior}
-                  onChange={e => setNewBehavior(e.target.value)}
+                  onChange={e => { setNewBehavior(e.target.value); setIncantationAdded(false) }}
                   placeholder={
                     isAr
                       ? 'مثال: عندما أشعر برغبة في التأجيل، أقوم بقاعدة الخمس دقائق — ابدأ لمدة 5 دقائق فقط...'
@@ -422,6 +423,38 @@ export default function NACProcess() {
                   className="w-full bg-transparent border-b border-[#333] py-2 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-[#2ecc71]"
                 />
               </div>
+
+              {/* CROSS-LINK 2: Convert to Incantation */}
+              {newBehavior.trim().length > 5 && (
+                <div className="rounded-xl p-4 space-y-2"
+                  style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.3)' }}>
+                  <p className="text-xs font-bold" style={{ color: '#c9a84c' }}>
+                    ⚡ {isAr ? 'حوّل هذا لتكرار قوي' : 'Convert to Power Incantation'}
+                  </p>
+                  {incantationAdded ? (
+                    <p className="text-xs font-bold" style={{ color: '#2ecc71' }}>
+                      ✓ {isAr ? 'تمت الإضافة لتكراراتك!' : 'Added to your incantations!'}
+                    </p>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        const prefix = isAr ? 'أنا / I am ' : 'I am '
+                        const arPrefix = 'أنا '
+                        const enPrefix = 'I am '
+                        const text = newBehavior.trim()
+                        const alreadyPrefixed = text.startsWith(arPrefix) || text.startsWith(enPrefix) || text.startsWith('أنا / I am')
+                        const newIncantation = alreadyPrefixed ? text : prefix + text
+                        update('incantations', [...(state.incantations || []), newIncantation])
+                        setIncantationAdded(true)
+                        showToast(isAr ? 'تمت الإضافة لتكراراتك!' : 'Added to your incantations!', 'success')
+                      }}
+                      className="w-full py-2 rounded-xl text-xs font-bold transition-all active:scale-[0.98]"
+                      style={{ background: 'linear-gradient(135deg, #c9a84c, #f0c96e)', color: '#000' }}>
+                      ⚡ {isAr ? 'حوّل هذا لتكرار قوي' : 'Convert to Power Incantation'}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

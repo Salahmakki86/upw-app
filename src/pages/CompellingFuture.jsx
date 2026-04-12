@@ -101,6 +101,30 @@ export default function CompellingFuture() {
   const currentData = getTimeframeData(activeTimeframe)
   const currentTfMeta = TIMEFRAMES.find(t => t.id === activeTimeframe)
 
+  // CROSS-LINK 4: Bridge to Now state
+  const [bridgeGoalText, setBridgeGoalText] = useState('')
+  const [bridgeGoalAdded, setBridgeGoalAdded] = useState(false)
+
+  const currentFilledAreas = LIFE_AREAS.filter(a => currentData.areas[a.key]?.trim().length > 0).length
+  const showBridgeToNow = !vizMode && currentFilledAreas >= 3
+
+  function addBridgeGoal() {
+    if (!bridgeGoalText.trim()) return
+    const tfLabel = isAr ? currentTfMeta?.ar : currentTfMeta?.en
+    const newGoal = {
+      id: Date.now(),
+      result: bridgeGoalText.trim(),
+      why: (isAr ? 'من رؤية ' : 'From vision: ') + tfLabel,
+      actions: [],
+      progress: 0,
+      ts: Date.now(),
+    }
+    update('goals', [...(state.goals || []), newGoal])
+    setBridgeGoalAdded(true)
+    showToast(isAr ? 'تمت إضافة الهدف!' : 'Goal added!', 'success')
+    setBridgeGoalText('')
+  }
+
   return (
     <Layout>
       <div className="min-h-screen bg-[#0a0a0a] text-white pb-24" dir={dir}>
@@ -368,6 +392,46 @@ export default function CompellingFuture() {
                 <Save size={18} />
                 {isAr ? 'حفظ رؤيتي' : 'Save My Vision'}
               </button>
+
+              {/* CROSS-LINK 4: Bridge to Now — shown when ≥3 areas are filled */}
+              {showBridgeToNow && (
+                <div className="rounded-2xl p-5 space-y-3"
+                  style={{ background: 'rgba(52,152,219,0.07)', border: '1px solid rgba(52,152,219,0.3)' }}>
+                  <div>
+                    <p className="text-sm font-black text-white">
+                      🌉 {isAr ? 'جسر للحاضر / Bridge to Now' : 'Bridge to Now'}
+                    </p>
+                    <p className="text-xs mt-1" style={{ color: '#aaa' }}>
+                      {isAr
+                        ? `رؤيتك لـ ${currentTfMeta?.ar} رائعة! ما الهدف الأول الذي سيقربك منها؟`
+                        : `Your vision for ${currentTfMeta?.en} is great! What's the first goal that will bring you closer to it?`}
+                    </p>
+                  </div>
+                  {bridgeGoalAdded ? (
+                    <p className="text-xs font-bold" style={{ color: '#2ecc71' }}>
+                      ✓ {isAr ? 'تمت إضافة الهدف إلى قائمة أهدافك!' : 'Goal added to your goals list!'}
+                    </p>
+                  ) : (
+                    <>
+                      <input
+                        value={bridgeGoalText}
+                        onChange={e => setBridgeGoalText(e.target.value)}
+                        placeholder={isAr
+                          ? 'هدفي الأول نحو هذه الرؤية...'
+                          : 'My first goal toward this vision...'}
+                        className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-xl px-3 py-2 text-white text-sm placeholder-gray-700 focus:outline-none focus:border-[#3498db]/50"
+                      />
+                      <button
+                        onClick={addBridgeGoal}
+                        disabled={!bridgeGoalText.trim()}
+                        className="w-full py-2.5 rounded-xl text-sm font-bold disabled:opacity-40 transition-all"
+                        style={{ background: 'rgba(52,152,219,0.2)', color: '#3498db', border: '1px solid rgba(52,152,219,0.4)' }}>
+                        ➕ {isAr ? 'أضف كهدف / Add as Goal' : 'Add as Goal'}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

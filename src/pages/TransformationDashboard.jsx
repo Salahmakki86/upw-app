@@ -49,7 +49,8 @@ const getPillars = (state, isAr) => {
   const maxBeliefs = 10
   const beliefsScore = Math.min(100, Math.round((beliefsWorked / maxBeliefs) * 100))
 
-  const ffLevel = state.financialFreedom?.currentLevel || 1
+  const ffLevelRaw = state.financialFreedom?.currentLevel || 1
+  const ffLevel = Math.min(Math.max(ffLevelRaw, 1), 7)
   const ffScore = Math.round(((ffLevel - 1) / 6) * 100)
 
   const relationships = state.relationships?.ratings || {}

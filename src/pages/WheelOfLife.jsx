@@ -25,6 +25,28 @@ const AREAS_DATA = {
   ]
 }
 
+// Score explanation per area
+const AREA_EXPLANATIONS = {
+  ar: {
+    body:         { '1': 'متعب دائماً، مريض كثيراً، لا تمارس أي رياضة', '5': 'صحة متوسطة، بعض التمارين أحياناً، وزن مقبول', '10': 'طاقة استثنائية، جسم قوي، روتين صحي يومي ثابت' },
+    emotions:     { '1': 'تشعر بالمعاناة معظم الوقت، قلق دائم، حزن عميق', '5': 'أحياناً سعيد وأحياناً متعب عاطفياً', '10': 'حالة جميلة دائمة، امتنان عميق، هدوء داخلي حقيقي' },
+    relationships:{ '1': 'علاقات مشحونة، وحيد، لا اتصال حقيقي', '5': 'علاقات جيدة لكن تفتقر للعمق أو الصدق', '10': 'علاقات عميقة، محبة حقيقية، دعم متبادل قوي' },
+    time:         { '1': 'لا تتحكم في وقتك إطلاقاً، مشتت دائماً', '5': 'بعض التنظيم لكن كثير من الضياع', '10': 'تتحكم بوقتك تماماً، أولوياتك واضحة، لا هدر' },
+    career:       { '1': 'تكره عملك، لا معنى فيه، لا نمو', '5': 'عمل مقبول، بعض الرضا، لكن ليس شغفك', '10': 'تعيش رسالتك، شغوف بما تفعل، أثر حقيقي' },
+    money:        { '1': 'ديون، ضغط مالي يومي، لا مدخرات', '5': 'مستقر مالياً لكن بلا وفرة أو حرية', '10': 'حرية مالية كاملة، المال يعمل لصالحك' },
+    contribution: { '1': 'لا تشعر أنك تؤثر في أحد، تعطي للنفس فقط', '5': 'تساعد أحياناً لكن العطاء ليس عادة راسخة', '10': 'تأثيرك واسع، عطاؤك جزء من هويتك، تشعر بالامتلاء' },
+  },
+  en: {
+    body:         { '1': 'Always tired, often sick, no exercise routine', '5': 'Average health, occasional exercise, acceptable weight', '10': 'Exceptional energy, strong body, consistent daily health routine' },
+    emotions:     { '1': 'Suffering most of the time, constant anxiety, deep sadness', '5': 'Sometimes happy, sometimes emotionally drained', '10': 'Permanent beautiful state, deep gratitude, true inner peace' },
+    relationships:{ '1': 'Tense relationships, lonely, no real connection', '5': 'Good relationships but lacking depth or honesty', '10': 'Deep relationships, real love, strong mutual support' },
+    time:         { '1': 'No control over time, always distracted', '5': 'Some organization but lots of waste', '10': 'Full control, clear priorities, zero wasted time' },
+    career:       { '1': 'Hate your work, no meaning, no growth', '5': 'Acceptable work, some satisfaction, but not your passion', '10': 'Living your mission, passionate, making a real impact' },
+    money:        { '1': 'Debt, daily financial stress, no savings', '5': 'Financially stable but no abundance or freedom', '10': 'Full financial freedom, money works for you' },
+    contribution: { '1': "Don't feel you impact anyone, focused only on self", '5': 'Help occasionally but giving is not a deep habit', '10': 'Wide impact, giving is part of your identity, feel fulfilled' },
+  }
+}
+
 function RadarChart({ scores, areas, size = 260 }) {
   const cx = size / 2, cy = size / 2
   const n = areas.length
@@ -99,6 +121,9 @@ export default function WheelOfLife() {
   const [saved, setSaved] = useState(false)
   const [showGoalTip, setShowGoalTip] = useState(false)
   const [activeArea, setActiveArea] = useState(null)
+  const [compareMode, setCompareMode] = useState(false)
+  const [scoreInfoArea, setScoreInfoArea] = useState(null)
+  const [lowAreaSuggestions, setLowAreaSuggestions] = useState([])
 
   const AREAS = AREAS_DATA[lang]
   const scores = state.wheelScores
@@ -106,11 +131,27 @@ export default function WheelOfLife() {
   const minArea = AREAS.reduce((a, b) => (scores[a.key] < scores[b.key] ? a : b))
   const maxArea = AREAS.reduce((a, b) => (scores[a.key] > scores[b.key] ? a : b))
 
+  const wheelHistory = state.wheelHistory || []
+  const canCompare = wheelHistory.length >= 2
+  const prevSnapshot = canCompare ? wheelHistory[wheelHistory.length - 2] : null
+
   const handleSave = () => {
     saveWheelSnapshot()
     setSaved(true)
     setShowGoalTip(true)
+    // Build list of low areas for suggestions
+    const lows = AREAS.filter(a => scores[a.key] < 6)
+    setLowAreaSuggestions(lows)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  const getChangeArrow = (key) => {
+    if (!prevSnapshot) return { arrow: '→', color: '#888' }
+    const curr = scores[key] || 0
+    const prev = prevSnapshot.scores[key] || 0
+    if (curr > prev) return { arrow: '↑', color: '#2ecc71' }
+    if (curr < prev) return { arrow: '↓', color: '#e63946' }
+    return { arrow: '→', color: '#888' }
   }
 
   return (
@@ -137,6 +178,77 @@ export default function WheelOfLife() {
           </div>
         </div>
 
+        {/* Compare Mode Toggle */}
+        {canCompare && (
+          <button
+            onClick={() => setCompareMode(v => !v)}
+            className="w-full py-2.5 rounded-xl text-sm font-bold transition-all"
+            style={{
+              background: compareMode ? 'rgba(52,152,219,0.15)' : '#111',
+              border: `1px solid ${compareMode ? 'rgba(52,152,219,0.4)' : '#1e1e1e'}`,
+              color: compareMode ? '#3498db' : '#666',
+            }}
+          >
+            📊 {isAr ? 'قارن / Compare' : 'Compare with previous'}
+          </button>
+        )}
+
+        {/* Compare Table */}
+        {compareMode && prevSnapshot && (
+          <div className="rounded-2xl overflow-hidden" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+            <div className="grid text-xs font-bold py-2 px-4" style={{ gridTemplateColumns: '1fr 60px 60px 40px', color: '#666' }}>
+              <span>{isAr ? 'المجال' : 'Area'}</span>
+              <span className="text-center">{isAr ? 'الآن' : 'Now'}</span>
+              <span className="text-center">{isAr ? 'السابق' : 'Prev'}</span>
+              <span className="text-center">{isAr ? 'التغيير' : 'Change'}</span>
+            </div>
+            {AREAS.map(area => {
+              const { arrow, color } = getChangeArrow(area.key)
+              const curr = scores[area.key] || 0
+              const prev = prevSnapshot.scores[area.key] || 0
+              return (
+                <div key={area.key}
+                  className="grid items-center px-4 py-2.5 text-sm"
+                  style={{ gridTemplateColumns: '1fr 60px 60px 40px', borderTop: '1px solid #222' }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>{area.emoji}</span>
+                    <span className="text-xs" style={{ color: '#bbb' }}>{area.label}</span>
+                  </div>
+                  <span className="text-center font-black" style={{ color: '#c9a84c' }}>{curr}</span>
+                  <span className="text-center font-bold" style={{ color: '#555' }}>{prev}</span>
+                  <span className="text-center font-black text-base" style={{ color }}>{arrow}</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Score Info Popup */}
+        {scoreInfoArea && (
+          <div className="rounded-2xl p-4 animate-fade-in"
+            style={{ background: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.25)' }}>
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-sm font-bold" style={{ color: '#c9a84c' }}>
+                {AREAS.find(a => a.key === scoreInfoArea)?.emoji} {AREAS.find(a => a.key === scoreInfoArea)?.label}
+              </p>
+              <button onClick={() => setScoreInfoArea(null)} style={{ color: '#555', fontSize: 18 }}>×</button>
+            </div>
+            {['1', '5', '10'].map(lvl => {
+              const exp = AREA_EXPLANATIONS[lang][scoreInfoArea]?.[lvl]
+              return exp ? (
+                <div key={lvl} className="flex gap-3 mb-2">
+                  <span className="text-xs font-black w-5 flex-shrink-0"
+                    style={{ color: lvl === '1' ? '#e63946' : lvl === '5' ? '#c9a84c' : '#2ecc71' }}>
+                    {lvl}
+                  </span>
+                  <p className="text-xs leading-relaxed" style={{ color: '#aaa' }}>{exp}</p>
+                </div>
+              ) : null
+            })}
+          </div>
+        )}
+
         <div className="space-y-3">
           {AREAS.map(area => (
             <div key={area.key} className="rounded-2xl p-4 transition-all"
@@ -147,6 +259,14 @@ export default function WheelOfLife() {
                 <div className="flex items-center gap-2">
                   <span>{area.emoji}</span>
                   <span className="text-sm font-bold text-white">{area.label}</span>
+                  {/* Info button */}
+                  <button
+                    onClick={e => { e.stopPropagation(); setScoreInfoArea(scoreInfoArea === area.key ? null : area.key) }}
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-xs transition-all"
+                    style={{ background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.25)' }}
+                  >
+                    i
+                  </button>
                 </div>
                 <span className="text-lg font-black"
                   style={{ color: scores[area.key] >= 7 ? '#2ecc71' : scores[area.key] >= 4 ? '#c9a84c' : '#e63946' }}>
@@ -179,17 +299,53 @@ export default function WheelOfLife() {
           {saved ? `✓ ${t('wheel_snapshot_saved')}!` : `💾 ${t('wheel_save')}`}
         </button>
 
-        {/* Goal suggestion after saving */}
-        {showGoalTip && (
+        {/* Auto Goal Suggestions for areas < 6 */}
+        {showGoalTip && lowAreaSuggestions.length > 0 && (
+          <div className="space-y-2">
+            {lowAreaSuggestions.map(area => (
+              <div key={area.key} className="rounded-2xl p-4 animate-scale-in"
+                style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.35)' }}>
+                <p className="text-sm font-bold text-white mb-1">
+                  💡 {area.emoji} {isAr
+                    ? `"${area.label}" يحتاج اهتماماً — هل تضيف هدفاً الآن؟`
+                    : `"${area.label}" needs attention — add a goal now?`}
+                </p>
+                <p className="text-xs mb-3" style={{ color: '#aaa' }}>
+                  {isAr ? `درجتك الحالية: ${scores[area.key]}/10` : `Current score: ${scores[area.key]}/10`}
+                </p>
+                <div className="flex gap-2">
+                  <button onClick={() => setLowAreaSuggestions(prev => prev.filter(a => a.key !== area.key))}
+                    className="flex-1 py-2 rounded-xl text-xs font-bold"
+                    style={{ background: '#1a1a1a', color: '#666', border: '1px solid #2a2a2a' }}>
+                    {isAr ? 'لاحقاً' : 'Later'}
+                  </button>
+                  <button
+                    onClick={() => navigate('/goals', { state: { suggestedArea: area.key, suggestedLabel: area.label } })}
+                    className="flex-1 py-2 rounded-xl text-xs font-bold"
+                    style={{ background: 'linear-gradient(135deg, #c9a84c, #f0c96e)', color: '#000' }}>
+                    ➕ {isAr ? 'أضف هدفاً' : 'Add Goal'}
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button onClick={() => { setShowGoalTip(false); setLowAreaSuggestions([]) }}
+              className="w-full py-2 text-xs" style={{ color: '#555' }}>
+              {isAr ? 'إغلاق الكل' : 'Dismiss all'}
+            </button>
+          </div>
+        )}
+
+        {/* Legacy single suggestion (kept for backwards compat when no lows) */}
+        {showGoalTip && lowAreaSuggestions.length === 0 && scores[minArea.key] < 6 && (
           <div className="rounded-2xl p-4 animate-scale-in"
-            style={{ background: 'rgba(52,152,219,0.08)', border: '1px solid rgba(52,152,219,0.3)' }}>
+            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.35)' }}>
             <p className="text-sm font-bold text-white mb-1">
-              🎯 {isAr ? 'هل تريد تحسين أضعف مجال؟' : 'Want to improve your weakest area?'}
+              📊 {isAr
+                ? `بناءً على تقييمك، مجال "${minArea.label}" يحتاج أكثر اهتماماً. هل تريد إضافة هدف لتحسينه؟`
+                : `Based on your assessment, "${minArea.label}" needs the most attention. Want to add a goal to improve it?`}
             </p>
             <p className="text-xs mb-3" style={{ color: '#aaa' }}>
-              {isAr
-                ? `مجال "${minArea.label}" (${scores[minArea.key]}/10) يحتاج اهتماماً — أنشئ هدفاً له الآن`
-                : `"${minArea.label}" (${scores[minArea.key]}/10) needs attention — create a goal for it now`}
+              {isAr ? `درجتك الحالية: ${scores[minArea.key]}/10` : `Current score: ${scores[minArea.key]}/10`}
             </p>
             <div className="flex gap-2">
               <button onClick={() => setShowGoalTip(false)}
@@ -197,10 +353,11 @@ export default function WheelOfLife() {
                 style={{ background: '#1a1a1a', color: '#666', border: '1px solid #2a2a2a' }}>
                 {isAr ? 'لاحقاً' : 'Later'}
               </button>
-              <button onClick={() => navigate('/goals')}
+              <button
+                onClick={() => navigate('/goals', { state: { suggestedArea: minArea.key, suggestedLabel: minArea.label } })}
                 className="flex-1 py-2 rounded-xl text-xs font-bold"
-                style={{ background: 'rgba(52,152,219,0.2)', color: '#3498db', border: '1px solid rgba(52,152,219,0.4)' }}>
-                {isAr ? `أنشئ هدف لـ ${minArea.emoji} ${minArea.label}` : `Create Goal for ${minArea.emoji} ${minArea.label}`}
+                style={{ background: 'linear-gradient(135deg, #c9a84c, #f0c96e)', color: '#000' }}>
+                ➕ {isAr ? `أضف هدفاً / Add Goal` : `Add Goal`}
               </button>
             </div>
           </div>
