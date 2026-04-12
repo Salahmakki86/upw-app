@@ -31,7 +31,8 @@ const EMPTY_FORM = {
 
 export default function VisionBoard() {
   const { state, update } = useApp()
-  const { lang, isAr } = useLang()
+  const { lang } = useLang()
+  const isAr = lang === 'ar'
 
   const board = state.visionBoard || { cards: [] }
   const cards = board.cards || []

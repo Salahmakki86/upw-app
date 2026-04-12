@@ -181,7 +181,8 @@ function ScoreTips({ score, t, isAr }) {
 /* ─── MAIN PAGE ─────────────────────────────────────────────────────── */
 export default function SleepTracker() {
   const { state, update } = useApp()
-  const { lang, isAr } = useLang()
+  const { lang } = useLang()
+  const isAr = lang === 'ar'
 
   const sleepLog = state.sleepLog || {}
   const today = getDateKey(0)

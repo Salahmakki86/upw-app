@@ -172,7 +172,8 @@ function BadgeCard({ achievement, isUnlocked, isNew, unlockedAt, t, isAr }) {
 /* ─── MAIN PAGE ─────────────────────────────────────────────────────── */
 export default function Achievements() {
   const { state, update } = useApp()
-  const { lang, isAr } = useLang()
+  const { lang } = useLang()
+  const isAr = lang === 'ar'
 
   const achievementsState = state.achievements || { unlocked: [], seen: [] }
   const unlocked = achievementsState.unlocked || []   // [{ id, date }]

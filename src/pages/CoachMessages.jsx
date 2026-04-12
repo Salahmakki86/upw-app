@@ -126,7 +126,7 @@ function ComposeSection({ students, onSent }) {
     try {
       await upwApi.sendCoachMessage({
         toUserId,
-        message: text.trim(),
+        body: text.trim(),
         type: msgType,
       })
       setSent(true)
