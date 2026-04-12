@@ -5,7 +5,7 @@ import {
   BarChart2, BookOpen, Briefcase, Compass, Calendar,
   TrendingUp, Shield, Clock,
   Trophy, Mail, Users, Heart, Activity, Shuffle, PieChart,
-  LogOut, Settings,
+  LogOut, Settings, NotebookPen,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
@@ -123,7 +123,8 @@ export default function Dashboard() {
     { path: '/protocol',      icon: Activity,  labelKey: 'dash_link_protocol',      color: '#1abc9c' },
     { path: '/challenge',     icon: Shuffle,   labelKey: 'dash_link_challenge',     color: '#e67e22' },
     { path: '/stats',         icon: PieChart,  labelKey: 'dash_link_stats',         color: '#9b59b6' },
-    { path: '/scaling',       icon: TrendingUp, labelKey: 'dash_link_scaling',       color: '#27ae60', adminOnly: true },
+    { path: '/scaling',       icon: TrendingUp,   labelKey: 'dash_link_scaling',   color: '#27ae60',  adminOnly: true },
+    { path: '/lifebook',      icon: NotebookPen,  labelKey: 'dash_link_lifebook',  color: '#8e44ad',  adminOnly: true },
   ]
 
   return (
