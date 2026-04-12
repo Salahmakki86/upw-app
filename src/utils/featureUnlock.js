@@ -23,6 +23,7 @@ export function isFeatureUnlocked(path, tier) {
     '/morning': 1, '/state': 1, '/evening': 1, '/habits': 1, '/gratitude': 1,
     '/today': 1, '/wins': 1, '/emergency': 1,
     '/weekly-pulse': 2,
+    '/monthly-reset': 3,
     // Tier 2 — After 3 days
     '/goals': 2, '/wheel': 2, '/sleep': 2, '/beliefs': 2, '/incantations': 2,
     // Tier 3 — After 7 days

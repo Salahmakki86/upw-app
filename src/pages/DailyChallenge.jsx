@@ -105,23 +105,49 @@ const CATEGORIES = {
 }
 
 export default function DailyChallenge() {
-  const { state, acceptChallenge, completeChallenge, today } = useApp()
+  const { state, update, acceptChallenge, completeChallenge, today } = useApp()
   const { lang, t } = useLang()
   const isAr = lang === 'ar'
 
   const [view, setView] = useState('today') // 'today' | 'all'
   const [filterCat, setFilterCat] = useState('all')
+  const [todayCat, setTodayCat] = useState('all') // category filter for today's challenge rotation
 
   const dc = state.dailyChallenges || { history: [], accepted: {}, completed: {} }
   const accepted = dc.accepted || {}
   const completed = dc.completed || {}
   const history = dc.history || []
 
-  // Seeded by date
+  // ── Improved challenge algorithm: day-of-year rotation + recent avoidance ──
   const todayChallenge = useMemo(() => {
-    const dateSum = today.replace(/-/g, '').split('').reduce((a, b) => a + parseInt(b), 0)
-    return ALL_CHALLENGES[dateSum % ALL_CHALLENGES.length]
-  }, [today])
+    const d = new Date(today)
+    const start = new Date(d.getFullYear(), 0, 0)
+    const diff = d - start
+    const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+    const pool = todayCat === 'all'
+      ? ALL_CHALLENGES
+      : ALL_CHALLENGES.filter(c => c.cat === todayCat)
+
+    if (pool.length === 0) return ALL_CHALLENGES[0]
+
+    const recentIndices = state.recentChallenges || []
+
+    // Start from day-of-year position and advance until we find one not recently shown
+    let idx = dayOfYear % pool.length
+    let attempts = 0
+    while (attempts < pool.length) {
+      const candidate = pool[idx]
+      const globalIdx = ALL_CHALLENGES.findIndex(c => c.id === candidate.id)
+      if (!recentIndices.includes(globalIdx)) return candidate
+      idx = (idx + 1) % pool.length
+      attempts++
+    }
+    // All were recently shown — just use the day-of-year index
+    return pool[dayOfYear % pool.length]
+  }, [today, todayCat, state.recentChallenges])
+
+  const todayChallengeIndex = ALL_CHALLENGES.findIndex(c => c.id === todayChallenge.id)
 
   const isAccepted = !!accepted[today]
   const isCompleted = !!completed[today]
@@ -178,6 +204,28 @@ export default function DailyChallenge() {
         {/* Today's Challenge */}
         {view === 'today' && (
           <div className="space-y-4">
+
+            {/* Category filter for today's challenge rotation */}
+            <div>
+              <p className="text-xs font-bold mb-2" style={{ color: '#888' }}>
+                {isAr ? '🔍 مصفاة / اختر الفئة' : '🔍 Filter / Choose category'}
+              </p>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                <button onClick={() => setTodayCat('all')}
+                  className="rounded-full px-3 py-1.5 text-xs font-bold flex-shrink-0 transition-all"
+                  style={{ background: todayCat === 'all' ? 'rgba(201,168,76,0.2)' : '#1a1a1a', border: `1px solid ${todayCat === 'all' ? '#c9a84c' : '#2a2a2a'}`, color: todayCat === 'all' ? '#c9a84c' : '#666' }}>
+                  {isAr ? 'الكل' : 'All'}
+                </button>
+                {Object.entries(cats).map(([key, cat]) => (
+                  <button key={key} onClick={() => setTodayCat(key)}
+                    className="rounded-full px-3 py-1.5 text-xs font-bold flex-shrink-0 transition-all"
+                    style={{ background: todayCat === key ? `${cat.color}20` : '#1a1a1a', border: `1px solid ${todayCat === key ? cat.color : '#2a2a2a'}`, color: todayCat === key ? cat.color : '#666' }}>
+                    {cat.emoji} {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="rounded-2xl p-5" style={{ background: isCompleted ? 'rgba(46,204,113,0.08)' : 'linear-gradient(135deg, #1a1500, #1a1a1a)', border: `1px solid ${isCompleted ? 'rgba(46,204,113,0.3)' : 'rgba(201,168,76,0.25)'}` }}>
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-black uppercase tracking-widest" style={{ color: '#e67e22' }}>
@@ -207,7 +255,10 @@ export default function DailyChallenge() {
                       {isAr ? '💪 قبلت التحدي!' : '💪 Challenge Accepted!'}
                     </p>
                   </div>
-                  <button onClick={() => completeChallenge(today)}
+                  <button onClick={() => {
+                    completeChallenge(today)
+                    update('recentChallenges', [...(state.recentChallenges || []).slice(-6), todayChallengeIndex])
+                  }}
                     className="w-full rounded-xl py-3 font-black text-sm transition-all active:scale-[0.98]"
                     style={{ background: 'rgba(46,204,113,0.15)', border: '1px solid rgba(46,204,113,0.3)', color: '#2ecc71' }}>
                     ✅ {isAr ? 'أنجزته!' : 'I Did It!'}

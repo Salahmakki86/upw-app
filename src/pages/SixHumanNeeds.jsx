@@ -1,11 +1,12 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import { useToast } from '../context/ToastContext'
 import Layout from '../components/Layout'
 import {
   Heart, TrendingUp, Star, Shield, Zap, Users,
-  CheckCircle, ChevronRight, BarChart2, Lightbulb
+  CheckCircle, ChevronRight, BarChart2, Lightbulb, Link
 } from 'lucide-react'
 
 const NEED_META = [
@@ -21,6 +22,14 @@ const NEED_META = [
     healthy_en: ['Planning & organizing', 'Building solid skills', 'Saving & investing'],
     unhealthy_ar: ['تجنب المخاطر كلياً', 'السيطرة على الآخرين', 'الوسواس القهري'],
     unhealthy_en: ['Avoiding all risk', 'Controlling others', 'OCD tendencies'],
+    rel_ar: [
+      'تبحث عن الاستقرار والأمان في علاقاتك — تجنّب التغيير المفاجئ',
+      'تحتاج إلى وعود واضحة وروتين ثابت مع من تحب لتشعر بالارتياح',
+    ],
+    rel_en: [
+      'You seek stability and security in relationships — sudden change feels threatening',
+      'Clear commitments and consistent routines with loved ones help you feel at ease',
+    ],
   },
   {
     key: 'variety',
@@ -34,6 +43,14 @@ const NEED_META = [
     healthy_en: ['Travel & exploration', 'Learning new skills', 'Thrilling sports'],
     unhealthy_ar: ['تشتت الانتباه', 'الانتقال من علاقة لأخرى', 'إدمان المخاطرة'],
     unhealthy_en: ['Distraction & ADD', 'Serial relationships', 'Risk addiction'],
+    rel_ar: [
+      'تحتاج إلى التجديد والإثارة في علاقاتك — الروتين يشعرك بالملل',
+      'تجلب الحيوية والإبداع لمن حولك، لكن احذر من عدم الاستقرار العاطفي',
+    ],
+    rel_en: [
+      'You need novelty and excitement in relationships — routine feels suffocating',
+      'You bring vitality and creativity to others, but watch for emotional instability',
+    ],
   },
   {
     key: 'significance',
@@ -47,6 +64,14 @@ const NEED_META = [
     healthy_en: ['Achieving milestones', 'Becoming an expert', 'Leading others'],
     unhealthy_ar: ['التفاخر والغرور', 'إنزال الآخرين', 'السعي للشهرة بأي ثمن'],
     unhealthy_en: ['Bragging & arrogance', 'Putting others down', 'Fame at any cost'],
+    rel_ar: [
+      'تحتاج إلى أن تُقدَّر وتُرى في علاقاتك — الإهمال يؤلمك عميقاً',
+      'علاقاتك تزدهر حين يُعترف بدورك ومكانتك — الاعتراف هو لغة حبك',
+    ],
+    rel_en: [
+      'You need to feel valued and seen in relationships — being ignored cuts deep',
+      'Your relationships flourish when your role is recognized — appreciation is your love language',
+    ],
   },
   {
     key: 'love',
@@ -60,6 +85,14 @@ const NEED_META = [
     healthy_en: ['Building genuine bonds', 'Volunteering & giving', 'Celebrating others'],
     unhealthy_ar: ['التعلق المفرط', 'الغيرة والتملك', 'قبول علاقات مسيئة'],
     unhealthy_en: ['Codependency', 'Jealousy & possessiveness', 'Accepting abuse'],
+    rel_ar: [
+      'العلاقات هي مركز حياتك — تستثمر عاطفياً بعمق وتحتاج تواصلاً حقيقياً',
+      'تخشى الرفض لأن الحب حاجتك الجوهرية — الانفتاح مع الحدود الصحية مفتاحك',
+    ],
+    rel_en: [
+      'Relationships are at the center of your life — you invest deeply and need genuine connection',
+      'You fear rejection because love is your core need — openness with healthy boundaries is your key',
+    ],
   },
   {
     key: 'growth',
@@ -73,6 +106,14 @@ const NEED_META = [
     healthy_en: ['Continuous learning', 'New challenges', 'Reflection & self-review'],
     unhealthy_ar: ['إهمال العلاقات للتركيز على النمو', 'الكمالية المفرطة', 'الإرهاق الذاتي'],
     unhealthy_en: ['Neglecting relationships for growth', 'Perfectionism', 'Self-burnout'],
+    rel_ar: [
+      'تريد علاقات تُحفّزك على النمو — الشريك الذي يُلهمك أهم من الشريك المريح',
+      'احذر من إهمال علاقاتك أثناء انشغالك بتطوير نفسك — النمو مع الآخرين أعمق',
+    ],
+    rel_en: [
+      'You want relationships that challenge and inspire growth — a stimulating partner beats a comfortable one',
+      'Beware of neglecting relationships while pursuing self-improvement — growing together runs deeper',
+    ],
   },
   {
     key: 'contribution',
@@ -86,6 +127,14 @@ const NEED_META = [
     healthy_en: ['Charity work', 'Mentoring others', 'Social impact projects'],
     unhealthy_ar: ['إهمال النفس لأجل الآخرين', 'الشعور بالاستشهاد', 'تجاهل حدود الطاقة'],
     unhealthy_en: ['Self-neglect for others', 'Martyrdom complex', 'Ignoring energy limits'],
+    rel_ar: [
+      'تجد معنى عميقاً في رعاية من تحب ودعمهم — العطاء هو أسلوب حبك',
+      'تأكد من أن علاقاتك تبادلية — لا تستنزف نفسك لأجل الآخرين دون تجديد طاقتك',
+    ],
+    rel_en: [
+      'You find deep meaning in nurturing and supporting loved ones — giving is how you love',
+      'Ensure your relationships are reciprocal — don\'t deplete yourself for others without replenishing',
+    ],
   },
 ]
 
@@ -132,6 +181,7 @@ export default function SixHumanNeeds() {
   const { lang, dir } = useLang()
   const { state, update } = useApp()
   const { showToast } = useToast()
+  const navigate = useNavigate()
   const isAr = lang === 'ar'
 
   const [activeTab, setActiveTab] = useState('diagnostic')
@@ -285,7 +335,7 @@ export default function SixHumanNeeds() {
                   const pct = maxScore > 0 ? (val / maxScore) * 100 : 0
                   return (
                     <div key={need.key} className="flex items-center gap-3">
-                      <div className="text-xs text-gray-400 w-24 flex-shrink-0 text-right" dir="ltr">
+                      <div className={`text-xs text-gray-400 w-24 flex-shrink-0 ${isAr ? 'text-left' : 'text-right'}`} dir="ltr">
                         {isAr ? need.ar : need.en}
                       </div>
                       <div className="flex-1 h-5 bg-[#222] rounded-full overflow-hidden">
@@ -512,6 +562,47 @@ export default function SixHumanNeeds() {
                   style={{ background: 'linear-gradient(135deg, #c9a84c, #f0c96e)' }}
                 >
                   {isAr ? 'حفظ المركبة الأساسية' : 'Save Primary Vehicle'}
+                </button>
+              </div>
+
+              {/* ── Cross-link: Relationship Blueprint ── */}
+              <div className="bg-[#111] rounded-2xl p-5 border space-y-4"
+                style={{ borderColor: dominant.color + '44' }}>
+                <div className="flex items-center gap-2">
+                  <Link size={18} style={{ color: dominant.color }} />
+                  <span className="font-bold" style={{ color: dominant.color }}>
+                    {isAr ? 'ربط بالعلاقات' : 'Connection to Relationships'}
+                  </span>
+                </div>
+
+                {/* Top need in context of relationships */}
+                <div className="rounded-xl p-4 space-y-2"
+                  style={{ background: dominant.color + '10', border: `1px solid ${dominant.color}33` }}>
+                  <p className="text-sm font-bold text-white">
+                    {isAr
+                      ? `احتياجك الأعلى "${dominant.ar}" يشكّل كيف تسلوك في علاقاتك — افهم نفسك أكثر`
+                      : `Your dominant need "${dominant.en}" shapes how you show up in relationships — understand yourself deeper`}
+                  </p>
+                </div>
+
+                {/* Relationship impact lines */}
+                <div className="space-y-2">
+                  {(isAr ? dominant.rel_ar : dominant.rel_en).map((line, i) => (
+                    <div key={i} className="flex gap-3 rounded-xl p-3"
+                      style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+                      <ChevronRight size={16} style={{ color: dominant.color, flexShrink: 0, marginTop: 2 }} />
+                      <p className="text-sm text-gray-300">{line}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Navigate to Relationships */}
+                <button
+                  onClick={() => navigate('/relationships')}
+                  className="w-full py-3 rounded-xl font-bold text-black transition-all active:scale-[0.98]"
+                  style={{ background: 'linear-gradient(135deg, #c9a84c, #f0c96e)' }}
+                >
+                  🔗 {isAr ? 'افتح خارطة العلاقات' : 'Open Relationship Blueprint'}
                 </button>
               </div>
             </div>

@@ -294,8 +294,14 @@ const INITIAL_STATE = {
   // Emergency Toolkit usage log
   emergencyLog: [],   // [{ date, tool, ts }]
 
+  // SOS state-change log: [{ date, time, result }]
+  sosLog: [],
+
   // Weekly Pulse check-ins: { 'YYYY-WW': { energy, word, win, challenge, reframe, intentions, weekStar, completedAt } }
   weeklyPulse: {},
+
+  // Monthly Reset ceremonies: [{ monthKey, completedAt, wins, release, word, goal, scores }]
+  monthlyResets: [],
 }
 
 const AppContext = createContext(null)

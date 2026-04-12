@@ -171,9 +171,13 @@ export default function MorningRitual() {
     if (!answer.trim()) return
     const newAnswers = { ...answers, [qIndex]: answer }
     setAnswers(newAnswers)
+    // Auto-save partial answers immediately on every question
+    update('morningAnswers', newAnswers)
+    // Clear draft since this question is now saved
+    update('morningAnswerDraft', null)
     setAnswer('')
     if (qIndex < QUESTIONS.length - 1) setQIndex(qIndex + 1)
-    else { update('morningAnswers', newAnswers); setView('incantations') }
+    else setView('incantations')
   }
 
   const finishMorning = () => { completeMorning(); setView('done') }
@@ -253,6 +257,15 @@ export default function MorningRitual() {
     )
   }
 
+  // Restore draft on mount when entering questions view, or when qIndex changes
+  useEffect(() => {
+    if (view !== 'questions') return
+    const draft = state.morningAnswerDraft
+    if (draft && draft.qIndex === qIndex && draft.text) {
+      setAnswer(draft.text)
+    }
+  }, [view, qIndex]) // eslint-disable-line react-hooks/exhaustive-deps
+
   if (view === 'questions') {
     return (
       <Layout title={t('morning_questions_title')} subtitle={`${lang === 'ar' ? 'السؤال' : 'Question'} ${qIndex + 1} / ${QUESTIONS.length}`}>
@@ -266,7 +279,11 @@ export default function MorningRitual() {
           </div>
           <textarea
             value={answer}
-            onChange={e => setAnswer(e.target.value)}
+            onChange={e => {
+              setAnswer(e.target.value)
+              // Auto-save draft so mid-session data is never lost
+              update('morningAnswerDraft', { qIndex, text: e.target.value })
+            }}
             placeholder={t('morning_type_answer')}
             rows={4}
             className="input-dark resize-none text-sm"
@@ -287,6 +304,7 @@ export default function MorningRitual() {
   const lowestArea = wheelEntries.length > 0
     ? wheelEntries.reduce((a, b) => a[1] < b[1] ? a : b)
     : null
+  const lowestAreaKey = lowestArea?.[0]
 
   // #3 — Sleep → Energy chain
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
@@ -306,7 +324,7 @@ export default function MorningRitual() {
             <p className="text-xs font-bold" style={{ color: '#e74c3c' }}>
               ⚠️ {isAr
                 ? `نمت ${lastSleep.hours} ساعة فقط البارحة — ركّز اليوم على الطاقة الجسدية أكثر!`
-                : `You only slept ${lastSleep.hours}h last night — focus extra on physical energy today!`}
+                : `You only slept ${lastSleep.hours}${isAr ? ' ساعة' : 'h'} last night — focus extra on physical energy today!`}
             </p>
             <p className="text-xs mt-1" style={{ color: '#888' }}>
               {isAr ? 'تنفس أعمق، تحرك أكثر، اشرب ماء فوراً' : 'Breathe deeper, move more, drink water immediately'}
@@ -327,12 +345,12 @@ export default function MorningRitual() {
         )}
 
         {/* #2 — Wheel of Life Lowest Area Prompt */}
-        {lowestArea && (
+        {lowestArea && lowestAreaKey && (
           <div className="rounded-2xl p-3" style={{ background: 'rgba(230,57,70,0.06)', border: '1px solid rgba(230,57,70,0.15)' }}>
             <p className="text-xs font-bold" style={{ color: '#e63946' }}>
               ⚙️ {isAr
-                ? `مجال "${AREA_NAMES[lowestArea[0]]?.ar || lowestArea[0]}" (${lowestArea[1]}/10) يحتاج اهتمامك — ماذا ستفعل اليوم لتحسينه؟`
-                : `"${AREA_NAMES[lowestArea[0]]?.en || lowestArea[0]}" (${lowestArea[1]}/10) needs your attention — what will you do today to improve it?`}
+                ? `مجال "${AREA_NAMES[lowestAreaKey]?.ar || lowestAreaKey}" (${lowestArea[1]}/10) يحتاج اهتمامك — ماذا ستفعل اليوم لتحسينه؟`
+                : `"${AREA_NAMES[lowestAreaKey]?.en || lowestAreaKey}" (${lowestArea[1]}/10) needs your attention — what will you do today to improve it?`}
             </p>
           </div>
         )}

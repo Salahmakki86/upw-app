@@ -27,6 +27,23 @@ function formatTodayDate(isAr) {
   })
 }
 
+function getTimePeriod(hour) {
+  if (hour >= 5 && hour < 12) return 'morning'
+  if (hour >= 12 && hour < 17) return 'afternoon'
+  if (hour >= 17 && hour < 24) return 'evening'
+  return 'night' // 0–4
+}
+
+function getTimeBadge(period, isAr) {
+  const badges = {
+    morning:   { ar: '🌅 صباح',    en: '🌅 Morning' },
+    afternoon: { ar: '☀️ ظهر',    en: '☀️ Afternoon' },
+    evening:   { ar: '🌆 مساء',   en: '🌆 Evening' },
+    night:     { ar: '🌙 ليل',    en: '🌙 Night' },
+  }
+  return isAr ? badges[period].ar : badges[period].en
+}
+
 // ─── Score Ring ──────────────────────────────────────────────────────────────
 
 function ScoreRing({ score, total, isAr }) {
@@ -73,7 +90,7 @@ function ScoreRing({ score, total, isAr }) {
 
 // ─── Task Row ────────────────────────────────────────────────────────────────
 
-function TaskRow({ emoji, labelAr, labelEn, done, path, isAr, navigate }) {
+function TaskRow({ emoji, labelAr, labelEn, done, path, isAr, navigate, suggested }) {
   return (
     <button
       onClick={() => navigate(path)}
@@ -87,17 +104,34 @@ function TaskRow({ emoji, labelAr, labelEn, done, path, isAr, navigate }) {
         padding: '14px 14px',
         marginBottom: 8,
         background: done ? 'rgba(46,204,113,0.06)' : '#111',
-        border: `1px solid ${done ? 'rgba(46,204,113,0.3)' : '#1e1e1e'}`,
+        border: `1px solid ${done ? 'rgba(46,204,113,0.3)' : suggested ? 'rgba(201,168,76,0.5)' : '#1e1e1e'}`,
         opacity: done ? 0.7 : 1,
         textAlign: isAr ? 'right' : 'left',
         cursor: 'pointer',
+        position: 'relative',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexDirection: isAr ? 'row-reverse' : 'row' }}>
         <span style={{ fontSize: 18 }}>{emoji}</span>
-        <span style={{ fontSize: 14, fontWeight: 600, color: done ? '#2ecc71' : '#ccc' }}>
-          {isAr ? labelAr : labelEn}
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: isAr ? 'flex-end' : 'flex-start', gap: 2 }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: done ? '#2ecc71' : '#ccc' }}>
+            {isAr ? labelAr : labelEn}
+          </span>
+          {suggested && !done && (
+            <span style={{
+              fontSize: 9,
+              fontWeight: 800,
+              color: '#c9a84c',
+              background: 'rgba(201,168,76,0.12)',
+              border: '1px solid rgba(201,168,76,0.3)',
+              borderRadius: 99,
+              padding: '1px 7px',
+              letterSpacing: '0.06em',
+            }}>
+              {isAr ? '✦ مقترح الآن' : '✦ Suggested now'}
+            </span>
+          )}
+        </div>
       </div>
       {done
         ? <Check size={16} style={{ color: '#2ecc71', flexShrink: 0 }} />
@@ -141,8 +175,10 @@ export default function TodayPage() {
   const [supportLoading, setSupportLoading] = useState(false)
 
   const today = todayKey()
-  const hour = new Date().getHours()
-  const greeting = getGreeting(hour, isAr)
+  const currentHour = new Date().getHours()
+  const greeting = getGreeting(currentHour, isAr)
+  const timePeriod = getTimePeriod(currentHour)
+  const timeBadge = getTimeBadge(timePeriod, isAr)
 
   // ── Score calculation ──────────────────────────────────────────────────────
   const gratitudeEntries = (state.gratitude?.[today] || []).filter(v => v && v.trim())
@@ -166,6 +202,63 @@ export default function TodayPage() {
     state.eveningDone,
     hasSleep,
   ].filter(Boolean).length
+
+  // ── Journey steps definition ──────────────────────────────────────────────
+  const allSteps = useMemo(() => [
+    { id: 'morning',   emoji: '☀️', labelAr: 'الروتين الصباحي', labelEn: 'Morning Ritual',  done: state.morningDone, path: '/morning',   section: 'morning' },
+    { id: 'gratitude', emoji: '🙏', labelAr: 'الامتنان',        labelEn: 'Gratitude',        done: hasGratitude,      path: '/gratitude', section: 'morning' },
+    { id: 'habits',    emoji: '✅', labelAr: 'العادات',          labelEn: 'Habits',           done: hasHabits,         path: '/habits',    section: 'morning' },
+    { id: 'state',     emoji: '⚡', labelAr: 'حالتك اليوم',     labelEn: "Today's State",    done: !!state.todayState, path: '/state',    section: 'afternoon' },
+    { id: 'goals',     emoji: '🎯', labelAr: 'الأهداف',          labelEn: 'Goals',            done: false,             path: '/goals',     section: 'afternoon' },
+    { id: 'challenge', emoji: '🔥', labelAr: 'تحدي اليوم',      labelEn: 'Daily Challenge',  done: false,             path: '/challenge', section: 'afternoon' },
+    { id: 'wins',      emoji: '🏆', labelAr: 'انتصارات اليوم',  labelEn: 'Daily Wins',       done: hasWins,           path: '/wins',      section: 'evening' },
+    { id: 'evening',   emoji: '🌙', labelAr: 'الروتين المسائي', labelEn: 'Evening Ritual',   done: state.eveningDone, path: '/evening',   section: 'evening' },
+    { id: 'sleep',     emoji: '😴', labelAr: 'تتبع النوم',      labelEn: 'Sleep Log',        done: hasSleep,          path: '/sleep',     section: 'evening' },
+  ], [state.morningDone, hasGratitude, hasHabits, state.todayState, hasWins, state.eveningDone, hasSleep])
+
+  // ── Time-based ordering ───────────────────────────────────────────────────
+  // Priority step IDs by time period (front steps become prominent)
+  const priorityOrder = useMemo(() => {
+    if (timePeriod === 'morning')   return ['morning', 'state', 'habits', 'gratitude', 'goals', 'challenge', 'wins', 'evening', 'sleep']
+    if (timePeriod === 'afternoon') return ['goals', 'habits', 'state', 'wins', 'challenge', 'morning', 'gratitude', 'evening', 'sleep']
+    if (timePeriod === 'evening')   return ['evening', 'wins', 'gratitude', 'sleep', 'morning', 'state', 'habits', 'goals', 'challenge']
+    // night (0-4)
+    return ['sleep', 'evening', 'gratitude', 'morning', 'state', 'habits', 'goals', 'challenge', 'wins']
+  }, [timePeriod])
+
+  // Sort steps: incomplete first (by priority order), then done (by priority order)
+  const sortedSteps = useMemo(() => {
+    const incomplete = priorityOrder
+      .map(id => allSteps.find(s => s.id === id))
+      .filter(s => s && !s.done)
+    const done = priorityOrder
+      .map(id => allSteps.find(s => s.id === id))
+      .filter(s => s && s.done)
+    return [...incomplete, ...done]
+  }, [allSteps, priorityOrder])
+
+  // First incomplete step gets "suggested" badge
+  const firstIncompleteId = sortedSteps.find(s => !s.done)?.id
+
+  // ── Group sorted steps by section for display ─────────────────────────────
+  const sectionColors = { morning: '#c9a84c', afternoon: '#3498db', evening: '#9b59b6' }
+  const sectionLabels = {
+    morning:   { ar: 'الصباح 🌅', en: 'Morning 🌅' },
+    afternoon: { ar: 'النهار 🌤',  en: 'Afternoon 🌤' },
+    evening:   { ar: 'المساء 🌙', en: 'Evening 🌙' },
+  }
+
+  // Group while preserving the sorted order within each section group appearance
+  const sectionOrder = useMemo(() => {
+    const seen = []
+    const groups = {}
+    sortedSteps.forEach(step => {
+      if (!seen.includes(step.section)) seen.push(step.section)
+      if (!groups[step.section]) groups[step.section] = []
+      groups[step.section].push(step)
+    })
+    return { order: seen, groups }
+  }, [sortedSteps])
 
   // ── Support button handler ─────────────────────────────────────────────────
   async function handleSupport() {
@@ -222,10 +315,22 @@ export default function TodayPage() {
           }
         </button>
 
-        <div style={{ textAlign: 'center' }}>
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
           <p style={{ color: '#c9a84c', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             {isAr ? 'يومي' : 'My Day'}
           </p>
+          {/* Time-of-day badge */}
+          <span style={{
+            fontSize: 10,
+            fontWeight: 800,
+            color: '#c9a84c',
+            background: 'rgba(201,168,76,0.1)',
+            border: '1px solid rgba(201,168,76,0.25)',
+            borderRadius: 99,
+            padding: '2px 10px',
+          }}>
+            {timeBadge}
+          </span>
         </div>
 
         {/* streak badge */}
@@ -269,122 +374,39 @@ export default function TodayPage() {
           <ScoreRing score={score} total={7} isAr={isAr} />
         </div>
 
-        {/* ── MORNING SECTION ────────────────────────────────────────────────── */}
-        <div style={{
-          borderRadius: 20,
-          padding: 16,
-          marginBottom: 14,
-          background: '#0e0e0e',
-          border: `1px solid ${hour >= 5 && hour < 12 ? 'rgba(201,168,76,0.3)' : '#1e1e1e'}`,
-        }}>
-          <SectionHeader labelAr="الصباح 🌅" labelEn="Morning 🌅" color="#c9a84c" isAr={isAr} />
-
-          <TaskRow
-            emoji="☀️"
-            labelAr="الروتين الصباحي"
-            labelEn="Morning Ritual"
-            done={state.morningDone}
-            path="/morning"
-            isAr={isAr}
-            navigate={navigate}
-          />
-          <TaskRow
-            emoji="🙏"
-            labelAr="الامتنان"
-            labelEn="Gratitude"
-            done={hasGratitude}
-            path="/gratitude"
-            isAr={isAr}
-            navigate={navigate}
-          />
-          <TaskRow
-            emoji="✅"
-            labelAr="العادات"
-            labelEn="Habits"
-            done={hasHabits}
-            path="/habits"
-            isAr={isAr}
-            navigate={navigate}
-          />
-        </div>
-
-        {/* ── AFTERNOON SECTION ──────────────────────────────────────────────── */}
-        <div style={{
-          borderRadius: 20,
-          padding: 16,
-          marginBottom: 14,
-          background: '#0e0e0e',
-          border: `1px solid ${hour >= 12 && hour < 18 ? 'rgba(52,152,219,0.35)' : '#1e1e1e'}`,
-        }}>
-          <SectionHeader labelAr="النهار 🌤" labelEn="Afternoon 🌤" color="#3498db" isAr={isAr} />
-
-          <TaskRow
-            emoji="⚡"
-            labelAr="حالتك اليوم"
-            labelEn="Today's State"
-            done={!!state.todayState}
-            path="/state"
-            isAr={isAr}
-            navigate={navigate}
-          />
-          <TaskRow
-            emoji="🎯"
-            labelAr="الأهداف"
-            labelEn="Goals"
-            done={false}
-            path="/goals"
-            isAr={isAr}
-            navigate={navigate}
-          />
-          <TaskRow
-            emoji="🔥"
-            labelAr="تحدي اليوم"
-            labelEn="Daily Challenge"
-            done={false}
-            path="/challenge"
-            isAr={isAr}
-            navigate={navigate}
-          />
-        </div>
-
-        {/* ── EVENING SECTION ────────────────────────────────────────────────── */}
-        <div style={{
-          borderRadius: 20,
-          padding: 16,
-          marginBottom: 14,
-          background: '#0e0e0e',
-          border: `1px solid ${hour >= 18 ? 'rgba(155,89,182,0.35)' : '#1e1e1e'}`,
-        }}>
-          <SectionHeader labelAr="المساء 🌙" labelEn="Evening 🌙" color="#9b59b6" isAr={isAr} />
-
-          <TaskRow
-            emoji="🏆"
-            labelAr="انتصارات اليوم"
-            labelEn="Daily Wins"
-            done={hasWins}
-            path="/wins"
-            isAr={isAr}
-            navigate={navigate}
-          />
-          <TaskRow
-            emoji="🌙"
-            labelAr="الروتين المسائي"
-            labelEn="Evening Ritual"
-            done={state.eveningDone}
-            path="/evening"
-            isAr={isAr}
-            navigate={navigate}
-          />
-          <TaskRow
-            emoji="😴"
-            labelAr="تتبع النوم"
-            labelEn="Sleep Log"
-            done={hasSleep}
-            path="/sleep"
-            isAr={isAr}
-            navigate={navigate}
-          />
-        </div>
+        {/* ── Time-smart task sections ──────────────────────────────────────── */}
+        {sectionOrder.order.map(section => {
+          const steps = sectionOrder.groups[section]
+          const color = sectionColors[section]
+          const label = sectionLabels[section]
+          return (
+            <div
+              key={section}
+              style={{
+                borderRadius: 20,
+                padding: 16,
+                marginBottom: 14,
+                background: '#0e0e0e',
+                border: `1px solid ${timePeriod === section ? `${color}55` : '#1e1e1e'}`,
+              }}
+            >
+              <SectionHeader labelAr={label.ar} labelEn={label.en} color={color} isAr={isAr} />
+              {steps.map(step => (
+                <TaskRow
+                  key={step.id}
+                  emoji={step.emoji}
+                  labelAr={step.labelAr}
+                  labelEn={step.labelEn}
+                  done={step.done}
+                  path={step.path}
+                  isAr={isAr}
+                  navigate={navigate}
+                  suggested={step.id === firstIncompleteId}
+                />
+              ))}
+            </div>
+          )
+        })}
 
         {/* ── All-done banner ─────────────────────────────────────────────────── */}
         {score === 7 && (

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
@@ -42,6 +42,8 @@ export default function DailyWins() {
   const [emoji, setEmoji] = useState('🏆')
   const [showForm, setShowForm] = useState(false)
   const [showCelebration, setShowCelebration] = useState(false)
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const confirmTimerRef = useRef(null)
 
   const dailyWins = state.dailyWins || {}
   const todayWins = dailyWins[today] || []
@@ -105,6 +107,30 @@ export default function DailyWins() {
     setShowCelebration(true)
     setTimeout(() => setShowCelebration(false), 4000)
   }
+
+  const handleDeleteRequest = (id) => {
+    // Clear any existing auto-cancel timer
+    if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current)
+    setConfirmDeleteId(id)
+    // Auto-cancel after 5 seconds
+    confirmTimerRef.current = setTimeout(() => setConfirmDeleteId(null), 5000)
+  }
+
+  const handleDeleteConfirm = (id) => {
+    if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current)
+    deleteWin(today, id)
+    setConfirmDeleteId(null)
+  }
+
+  const handleDeleteCancel = () => {
+    if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current)
+    setConfirmDeleteId(null)
+  }
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => { if (confirmTimerRef.current) clearTimeout(confirmTimerRef.current) }
+  }, [])
 
   const pastDays = last14.filter(d => d !== today && (dailyWins[d] || []).length > 0).reverse()
 
@@ -204,18 +230,42 @@ export default function DailyWins() {
 
           <div className="space-y-2 mb-3">
             {todayWins.map(win => (
-              <div key={win.id} className="flex items-start gap-3 rounded-xl p-3"
-                style={{ background: `${CATEGORIES[win.category]?.color}15`, border: `1px solid ${CATEGORIES[win.category]?.color}30` }}>
-                <span className="text-xl">{win.emoji}</span>
-                <div className="flex-1">
-                  <p className="text-sm text-white font-medium">{win.text}</p>
-                  <span className="text-xs" style={{ color: CATEGORIES[win.category]?.color }}>
-                    {isAr ? CATEGORIES[win.category]?.ar : CATEGORIES[win.category]?.en}
-                  </span>
+              <div key={win.id}>
+                <div className="flex items-start gap-3 rounded-xl p-3"
+                  style={{ background: `${CATEGORIES[win.category]?.color}15`, border: `1px solid ${CATEGORIES[win.category]?.color}30` }}>
+                  <span className="text-xl">{win.emoji}</span>
+                  <div className="flex-1">
+                    <p className="text-sm text-white font-medium">{win.text}</p>
+                    <span className="text-xs" style={{ color: CATEGORIES[win.category]?.color }}>
+                      {isAr ? CATEGORIES[win.category]?.ar : CATEGORIES[win.category]?.en}
+                    </span>
+                  </div>
+                  <button onClick={() => handleDeleteRequest(win.id)}
+                    className="text-xs px-2 py-1 rounded-lg transition-all"
+                    style={{ background: confirmDeleteId === win.id ? 'rgba(231,76,60,0.15)' : '#2a2a2a', color: confirmDeleteId === win.id ? '#e74c3c' : '#888' }}>✕</button>
                 </div>
-                <button onClick={() => deleteWin(today, win.id)}
-                  className="text-xs px-2 py-1 rounded-lg transition-all"
-                  style={{ background: '#2a2a2a', color: '#888' }}>✕</button>
+                {confirmDeleteId === win.id && (
+                  <div className="rounded-xl px-3 py-2.5 mt-1 animate-scale-in"
+                    style={{ background: 'rgba(231,76,60,0.08)', border: '1px solid rgba(231,76,60,0.25)' }}>
+                    <p className="text-xs mb-2" style={{ color: '#e74c3c' }}>
+                      {isAr ? 'هل تريد حذف هذا الانتصار؟' : 'Delete this win?'}
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleDeleteConfirm(win.id)}
+                        className="flex-1 rounded-lg py-1.5 text-xs font-bold transition-all active:scale-95"
+                        style={{ background: 'rgba(231,76,60,0.2)', border: '1px solid rgba(231,76,60,0.4)', color: '#e74c3c' }}>
+                        ✓ {isAr ? 'نعم احذف' : 'Yes, delete'}
+                      </button>
+                      <button
+                        onClick={handleDeleteCancel}
+                        className="flex-1 rounded-lg py-1.5 text-xs font-bold transition-all active:scale-95"
+                        style={{ background: '#2a2a2a', border: '1px solid #3a3a3a', color: '#888' }}>
+                        ✗ {isAr ? 'إلغاء' : 'Cancel'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -181,6 +181,20 @@ export default function CelebrationRituals() {
         >
           {!showCelebrate ? (
             <>
+              {/* Skip button — top-right corner */}
+              <button
+                onClick={e => { e.stopPropagation(); clearInterval(countdownRef.current); setShowCelebrate(true); setCountdown(0) }}
+                style={{
+                  position: 'absolute', top: '1.25rem', right: isAr ? undefined : '1.25rem', left: isAr ? '1.25rem' : undefined,
+                  background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: 8, padding: '0.35rem 0.75rem',
+                  color: '#888', fontSize: '0.85rem', cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                {isAr ? 'تخطى ←' : 'Skip →'}
+              </button>
+
               <p style={{ color: '#888', fontSize: '1rem' }}>
                 {isAr ? 'احتفل بـ' : 'Celebrate with'}
               </p>
@@ -203,18 +217,31 @@ export default function CelebrationRituals() {
             </>
           ) : (
             <>
-              <div style={{ fontSize: '5rem', animation: 'bounce 0.6s ease infinite alternate' }}>🎉</div>
+              {celebRitual && (
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '5rem', animation: 'bounce 0.6s ease infinite alternate', marginBottom: '0.5rem' }}>
+                    {celebRitual.emoji}
+                  </div>
+                  <p style={{ color: '#fff', fontSize: '1.6rem', fontWeight: 800, marginBottom: '0.25rem' }}>
+                    {celebRitual.label}
+                  </p>
+                </div>
+              )}
               <h2 style={{ color: '#c9a84c', fontSize: '2.5rem', fontWeight: 900, textAlign: 'center' }}>
                 {isAr ? 'احتفل الآن!' : 'CELEBRATE!'}
               </h2>
-              {celebRitual && (
-                <p style={{ color: '#fff', fontSize: '1.3rem', textAlign: 'center' }}>
-                  {celebRitual.emoji} {celebRitual.label}
-                </p>
-              )}
-              <p style={{ color: '#666', fontSize: '0.9rem' }}>
-                {isAr ? '(انقر في أي مكان للإغلاق)' : '(tap anywhere to close)'}
-              </p>
+              <button
+                onClick={e => { e.stopPropagation(); closeCelebration() }}
+                style={{
+                  marginTop: '0.75rem',
+                  background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.15)',
+                  borderRadius: 10, padding: '0.6rem 2rem',
+                  color: '#888', fontSize: '0.9rem', cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                {isAr ? 'أغلق' : 'Close'}
+              </button>
             </>
           )}
         </div>

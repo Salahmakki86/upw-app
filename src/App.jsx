@@ -69,6 +69,7 @@ import CelebrationRituals from './pages/CelebrationRituals'
 import LifeStoryReframing from './pages/LifeStoryReframing'
 import EmergencyToolkit from './pages/EmergencyToolkit'
 import WeeklyPulse from './pages/WeeklyPulse'
+import MonthlyReset from './pages/MonthlyReset'
 import ErrorBoundary from './components/ErrorBoundary'
 
 function AppRoutes() {
@@ -158,6 +159,7 @@ function AppRoutes() {
             <Route path="/life-story"         element={<LifeStoryReframing />}     />
             <Route path="/emergency"          element={<EmergencyToolkit />}       />
             <Route path="/weekly-pulse"       element={<WeeklyPulse />}            />
+            <Route path="/monthly-reset"      element={<MonthlyReset />}           />
             <Route
               path="/weekly-report"
               element={currentUser.role === 'admin' ? <WeeklyReportPage /> : <Navigate to="/" />}

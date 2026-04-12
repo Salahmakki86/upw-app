@@ -60,6 +60,64 @@ function getMeterColor(val) {
   return '#2ecc71'
 }
 
+const DAY_ABBR = {
+  en: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
+  ar: ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'],
+}
+
+function CANIMiniCalendar({ caniLog, isAr, lang }) {
+  const today = getTodayStr()
+  const todayDone = !!(caniLog && caniLog[today])
+
+  // Build last 7 days (oldest → newest)
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - (6 - i))
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const done = !!(caniLog && caniLog[dateStr])
+    const isToday = dateStr === today
+    const dayIndex = d.getDay() // 0=Sun
+    return { dateStr, done, isToday, dayIndex }
+  })
+
+  const doneCount = days.filter(d => d.done).length
+
+  return (
+    <div className="rounded-2xl p-4" style={{ background: '#111', border: '1px solid #1e1e1e' }}>
+      <p className="text-xs font-bold mb-3 text-center" style={{ color: '#c9a84c' }}>
+        {doneCount}/7 {isAr ? 'أيام' : 'days'}
+      </p>
+      <div className="flex items-center justify-center gap-2">
+        {days.map(({ dateStr, done, isToday, dayIndex }) => (
+          <div key={dateStr} className="flex flex-col items-center gap-1">
+            <div
+              style={{
+                width: 32, height: 32, borderRadius: '50%',
+                background: done ? '#2ecc71' : '#1e1e1e',
+                border: `2px solid ${done ? '#2ecc71' : isToday ? '#c9a84c' : '#2a2a2a'}`,
+                boxShadow: isToday && !done ? '0 0 8px rgba(201,168,76,0.6)' : done ? '0 0 6px rgba(46,204,113,0.4)' : 'none',
+                animation: isToday && !done ? 'pulse 1.5s ease-in-out infinite' : 'none',
+                flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              {done && <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>✓</span>}
+            </div>
+            <span style={{ color: '#555', fontSize: 10 }}>
+              {DAY_ABBR[lang][dayIndex]}
+            </span>
+          </div>
+        ))}
+      </div>
+      {isToday && !todayDone && (
+        <p className="text-xs text-center mt-2" style={{ color: '#c9a84c88' }}>
+          {isAr ? 'أكمل CANI اليوم لتُضيء الدائرة!' : 'Complete CANI today to light up your circle!'}
+        </p>
+      )}
+    </div>
+  )
+}
+
 export default function EveningRitual() {
   const { state, update } = useApp()
   const { lang, t } = useLang()
@@ -205,6 +263,9 @@ export default function EveningRitual() {
         subtitle="CANI">
         <div className="space-y-5 pt-2">
 
+          {/* 7-day CANI mini-calendar */}
+          <CANIMiniCalendar caniLog={state.caniLog} isAr={isAr} lang={lang} />
+
           {/* Streak badge */}
           {caniStreak >= 3 && (
             <div className="rounded-2xl p-3 flex items-center gap-3 animate-scale-in"
@@ -315,25 +376,37 @@ export default function EveningRitual() {
             <p className="text-xs font-bold mb-3 text-white">
               📊 {isAr ? 'متر التحسين — كم حسّنت نفسك اليوم؟' : 'Improvement Meter — How much did you improve today?'}
             </p>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs" style={{ color: '#888' }}>1</span>
-              <span className="text-2xl font-black" style={{ color: meterColor }}>{caniMeter}</span>
-              <span className="text-xs" style={{ color: '#888' }}>10</span>
-            </div>
-            <input
-              type="range"
-              min={1}
-              max={10}
-              value={caniMeter}
-              onChange={e => setCaniMeter(Number(e.target.value))}
-              style={{ accentColor: meterColor }}
-              className="w-full"
-            />
-            <div className="flex justify-between mt-1">
-              <span className="text-xs" style={{ color: '#e63946' }}>{isAr ? 'ضعيف' : 'Weak'}</span>
-              <span className="text-xs" style={{ color: '#f39c12' }}>{isAr ? 'متوسط' : 'Average'}</span>
-              <span className="text-xs" style={{ color: '#2ecc71' }}>{isAr ? 'قوي' : 'Strong'}</span>
-            </div>
+            {(() => {
+              const meterLabel = isAr
+                ? (caniMeter <= 3 ? 'ضعيف' : caniMeter <= 6 ? 'متوسط' : 'قوي')
+                : (caniMeter <= 3 ? 'Weak' : caniMeter <= 6 ? 'Moderate' : 'Strong')
+              return (
+                <>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs" style={{ color: '#888' }}>1</span>
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span className="text-2xl font-black" style={{ color: meterColor }}>{caniMeter}</span>
+                      <span className="text-xs font-bold" style={{ color: meterColor }}>{meterLabel}</span>
+                    </div>
+                    <span className="text-xs" style={{ color: '#888' }}>10</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={1}
+                    max={10}
+                    value={caniMeter}
+                    onChange={e => setCaniMeter(Number(e.target.value))}
+                    style={{ accentColor: meterColor }}
+                    className="w-full"
+                  />
+                  <div className="flex justify-between mt-1">
+                    <span className="text-xs" style={{ color: '#e63946' }}>{isAr ? 'ضعيف' : 'Weak'}</span>
+                    <span className="text-xs" style={{ color: '#f39c12' }}>{isAr ? 'متوسط' : 'Moderate'}</span>
+                    <span className="text-xs" style={{ color: '#2ecc71' }}>{isAr ? 'قوي' : 'Strong'}</span>
+                  </div>
+                </>
+              )
+            })()}
             {/* Color bar */}
             <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ background: '#1a1a1a' }}>
               <div

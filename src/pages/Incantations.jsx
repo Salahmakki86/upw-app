@@ -249,7 +249,7 @@ function PracticeSession({ incantations, onClose, isAr }) {
           className="flex-1 py-3 rounded-xl font-semibold"
           style={{ background: '#1a1a1a', border: '1px solid #333', color: '#ccc' }}
         >
-          {isAr ? 'التالي ←' : '→ Next'}
+          {isAr ? '← التالي' : 'Next →'}
         </button>
       </div>
     </div>

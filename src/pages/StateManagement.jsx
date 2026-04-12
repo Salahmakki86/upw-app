@@ -597,6 +597,90 @@ function EmotionalFlooding({ state, update, lang }) {
   )
 }
 
+// ── SOS History component ─────────────────────────────────────────────────────
+function SOSHistory({ sosLog, last7Sos, sosThisWeek, today, isAr }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="rounded-2xl p-4" style={{ background: '#111', border: '1px solid #1e1e1e' }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between"
+        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+      >
+        <h3 className="font-bold text-white text-sm">
+          🚨 {isAr ? 'سجل SOS / SOS History' : 'SOS History / سجل SOS'}
+        </h3>
+        <span style={{ color: '#555', fontSize: 18 }}>{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="mt-4 space-y-4 animate-fade-in">
+          {/* Usage count this week */}
+          <div className="rounded-xl px-4 py-3 flex items-center justify-between"
+            style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+            <span className="text-sm text-white font-semibold">
+              {isAr
+                ? `استخدمت SOS ${sosThisWeek} مرة هذا الأسبوع`
+                : `Used SOS ${sosThisWeek} time${sosThisWeek !== 1 ? 's' : ''} this week`}
+            </span>
+            <span className="text-xl font-black" style={{ color: '#e63946' }}>{sosThisWeek}</span>
+          </div>
+
+          {/* Last 7 dots */}
+          {last7Sos.length > 0 && (
+            <div>
+              <p className="text-xs mb-2" style={{ color: '#888' }}>
+                {isAr ? 'آخر 7 استخدامات:' : 'Last 7 uses:'}
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                {last7Sos.map((entry, i) => {
+                  const isToday = entry.date === today
+                  return (
+                    <div key={i} title={entry.date}
+                      style={{
+                        width: 18, height: 18, borderRadius: '50%',
+                        background: '#c9a84c',
+                        boxShadow: isToday ? '0 0 8px rgba(201,168,76,0.8)' : 'none',
+                        animation: isToday ? 'pulse-red 1.5s ease-in-out infinite' : 'none',
+                        flexShrink: 0,
+                      }}
+                    />
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* High-frequency insight */}
+          {sosThisWeek >= 3 && (
+            <div className="rounded-xl p-4 space-y-2"
+              style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.3)' }}>
+              <p className="text-sm text-white font-bold">
+                💡 {isAr
+                  ? 'استخدامك المتكرر يقترح أنك تواجه ضغطاً — هل جربت أدوات الطوارئ الأعمق؟'
+                  : 'Frequent use suggests you\'re under pressure — have you tried deeper emergency tools?'}
+              </p>
+              <a href="/emergency"
+                className="inline-block text-xs font-bold rounded-full px-4 py-1.5 transition-all active:scale-95"
+                style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.4)', color: '#c9a84c', textDecoration: 'none' }}>
+                {isAr ? '→ أدوات الطوارئ العميقة' : '→ Deep Emergency Tools'}
+              </a>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {last7Sos.length === 0 && (
+            <p className="text-xs text-center py-2" style={{ color: '#555' }}>
+              {isAr ? 'لم تستخدم SOS بعد' : 'No SOS uses yet'}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function StateManagement() {
   const { state, update, logState, updateMagicQuestions } = useApp()
   const { lang, t } = useLang()
@@ -611,7 +695,36 @@ export default function StateManagement() {
   const TRANSFORMER = TRANSFORMER_DATA[lang]
   const INTERRUPTS = INTERRUPT_LIST[lang]
 
-  const handleSosComplete = () => { logState('beautiful', '✨'); setMode('result') }
+  const today = getTodayStr()
+
+  const handleSosComplete = () => {
+    logState('beautiful', '✨')
+    update('sosLog', [...(state.sosLog || []), { date: today, ts: Date.now(), result: 'completed' }])
+    setMode('result')
+  }
+
+  // ── SOS History helpers ─────────────────────────────────────────────────────
+  const sosLog = state.sosLog || []
+  const last7Sos = sosLog.slice(-7)
+  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const sosThisWeek = sosLog.filter(e => e.ts >= oneWeekAgo).length
+
+  // Time-of-day message for result screen
+  const sosResultMsg = (() => {
+    const h = new Date().getHours()
+    const freq = sosThisWeek
+    if (isAr) {
+      if (h >= 5 && h < 12) return freq >= 3 ? 'صباحك يبدأ بتحدٍّ — أنت تواجهه بشجاعة 🌅' : 'بداية صباحية قوية — أنت تتحكم في حالتك ☀️'
+      if (h >= 12 && h < 17) return freq >= 3 ? 'منتصف اليوم يُجهدك — ارتِح دقيقتين ثم تابع 💪' : 'في منتصف اليوم وأنت لا تزال واقفاً — رائع 🌤'
+      if (h >= 17 && h < 21) return freq >= 3 ? 'نهاية اليوم تثقل كاهلك — أنت لم تستسلم 🌆' : 'مساؤك قوي — اكتمل اليوم بنجاح 🌙'
+      return freq >= 3 ? 'الليل طويل لكنك أقوى منه — نم وستجد الحل غداً 🌙' : 'حتى في الليل أنت تختار حالتك — قوي ✨'
+    } else {
+      if (h >= 5 && h < 12) return freq >= 3 ? 'Your morning starts with challenges — you face them bravely 🌅' : 'Strong morning start — you control your state ☀️'
+      if (h >= 12 && h < 17) return freq >= 3 ? 'Midday drains you — rest 2 minutes then continue 💪' : 'Midday and still standing — remarkable 🌤'
+      if (h >= 17 && h < 21) return freq >= 3 ? 'End-of-day weight — you didn\'t give up 🌆' : 'Strong evening — day completed with success 🌙'
+      return freq >= 3 ? 'The night is long but you are stronger — sleep and find the solution tomorrow 🌙' : 'Even at night you choose your state — powerful ✨'
+    }
+  })()
 
   if (mode === 'sos') {
     return (
@@ -633,6 +746,16 @@ export default function StateManagement() {
             {lang === 'ar'
               ? 'لاحظ الفرق في مشاعرك — هذه قوة الثالوث العاطفي'
               : 'Notice the difference in how you feel — this is the power of the Triad'}
+          </p>
+          {/* Time-of-day + frequency message */}
+          <div className="rounded-2xl px-5 py-3 text-sm font-semibold"
+            style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)', color: '#c9a84c', maxWidth: 320 }}>
+            {sosResultMsg}
+          </div>
+          <p className="text-xs" style={{ color: '#555' }}>
+            {lang === 'ar'
+              ? `استخدمت SOS ${sosThisWeek} مرة${sosThisWeek !== 1 ? '' : ''} هذا الأسبوع`
+              : `Used SOS ${sosThisWeek} time${sosThisWeek !== 1 ? 's' : ''} this week`}
           </p>
           <button onClick={() => setMode('home')} className="btn-gold px-8 py-3 mt-2">{t('back')}</button>
         </div>
@@ -818,6 +941,9 @@ export default function StateManagement() {
 
         {/* Emotional Flooding */}
         <EmotionalFlooding state={state} update={update} lang={lang} />
+
+        {/* SOS History */}
+        <SOSHistory sosLog={sosLog} last7Sos={last7Sos} sosThisWeek={sosThisWeek} today={today} isAr={isAr} />
 
       </div>
     </Layout>

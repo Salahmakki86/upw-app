@@ -156,7 +156,8 @@ export default function Dashboard() {
         { path: '/habits',        icon: CheckSquare, labelKey: 'dash_link_habits',        color: '#2ecc71' },
         { path: '/sleep',         icon: MoonIcon,    labelKey: 'dash_link_sleep',         color: '#9b59b6' },
         { path: '/emergency',     icon: Zap,         labelKey: 'dash_link_emergency',     color: '#e63946' },
-        { path: '/weekly-pulse',  icon: BarChart2,   labelKey: 'dash_link_weekly_pulse',  color: '#3498db' },
+        { path: '/weekly-pulse',   icon: BarChart2,   labelKey: 'dash_link_weekly_pulse',   color: '#3498db' },
+        { path: '/monthly-reset',  icon: Calendar,    labelKey: 'dash_link_monthly_reset',  color: '#c9a84c' },
       ],
     },
     {
