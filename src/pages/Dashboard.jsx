@@ -190,6 +190,19 @@ export default function Dashboard() {
       ],
     },
     {
+      key: 'business',
+      labelAr: '💼 تطوير العمل',
+      labelEn: '💼 Business',
+      links: [
+        { path: '/biz-scorecard',icon: BarChart2,  labelKey: 'dash_link_biz_scorecard', color: '#c9a84c' },
+        { path: '/sprint90',     icon: Target,     labelKey: 'dash_link_sprint90',      color: '#e67e22' },
+        { path: '/power-hour',   icon: Clock,      labelKey: 'dash_link_power_hour',    color: '#e74c3c' },
+        { path: '/decisions',    icon: Compass,    labelKey: 'dash_link_decisions',      color: '#9b59b6' },
+        { path: '/skills',       icon: TrendingUp, labelKey: 'dash_link_skills',         color: '#3498db' },
+        { path: '/network',      icon: Users,      labelKey: 'dash_link_network',       color: '#2ecc71' },
+      ],
+    },
+    {
       key: 'tools',
       labelAr: '🔧 الأدوات',
       labelEn: '🔧 Tools',

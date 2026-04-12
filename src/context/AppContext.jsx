@@ -222,6 +222,15 @@ const INITIAL_STATE = {
 
   // #8 — Celebrated milestones tracking
   celebratedMilestones: [],
+
+  // Business Development Features
+  businessWeeklyReview: {},  // { 'YYYY-WW': { revenueActual, revenueTarget, topWins, biggestBlocker, blockerPlan, decisionNeeded, selfRating, notes } }
+  businessScorecard: {},  // { 'YYYY-MM-DD': { calls, leads, revenue, topWin, blocker } }
+  sprint90: {},           // { goal, metric, startDate, weeks: [...] }
+  powerHour: {},          // { 'YYYY-MM-DD': { task, startedAt, result, completedAt } }
+  decisionJournal: [],    // [{ id, decision, reason, alternatives, expectedResult, emotion, date, reviewDate, review }]
+  skillStack: { scores: {}, history: [], customSkills: null },
+  networkTracker: [],     // [{ id, name, role, value, lastContact, nextFollowUp, given }]
 }
 
 const AppContext = createContext(null)

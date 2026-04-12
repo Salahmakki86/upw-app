@@ -25,6 +25,10 @@ const EMPTY_FORM = {
   category: 'selfdev', status: 'wishlist',
   pages: '', rating: 0, insight: '',
   startDate: '', endDate: '',
+  takeaways: ['', '', ''],
+  actionItem: '',
+  actionApplied: false,
+  actionAppliedNote: '',
 }
 
 const TABS = [
@@ -103,6 +107,10 @@ export default function ReadingLog() {
       insight:   book.insight   || '',
       startDate: book.startDate || '',
       endDate:   book.endDate   || '',
+      takeaways: book.takeaways || ['', '', ''],
+      actionItem: book.actionItem || '',
+      actionApplied: book.actionApplied || false,
+      actionAppliedNote: book.actionAppliedNote || '',
     })
     setEditId(book.id)
     setShowForm(true)
@@ -122,6 +130,10 @@ export default function ReadingLog() {
       insight:   form.insight.trim(),
       startDate: form.startDate,
       endDate:   form.endDate,
+      takeaways: form.takeaways,
+      actionItem: form.actionItem.trim(),
+      actionApplied: form.actionApplied,
+      actionAppliedNote: form.actionAppliedNote.trim(),
     }
     if (editId) {
       saveBooks(books.map(b => b.id === editId ? bookData : b))
@@ -136,6 +148,10 @@ export default function ReadingLog() {
   function deleteBook(id) {
     saveBooks(books.filter(b => b.id !== id))
     if (expandedId === id) setExpandedId(null)
+  }
+
+  function toggleActionApplied(id) {
+    saveBooks(books.map(b => b.id === id ? { ...b, actionApplied: !b.actionApplied } : b))
   }
 
   const currentYear = new Date().getFullYear()
@@ -421,6 +437,69 @@ export default function ReadingLog() {
                   style={{ background: '#111', border: '1px solid #333', outline: 'none', minHeight: 80 }}
                   rows={3}
                 />
+
+                {/* Learning → Doing: Top 3 Takeaways */}
+                <div>
+                  <p className="text-xs mb-2 font-bold" style={{ color: '#c9a84c' }}>
+                    📝 {isAr ? 'أهم ٣ دروس مستفادة' : 'Top 3 Takeaways'}
+                  </p>
+                  <div className="space-y-1.5">
+                    {form.takeaways.map((tk, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="text-xs font-black flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
+                          style={{ background: tk ? '#c9a84c' : '#2a2a2a', color: tk ? '#000' : '#555' }}>{i + 1}</span>
+                        <input type="text" value={tk}
+                          onChange={e => {
+                            const arr = [...form.takeaways]; arr[i] = e.target.value
+                            setForm(f => ({ ...f, takeaways: arr }))
+                          }}
+                          placeholder={isAr ? `الدرس ${i + 1}...` : `Takeaway ${i + 1}...`}
+                          className="flex-1 rounded-xl px-3 py-2 text-sm text-white"
+                          style={{ background: '#111', border: '1px solid #333', outline: 'none' }} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Learning → Doing: 1 Action to Apply */}
+                <div>
+                  <p className="text-xs mb-2 font-bold" style={{ color: '#2ecc71' }}>
+                    🎯 {isAr ? 'إجراء واحد للتطبيق هذا الأسبوع' : '1 Action to Apply This Week'}
+                  </p>
+                  <input type="text" value={form.actionItem}
+                    onChange={e => setForm(f => ({ ...f, actionItem: e.target.value }))}
+                    placeholder={isAr ? 'ما الشيء الوحيد الذي ستطبقه من هذا الكتاب؟' : 'What one thing will you apply from this book?'}
+                    className="w-full rounded-xl px-3 py-2.5 text-sm text-white"
+                    style={{ background: '#111', border: '1px solid #2ecc7140', outline: 'none' }} />
+                </div>
+
+                {/* Did You Apply? Tracking */}
+                {form.actionItem && (
+                  <div className="rounded-xl p-3" style={{
+                    background: form.actionApplied ? 'rgba(46,204,113,0.08)' : 'rgba(231,76,60,0.05)',
+                    border: `1px solid ${form.actionApplied ? '#2ecc7130' : '#e6394620'}`
+                  }}>
+                    <div className="flex items-center gap-3 mb-2">
+                      <button onClick={() => setForm(f => ({ ...f, actionApplied: !f.actionApplied }))}
+                        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all"
+                        style={{ background: form.actionApplied ? '#2ecc71' : '#2a2a2a', border: `2px solid ${form.actionApplied ? '#2ecc71' : '#444'}` }}>
+                        {form.actionApplied && <span className="text-white text-xs">✓</span>}
+                      </button>
+                      <p className="text-xs font-bold" style={{ color: form.actionApplied ? '#2ecc71' : '#e63946' }}>
+                        {form.actionApplied
+                          ? (isAr ? '✅ تم التطبيق!' : '✅ Applied!')
+                          : (isAr ? '⏳ لم يُطبق بعد' : '⏳ Not yet applied')}
+                      </p>
+                    </div>
+                    {form.actionApplied && (
+                      <input type="text" value={form.actionAppliedNote}
+                        onChange={e => setForm(f => ({ ...f, actionAppliedNote: e.target.value }))}
+                        placeholder={isAr ? 'كيف طبقت هذا الدرس؟' : 'How did you apply it?'}
+                        className="w-full rounded-lg px-3 py-2 text-xs text-white"
+                        style={{ background: '#111', border: '1px solid #333', outline: 'none' }} />
+                    )}
+                  </div>
+                )}
               </>
             )}
 
@@ -562,6 +641,44 @@ export default function ReadingLog() {
                             💡 {isAr ? 'أهم فكرة' : 'Key Insight'}
                           </p>
                           <p className="text-xs text-white leading-relaxed">{book.insight}</p>
+                        </div>
+                      )}
+
+                      {/* Takeaways */}
+                      {(book.takeaways || []).filter(Boolean).length > 0 && (
+                        <div className="rounded-xl p-3" style={{ background: '#111', border: '1px solid #1e1e1e' }}>
+                          <p className="text-xs font-bold mb-2" style={{ color: '#c9a84c' }}>
+                            📝 {isAr ? 'دروس مستفادة' : 'Takeaways'}
+                          </p>
+                          {book.takeaways.filter(Boolean).map((tk, i) => (
+                            <p key={i} className="text-xs leading-relaxed mb-1" style={{ color: '#aaa' }}>
+                              <span style={{ color: '#c9a84c' }}>{i + 1}.</span> {tk}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Action Item */}
+                      {book.actionItem && (
+                        <div className="rounded-xl p-3" style={{
+                          background: book.actionApplied ? 'rgba(46,204,113,0.08)' : 'rgba(52,152,219,0.08)',
+                          border: `1px solid ${book.actionApplied ? '#2ecc7130' : '#3498db30'}`
+                        }}>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-xs font-bold" style={{ color: book.actionApplied ? '#2ecc71' : '#3498db' }}>
+                              🎯 {isAr ? 'إجراء للتطبيق' : 'Action to Apply'}
+                            </p>
+                            <span className="text-xs px-2 py-0.5 rounded-full font-bold" style={{
+                              background: book.actionApplied ? '#2ecc7122' : '#e6394622',
+                              color: book.actionApplied ? '#2ecc71' : '#e63946'
+                            }}>
+                              {book.actionApplied ? (isAr ? 'تم ✓' : 'Done ✓') : (isAr ? 'قيد التطبيق' : 'Pending')}
+                            </span>
+                          </div>
+                          <p className="text-xs text-white">{book.actionItem}</p>
+                          {book.actionAppliedNote && (
+                            <p className="text-xs mt-1" style={{ color: '#2ecc71' }}>→ {book.actionAppliedNote}</p>
+                          )}
                         </div>
                       )}
 

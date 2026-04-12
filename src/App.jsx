@@ -48,6 +48,12 @@ import CommitmentPage   from './pages/CommitmentPage'
 import GroupChallengePage from './pages/GroupChallengePage'
 import WeeklyReportPage from './pages/WeeklyReportPage'
 import MyWeeklySummary from './pages/MyWeeklySummary'
+import BusinessScorecard from './pages/BusinessScorecard'
+import Sprint90 from './pages/Sprint90'
+import PowerHour from './pages/PowerHour'
+import DecisionJournal from './pages/DecisionJournal'
+import SkillStack from './pages/SkillStack'
+import NetworkTracker from './pages/NetworkTracker'
 
 function AppRoutes() {
   const { currentUser } = useAuth()
@@ -115,6 +121,12 @@ function AppRoutes() {
             <Route path="/commitment"     element={<CommitmentPage />}     />
             <Route path="/group-challenge" element={<GroupChallengePage />} />
             <Route path="/my-summary"     element={<MyWeeklySummary />}    />
+            <Route path="/biz-scorecard" element={<BusinessScorecard />} />
+            <Route path="/sprint90"      element={<Sprint90 />}          />
+            <Route path="/power-hour"    element={<PowerHour />}         />
+            <Route path="/decisions"     element={<DecisionJournal />}   />
+            <Route path="/skills"        element={<SkillStack />}        />
+            <Route path="/network"       element={<NetworkTracker />}    />
             <Route
               path="/weekly-report"
               element={currentUser.role === 'admin' ? <WeeklyReportPage /> : <Navigate to="/" />}

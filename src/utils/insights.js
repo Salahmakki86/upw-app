@@ -149,6 +149,46 @@ export function getDailyInsight(state, lang) {
     }
   }
 
+  // ── Business Scorecard → State Correlation (#10) ────────
+  const scorecard = state.businessScorecard || {}
+  let beautifulRevenue = 0, beautifulBizDays = 0, otherRevenue = 0, otherBizDays = 0
+  Object.entries(scorecard).forEach(([date, entry]) => {
+    const rev = Number(entry.revenue) || 0
+    if (stateByDate[date] === 'beautiful') { beautifulRevenue += rev; beautifulBizDays++ }
+    else if (rev > 0) { otherRevenue += rev; otherBizDays++ }
+  })
+  if (beautifulBizDays >= 3 && otherBizDays >= 3) {
+    const avgB = beautifulRevenue / beautifulBizDays
+    const avgO = otherRevenue / otherBizDays
+    if (avgB > avgO * 1.15) {
+      const pct = Math.round(((avgB - avgO) / avgO) * 100)
+      insights.push({
+        emoji: '💼',
+        textAr: `أيام "الحالة الجميلة" = إيرادات أعلى بـ ${pct}%! حالتك تصنع أرباحك`,
+        textEn: `"Beautiful state" days = ${pct}% higher revenue! Your state creates your profit`,
+        color: '#c9a84c',
+        priority: 10,
+      })
+    }
+  }
+
+  // ── Power Hour Streak ─────────────────────────────────────
+  const powerHour = state.powerHour || {}
+  const phStreak = (() => {
+    let c = 0; const cur = new Date()
+    while (powerHour[cur.toISOString().slice(0, 10)]?.completedAt) { c++; cur.setDate(cur.getDate() - 1) }
+    return c
+  })()
+  if (phStreak >= 3) {
+    insights.push({
+      emoji: '⏱',
+      textAr: `${phStreak} يوم من ساعة القوة — التركيز العميق يصنع نتائج استثنائية!`,
+      textEn: `${phStreak} days of Power Hour — deep focus creates extraordinary results!`,
+      color: '#e67e22',
+      priority: 7,
+    })
+  }
+
   // ── Goal Progress Momentum ────────────────────────────────
   const activeGoals = (state.goals || []).filter(g => (g.progress || 0) < 100)
   const goalsWithDailyLog = activeGoals.filter(g => g.dailyLog?.[today]?.done)

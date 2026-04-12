@@ -27,10 +27,11 @@ export function isFeatureUnlocked(path, tier) {
     // Tier 3 — After 7 days
     '/insights': 3, '/baseline': 3, '/destiny': 3, '/commitment': 3,
     '/vision': 3, '/reading': 3, '/fear': 3,
+    '/biz-scorecard': 3, '/power-hour': 3, '/decisions': 3, '/network': 3,
     // Tier 4 — After 21 days
     '/freedom': 4, '/power30': 4, '/time': 4, '/modeling': 4,
     '/relationships': 4, '/protocol': 4, '/letters': 4, '/library': 4,
-    '/group-challenge': 4,
+    '/group-challenge': 4, '/sprint90': 4, '/skills': 4,
   }
 
   const requiredTier = TIER_MAP[path]

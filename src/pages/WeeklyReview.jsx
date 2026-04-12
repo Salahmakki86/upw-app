@@ -5,6 +5,11 @@ import { useLang } from '../context/LangContext'
 import { useApp } from '../context/AppContext'
 import BottomNav from '../components/BottomNav'
 
+const TABS = [
+  { id: 'personal', ar: '🧘 شخصي', en: '🧘 Personal' },
+  { id: 'business', ar: '💼 عمل', en: '💼 Business' },
+]
+
 const WHEEL_AREAS = {
   ar: [
     { key: 'body',          label: 'الجسم',    emoji: '💪', color: '#e74c3c' },
@@ -37,12 +42,29 @@ export default function WeeklyReview() {
   const navigate = useNavigate()
   const isAr = lang === 'ar'
 
+  const [activeTab, setActiveTab] = useState('personal')
   const [reflection, setReflection] = useState(() => {
     // Load this week's reflection if exists
     const week = getWeekKey()
     return (state.weeklyReflections || []).find(r => r.week === week)?.text || ''
   })
   const [saved, setSaved] = useState(false)
+
+  // Business Review state
+  const weekKey = getWeekKey()
+  const bizReviews = state.businessWeeklyReview || {}
+  const currentBizReview = bizReviews[weekKey] || {}
+  const [bizForm, setBizForm] = useState({
+    revenueActual: currentBizReview.revenueActual || '',
+    revenueTarget: currentBizReview.revenueTarget || '',
+    topWins: currentBizReview.topWins || ['', '', ''],
+    biggestBlocker: currentBizReview.biggestBlocker || '',
+    blockerPlan: currentBizReview.blockerPlan || '',
+    decisionNeeded: currentBizReview.decisionNeeded || '',
+    selfRating: currentBizReview.selfRating || 5,
+    notes: currentBizReview.notes || '',
+  })
+  const [bizSaved, setBizSaved] = useState(false)
 
   function getWeekKey() {
     const d = new Date()
@@ -102,6 +124,40 @@ export default function WeeklyReview() {
     setTimeout(() => setSaved(false), 2000)
   }
 
+  const handleBizSave = () => {
+    const reviews = state.businessWeeklyReview || {}
+    update('businessWeeklyReview', { ...reviews, [weekKey]: { ...bizForm, savedAt: new Date().toISOString() } })
+    setBizSaved(true)
+    setTimeout(() => setBizSaved(false), 2000)
+  }
+
+  // Weekly business scorecard stats
+  const weekScorecard = useMemo(() => {
+    const sc = state.businessScorecard || {}
+    let totalCalls = 0, totalLeads = 0, totalRevenue = 0
+    last7.forEach(d => {
+      const entry = sc[d]
+      if (entry) {
+        totalCalls += Number(entry.calls) || 0
+        totalLeads += Number(entry.leads) || 0
+        totalRevenue += Number(entry.revenue) || 0
+      }
+    })
+    return { totalCalls, totalLeads, totalRevenue }
+  }, [state.businessScorecard, last7])
+
+  // Power hour completion this week
+  const weekPowerHours = useMemo(() => {
+    const ph = state.powerHour || {}
+    return last7.filter(d => ph[d]?.completedAt).length
+  }, [state.powerHour, last7])
+
+  // Decisions this week
+  const weekDecisions = useMemo(() => {
+    const dj = state.decisionJournal || []
+    return dj.filter(d => last7.includes(d.date)).length
+  }, [state.decisionJournal, last7])
+
   // ── Week range label ─────────────────────────────────────
   const weekStart = new Date(last7[0]).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' })
   const weekEnd   = new Date(last7[6]).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { day: 'numeric', month: 'short' })
@@ -130,6 +186,23 @@ export default function WeeklyReview() {
       </div>
 
       <div className="mx-5 space-y-4">
+
+        {/* ── Tab Switcher ────────────────────────────────── */}
+        <div className="flex rounded-xl overflow-hidden" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+          {TABS.map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              className="flex-1 py-2.5 text-xs font-bold transition-all"
+              style={{
+                background: activeTab === tab.id ? 'rgba(201,168,76,0.15)' : 'transparent',
+                color: activeTab === tab.id ? '#c9a84c' : '#666',
+              }}>
+              {isAr ? tab.ar : tab.en}
+            </button>
+          ))}
+        </div>
+
+        {/* ════════════════ PERSONAL TAB ════════════════════ */}
+        {activeTab === 'personal' && <>
 
         {/* ── 1. أيام الأسبوع ─────────────────────────────── */}
         <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
@@ -390,6 +463,200 @@ export default function WeeklyReview() {
             </div>
           </div>
         )}
+
+        </>}
+
+        {/* ════════════════ BUSINESS TAB ═══════════════════ */}
+        {activeTab === 'business' && <>
+
+          {/* ── Weekly Business Scorecard Summary ───────────── */}
+          <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
+            <p className="text-xs font-black mb-3 uppercase tracking-widest" style={{ color: '#c9a84c' }}>
+              {isAr ? '📊 ملخص سبورة الأسبوع' : '📊 Weekly Scorecard Summary'}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { label: isAr ? 'اتصالات/اجتماعات' : 'Calls/Meetings', value: weekScorecard.totalCalls, color: '#3498db', emoji: '📞' },
+                { label: isAr ? 'عملاء جدد' : 'New Leads', value: weekScorecard.totalLeads, color: '#2ecc71', emoji: '🧲' },
+                { label: isAr ? 'الإيرادات' : 'Revenue', value: `$${weekScorecard.totalRevenue.toLocaleString()}`, color: '#c9a84c', emoji: '💰' },
+                { label: isAr ? 'ساعات قوة' : 'Power Hours', value: weekPowerHours, color: '#e67e22', emoji: '⏱' },
+              ].map((item, i) => (
+                <div key={i} className="rounded-xl p-3 text-center" style={{ background: '#151515', border: '1px solid #252525' }}>
+                  <span className="text-lg">{item.emoji}</span>
+                  <div className="text-xl font-black mt-1" style={{ color: item.color }}>{item.value}</div>
+                  <div className="text-xs mt-0.5" style={{ color: '#555' }}>{item.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Revenue vs Target ──────────────────────────── */}
+          <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
+            <p className="text-xs font-black mb-3 uppercase tracking-widest" style={{ color: '#2ecc71' }}>
+              {isAr ? '💰 الإيراد مقابل الهدف' : '💰 Revenue vs Target'}
+            </p>
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <p className="text-xs mb-1" style={{ color: '#888' }}>{isAr ? 'الإيراد الفعلي' : 'Actual Revenue'}</p>
+                <input type="number" value={bizForm.revenueActual}
+                  onChange={e => setBizForm(f => ({ ...f, revenueActual: e.target.value }))}
+                  placeholder="0" className="w-full rounded-xl px-3 py-2.5 text-sm text-white"
+                  style={{ background: '#111', border: '1px solid #333', outline: 'none' }} />
+              </div>
+              <div>
+                <p className="text-xs mb-1" style={{ color: '#888' }}>{isAr ? 'الهدف الأسبوعي' : 'Weekly Target'}</p>
+                <input type="number" value={bizForm.revenueTarget}
+                  onChange={e => setBizForm(f => ({ ...f, revenueTarget: e.target.value }))}
+                  placeholder="0" className="w-full rounded-xl px-3 py-2.5 text-sm text-white"
+                  style={{ background: '#111', border: '1px solid #333', outline: 'none' }} />
+              </div>
+            </div>
+            {bizForm.revenueTarget > 0 && (() => {
+              const pct = Math.round((Number(bizForm.revenueActual) / Number(bizForm.revenueTarget)) * 100) || 0
+              const hit = pct >= 100
+              return (
+                <div className="rounded-xl p-3" style={{ background: hit ? '#2ecc7110' : '#e6394610', border: `1px solid ${hit ? '#2ecc7130' : '#e6394630'}` }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold" style={{ color: hit ? '#2ecc71' : '#e63946' }}>
+                      {hit ? (isAr ? '🎯 تجاوزت الهدف!' : '🎯 Target exceeded!') : (isAr ? `${pct}% من الهدف` : `${pct}% of target`)}
+                    </span>
+                    <span className="text-xs font-black" style={{ color: hit ? '#2ecc71' : '#e63946' }}>{pct}%</span>
+                  </div>
+                  <div className="w-full rounded-full h-2" style={{ background: '#1a1a1a' }}>
+                    <div className="h-2 rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, background: hit ? '#2ecc71' : '#e63946' }} />
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
+
+          {/* ── Top 3 Business Wins ───────────────────────── */}
+          <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
+            <p className="text-xs font-black mb-3 uppercase tracking-widest" style={{ color: '#f1c40f' }}>
+              {isAr ? '🏆 أفضل ٣ إنجازات عمل' : '🏆 Top 3 Business Wins'}
+            </p>
+            <div className="space-y-2">
+              {bizForm.topWins.map((win, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span className="text-xs font-black flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
+                    style={{ background: win ? '#c9a84c' : '#2a2a2a', color: win ? '#000' : '#555' }}>{i + 1}</span>
+                  <input type="text" value={win}
+                    onChange={e => {
+                      const w = [...bizForm.topWins]; w[i] = e.target.value
+                      setBizForm(f => ({ ...f, topWins: w }))
+                    }}
+                    placeholder={isAr ? `الإنجاز ${i + 1}...` : `Win ${i + 1}...`}
+                    className="flex-1 rounded-xl px-3 py-2 text-sm text-white"
+                    style={{ background: '#111', border: '1px solid #333', outline: 'none' }} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Biggest Blocker + Plan ────────────────────── */}
+          <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
+            <p className="text-xs font-black mb-3 uppercase tracking-widest" style={{ color: '#e63946' }}>
+              {isAr ? '🚧 أكبر عائق + خطة الحل' : '🚧 Biggest Blocker + Plan'}
+            </p>
+            <textarea value={bizForm.biggestBlocker}
+              onChange={e => setBizForm(f => ({ ...f, biggestBlocker: e.target.value }))}
+              placeholder={isAr ? 'ما أكبر عائق واجهته هذا الأسبوع؟' : 'What was the biggest blocker this week?'}
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white resize-none mb-2"
+              style={{ background: '#111', border: '1px solid #333', outline: 'none', minHeight: 60 }} rows={2} />
+            <textarea value={bizForm.blockerPlan}
+              onChange={e => setBizForm(f => ({ ...f, blockerPlan: e.target.value }))}
+              placeholder={isAr ? 'ما خطتك لحل هذا العائق؟' : 'What\'s your plan to solve it?'}
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white resize-none"
+              style={{ background: '#111', border: '1px solid #2ecc7140', outline: 'none', minHeight: 60 }} rows={2} />
+          </div>
+
+          {/* ── Decision Needed Next Week ─────────────────── */}
+          <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
+            <p className="text-xs font-black mb-3 uppercase tracking-widest" style={{ color: '#9b59b6' }}>
+              {isAr ? '🧠 قرار مطلوب الأسبوع القادم' : '🧠 Decision Needed Next Week'}
+            </p>
+            <textarea value={bizForm.decisionNeeded}
+              onChange={e => setBizForm(f => ({ ...f, decisionNeeded: e.target.value }))}
+              placeholder={isAr ? 'ما أهم قرار عليك اتخاذه الأسبوع القادم؟' : 'What\'s the most important decision to make next week?'}
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white resize-none"
+              style={{ background: '#111', border: '1px solid #333', outline: 'none', minHeight: 60 }} rows={2} />
+          </div>
+
+          {/* ── Self Rating ────────────────────────────────── */}
+          <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
+            <p className="text-xs font-black mb-3 uppercase tracking-widest" style={{ color: '#c9a84c' }}>
+              {isAr ? '⭐ تقييمك لأدائك هذا الأسبوع' : '⭐ Rate Your Performance This Week'}
+            </p>
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <input type="range" min={1} max={10} value={bizForm.selfRating}
+                onChange={e => setBizForm(f => ({ ...f, selfRating: parseInt(e.target.value) }))}
+                className="flex-1" style={{ accentColor: '#c9a84c' }} />
+              <div className="text-3xl font-black" style={{
+                color: bizForm.selfRating >= 8 ? '#2ecc71' : bizForm.selfRating >= 5 ? '#c9a84c' : '#e63946'
+              }}>
+                {bizForm.selfRating}/10
+              </div>
+            </div>
+            <p className="text-xs text-center" style={{ color: '#555' }}>
+              {bizForm.selfRating >= 9 ? (isAr ? '🔥 أداء استثنائي!' : '🔥 Exceptional!') :
+               bizForm.selfRating >= 7 ? (isAr ? '💪 أداء قوي' : '💪 Strong!') :
+               bizForm.selfRating >= 5 ? (isAr ? '📈 يمكنك أفضل' : '📈 Room to grow') :
+               (isAr ? '⚡ الأسبوع القادم أقوى' : '⚡ Next week will be stronger')}
+            </p>
+          </div>
+
+          {/* ── Notes ──────────────────────────────────────── */}
+          <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
+            <p className="text-xs font-black mb-1 uppercase tracking-widest" style={{ color: '#c9a84c' }}>
+              {isAr ? '✍️ ملاحظات إضافية' : '✍️ Additional Notes'}
+            </p>
+            <textarea value={bizForm.notes}
+              onChange={e => setBizForm(f => ({ ...f, notes: e.target.value }))}
+              placeholder={isAr ? 'أي ملاحظة أو فكرة تريد تسجيلها...' : 'Any additional notes or ideas...'}
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white resize-none mt-2"
+              style={{ background: '#111', border: '1px solid #1e1e1e', outline: 'none', minHeight: 60 }} rows={3} />
+          </div>
+
+          {/* ── Save Business Review ──────────────────────── */}
+          <button onClick={handleBizSave}
+            className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
+            style={{
+              background: bizSaved ? 'linear-gradient(135deg, #2ecc71, #27ae60)' : 'linear-gradient(135deg, #c9a84c, #e8c96a)',
+              color: '#000',
+            }}>
+            {bizSaved ? <><Check size={16} /> {isAr ? 'تم حفظ المراجعة ✓' : 'Business review saved ✓'}</> : (isAr ? '💾 احفظ مراجعة العمل' : '💾 Save Business Review')}
+          </button>
+
+          {/* ── Past Business Reviews ────────────────────── */}
+          {Object.keys(bizReviews).filter(k => k !== weekKey && bizReviews[k].savedAt).length > 0 && (
+            <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
+              <p className="text-xs font-black mb-3 uppercase tracking-widest" style={{ color: '#555' }}>
+                {isAr ? '📚 مراجعات سابقة' : '📚 Past Reviews'}
+              </p>
+              <div className="space-y-3">
+                {Object.entries(bizReviews)
+                  .filter(([k, v]) => k !== weekKey && v.savedAt)
+                  .sort(([a], [b]) => b.localeCompare(a))
+                  .slice(0, 4)
+                  .map(([wk, r]) => (
+                    <div key={wk} className="rounded-xl p-3" style={{ background: '#111', border: '1px solid #1a1a1a' }}>
+                      <div className="flex justify-between items-center mb-1">
+                        <p className="text-xs font-bold" style={{ color: '#888' }}>{wk}</p>
+                        <span className="text-xs font-black" style={{
+                          color: r.selfRating >= 7 ? '#2ecc71' : r.selfRating >= 5 ? '#c9a84c' : '#e63946'
+                        }}>{r.selfRating}/10</span>
+                      </div>
+                      <div className="flex gap-3 text-xs" style={{ color: '#555' }}>
+                        {r.revenueActual && <span>${Number(r.revenueActual).toLocaleString()}</span>}
+                        {r.topWins?.filter(Boolean).length > 0 && <span>{r.topWins.filter(Boolean).length} {isAr ? 'إنجاز' : 'wins'}</span>}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+        </>}
 
       </div>
 

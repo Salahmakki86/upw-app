@@ -67,6 +67,18 @@ const ALL_CHALLENGES = [
   { id: 48, cat: 'financial', ar: 'فكر في مصدر دخل إضافي واكتب خطوة أولى', en: 'Think of an extra income source and write the first step' },
   { id: 49, cat: 'financial', ar: 'ادخر مبلغاً صغيراً اليوم مهما كان', en: 'Save a small amount today no matter what' },
   { id: 50, cat: 'financial', ar: 'ابحث عن استثمار واحد يمكنك البدء به بموارد محدودة', en: 'Research one investment you can start with limited resources' },
+
+  // #9 — Business (10)
+  { id: 51, cat: 'business', ar: 'اتصل بعميل قديم وتابع معه', en: 'Call an old client and follow up' },
+  { id: 52, cat: 'business', ar: 'اطلب تقييم (feedback) من عميل حالي', en: 'Ask a current client for feedback' },
+  { id: 53, cat: 'business', ar: 'فوّض مهمة واحدة كنت تفعلها بنفسك', en: 'Delegate one task you used to do yourself' },
+  { id: 54, cat: 'business', ar: 'اقرأ ١٥ دقيقة عن مجال عملك', en: 'Read 15 minutes about your industry' },
+  { id: 55, cat: 'business', ar: 'راجع أرقامك المالية اليوم — لا تتجاهلها', en: 'Review your financial numbers today — don\'t ignore them' },
+  { id: 56, cat: 'business', ar: 'أرسل ٣ رسائل تواصل لعملاء محتملين', en: 'Send 3 outreach messages to potential clients' },
+  { id: 57, cat: 'business', ar: 'حسّن شيئاً واحداً في عملية عملك اليوم', en: 'Improve one thing in your work process today' },
+  { id: 58, cat: 'business', ar: 'اكتب هدفك المالي للشهر وخطوة واحدة نحوه', en: 'Write your monthly financial goal and one step toward it' },
+  { id: 59, cat: 'business', ar: 'ادرس منافساً واحداً — ماذا يفعل أفضل منك؟', en: 'Study one competitor — what do they do better than you?' },
+  { id: 60, cat: 'business', ar: 'قل "لا" لشيء واحد غير مهم لتركز على الأهم', en: 'Say "no" to one unimportant thing to focus on what matters' },
 ]
 
 const CATEGORIES = {
@@ -78,6 +90,7 @@ const CATEGORIES = {
     growth: { label: 'النمو', color: '#3498db', emoji: '📈' },
     giving: { label: 'العطاء', color: '#1abc9c', emoji: '🎁' },
     financial: { label: 'المال', color: '#c9a84c', emoji: '💰' },
+    business: { label: 'العمل', color: '#e67e22', emoji: '💼' },
   },
   en: {
     state: { label: 'State', color: '#e63946', emoji: '⚡' },
@@ -87,6 +100,7 @@ const CATEGORIES = {
     growth: { label: 'Growth', color: '#3498db', emoji: '📈' },
     giving: { label: 'Giving', color: '#1abc9c', emoji: '🎁' },
     financial: { label: 'Financial', color: '#c9a84c', emoji: '💰' },
+    business: { label: 'Business', color: '#e67e22', emoji: '💼' },
   },
 }
 
