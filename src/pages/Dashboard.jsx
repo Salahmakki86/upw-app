@@ -193,6 +193,9 @@ export default function Dashboard() {
         { path: '/library',      icon: BookOpen,    labelKey: 'dash_link_library',       color: '#1abc9c' },
         { path: '/nac',           icon: Zap,      labelKey: 'dash_link_nac',           color: '#e63946' },
         { path: '/incantations',  icon: Sparkles, labelKey: 'dash_link_incantations',  color: '#c9a84c' },
+        { path: '/upw-program',   icon: Flame,    labelKey: 'dash_link_upw_program',   color: '#e63946' },
+        { path: '/celebration',   icon: Star,     labelKey: 'dash_link_celebration',   color: '#f1c40f' },
+        { path: '/life-story',    icon: BookOpen, labelKey: 'dash_link_life_story',    color: '#9b59b6' },
       ],
     },
     {

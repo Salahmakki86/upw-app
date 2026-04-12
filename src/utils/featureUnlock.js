@@ -30,6 +30,7 @@ export function isFeatureUnlocked(path, tier) {
     '/biz-scorecard': 3, '/power-hour': 3, '/decisions': 3, '/network': 3,
     '/pipeline': 3, '/biz-dashboard': 3, '/avatar': 3, '/content': 3,
     '/six-needs': 3, '/nac': 3, '/compelling-future': 3, '/values': 3,
+    '/upw-program': 3, '/celebration': 2, '/life-story': 3,
     // Tier 4 — After 21 days
     '/freedom': 4, '/power30': 4, '/time': 4, '/modeling': 4,
     '/relationships': 4, '/protocol': 4, '/letters': 4, '/library': 4,

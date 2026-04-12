@@ -166,6 +166,12 @@ const INITIAL_STATE = {
   incantationStreak: 0,
   lastIncantationDate: null,
 
+  // Celebration Rituals
+  celebrationRituals: { selectedRituals: [], winsLog: [] },
+
+  // Life Story Reframing
+  lifeStory: { currentStory: '', template: '', q1: '', q2: '', q3: '', newStory: '', committed: false },
+
   // Daily Wins
   dailyWins: {},  // { 'YYYY-MM-DD': [{ id, text, category, emoji, ts }] }
 
@@ -272,6 +278,15 @@ const INITIAL_STATE = {
   contentLog: [],        // [{ id, date, platform, type, topic, caption, leadsGenerated }]
   contentIdeas: [],      // [{ id, idea, used, createdAt }]
   leadMagnets: [],       // [{ id, name, type, createdDate, signups, conversionPct }]
+
+  // UPW 4-day program
+  upwProgram: {
+    daysDone: { day1: false, day2: false, day3: false, day4: false },
+    exercises: {},
+    exerciseData: {},
+    reflections: { day1: '', day2: '', day3: '', day4: '' },
+    startDate: null,
+  },
 }
 
 const AppContext = createContext(null)

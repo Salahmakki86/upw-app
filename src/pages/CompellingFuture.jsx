@@ -51,7 +51,13 @@ export default function CompellingFuture() {
   const allData = state.compellingFuture || {}
 
   function getTimeframeData(tf) {
-    return allData[tf] || EMPTY_TIMEFRAME()
+    const empty = EMPTY_TIMEFRAME()
+    const saved = allData[tf] || {}
+    return {
+      ...empty,
+      ...saved,
+      areas: { ...empty.areas, ...(saved.areas || {}) },
+    }
   }
 
   function updateArea(tf, areaKey, value) {

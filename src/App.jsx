@@ -64,6 +64,9 @@ import CompellingFuture   from './pages/CompellingFuture'
 import ValuesHierarchy    from './pages/ValuesHierarchy'
 import Incantations       from './pages/Incantations'
 import TransformationDashboard from './pages/TransformationDashboard'
+import UPWProgram from './pages/UPWProgram'
+import CelebrationRituals from './pages/CelebrationRituals'
+import LifeStoryReframing from './pages/LifeStoryReframing'
 import ErrorBoundary from './components/ErrorBoundary'
 
 function AppRoutes() {
@@ -148,6 +151,9 @@ function AppRoutes() {
             <Route path="/values"             element={<ValuesHierarchy />}         />
             <Route path="/incantations"       element={<Incantations />}           />
             <Route path="/transformation"     element={<TransformationDashboard />} />
+            <Route path="/upw-program"        element={<UPWProgram />}             />
+            <Route path="/celebration"        element={<CelebrationRituals />}     />
+            <Route path="/life-story"         element={<LifeStoryReframing />}     />
             <Route
               path="/weekly-report"
               element={currentUser.role === 'admin' ? <WeeklyReportPage /> : <Navigate to="/" />}
