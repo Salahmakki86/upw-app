@@ -57,7 +57,7 @@ const INITIAL_STATE = {
   eveningAnswers: {},
 
   // Settings
-  userName: 'المحارب',
+  userName: '',
 
   // Business Mastery KPIs
   businessKPIs: {

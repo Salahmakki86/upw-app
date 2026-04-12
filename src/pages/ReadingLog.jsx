@@ -441,12 +441,32 @@ export default function ReadingLog() {
 
         {/* Book List */}
         {filteredBooks.length === 0 ? (
-          <div className="text-center py-10">
-            <p className="text-4xl mb-3">📚</p>
-            <p className="text-sm" style={{ color: '#444' }}>
-              {isAr ? 'لا توجد كتب بعد — أضف أول كتاب!' : 'No books yet — add your first book!'}
-            </p>
-          </div>
+          books.length === 0 ? (
+            <div className="rounded-2xl p-6 text-center" style={{ background: '#0e0e0e', border: '1px dashed #2a2a2a' }}>
+              <p className="text-5xl mb-4">📚</p>
+              <p className="text-base font-bold text-white mb-2">
+                {isAr ? 'مكتبتك فارغة بعد' : 'Your library is empty'}
+              </p>
+              <p className="text-xs mb-5" style={{ color: '#666', lineHeight: 1.7 }}>
+                {isAr
+                  ? 'القراء يعيشون ألف حياة قبل أن يموتوا\nأضف أول كتاب وابدأ رحلة التعلم'
+                  : 'Readers live a thousand lives before they die.\nAdd your first book and start your learning journey.'}
+              </p>
+              <button onClick={openAddForm}
+                style={{ background: 'linear-gradient(135deg,#c9a84c,#e8c96a)', color: '#0a0a0a',
+                  border: 'none', cursor: 'pointer', padding: '12px 24px',
+                  borderRadius: 12, fontWeight: 700, fontSize: 14 }}>
+                📖 {isAr ? 'أضف أول كتاب' : 'Add Your First Book'}
+              </button>
+            </div>
+          ) : (
+            <div className="text-center py-10">
+              <p className="text-4xl mb-3">🔍</p>
+              <p className="text-sm" style={{ color: '#444' }}>
+                {isAr ? 'لا توجد كتب في هذه الفئة' : 'No books in this category'}
+              </p>
+            </div>
+          )
         ) : (
           <div className="space-y-3">
             {filteredBooks.map(book => {

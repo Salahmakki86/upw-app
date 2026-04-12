@@ -123,9 +123,23 @@ export default function VisionBoard() {
 
       {/* Cards Grid */}
       {cards.length === 0 ? (
-        <div className="text-center py-12" style={{ color: '#555' }}>
-          <div className="text-5xl mb-3">🔭</div>
-          <p className="text-sm">{t('ابدأ برسم رؤيتك الآن', 'Start drawing your vision now')}</p>
+        <div className="rounded-2xl p-6 text-center" style={{ background: '#0e0e0e', border: '1px dashed #2a2a2a', margin: '8px 0' }}>
+          <div className="text-5xl mb-4">🔭</div>
+          <p className="text-base font-bold text-white mb-2">
+            {isAr ? 'لوحة رؤيتك فارغة' : 'Your vision board is empty'}
+          </p>
+          <p className="text-xs mb-5" style={{ color: '#666', lineHeight: 1.7 }}>
+            {isAr
+              ? 'الرؤية الواضحة تجذب الواقع نحوها\nأضف بطاقة لكل محور من محاور حياتك'
+              : 'A clear vision attracts reality toward it.\nAdd a card for each area of your life.'}
+          </p>
+          <button
+            onClick={() => setShowModal(true)}
+            style={{ background: 'linear-gradient(135deg,#c9a84c,#e8c96a)', color: '#0a0a0a',
+              border: 'none', cursor: 'pointer', padding: '12px 24px',
+              borderRadius: 12, fontWeight: 700, fontSize: 14 }}>
+            ✨ {isAr ? 'ارسم أول رؤية' : 'Create First Vision'}
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">

@@ -711,6 +711,26 @@ export default function Lifebook() {
     <Layout title={isAr ? '📖 كتابي الحياتي' : '📖 My Lifebook'} subtitle={isAr ? 'الكورس الذي يغير كل شيء — Lifebook' : 'The course that changes everything — Lifebook'} helpKey="lifebook">
       <div className="space-y-4 pt-2 pb-24">
 
+        {/* Intro card — shown only when nothing filled yet */}
+        {completedCount === 0 && (
+          <div className="rounded-2xl p-5" style={{ background: 'linear-gradient(135deg,#1a1500,#181818)', border: '1px solid rgba(201,168,76,0.35)' }}>
+            <p className="text-xs font-black mb-2" style={{ color: '#c9a84c' }}>
+              📖 {isAr ? 'ما هو الـ Lifebook؟' : 'What is Lifebook?'}
+            </p>
+            <p className="text-sm text-white font-bold mb-2">
+              {isAr ? 'الكتاب الأقوى الذي ستكتبه في حياتك — عن حياتك أنت.' : 'The most powerful book you\'ll ever write — about your own life.'}
+            </p>
+            <p className="text-xs mb-3" style={{ color: '#888', lineHeight: 1.7 }}>
+              {isAr
+                ? '12 فئة حياتية × 4 أقسام لكل فئة (معتقدات، رؤية، غرض، استراتيجية)\nابدأ بأي فئة واكتب بصدق — لا إجابات صحيحة أو خاطئة'
+                : '12 life categories × 4 sections each (beliefs, vision, purpose, strategy)\nStart with any category and write honestly — there are no right or wrong answers'}
+            </p>
+            <p className="text-xs" style={{ color: '#555' }}>
+              {isAr ? '👆 اختر فئة من الشرائح أدناه لتبدأ' : '👆 Choose a category from the tabs below to start'}
+            </p>
+          </div>
+        )}
+
         {/* Overall progress */}
         <div className="card">
           <div className="flex items-center justify-between mb-2">

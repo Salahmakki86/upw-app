@@ -108,7 +108,7 @@ function AppRoutes() {
               path="/coach-messages"
               element={currentUser.role === 'admin' ? <CoachMessages /> : <Navigate to="/" />}
             />
-            <Route path="/today"          element={<TodayPage />}          />
+            <Route path="/today"          element={<TodayPage />}       />
             <Route path="/baseline"       element={<BaselinePage />}       />
             <Route path="/insights"       element={<InsightsPage />}       />
             <Route path="/commitment"     element={<CommitmentPage />}     />

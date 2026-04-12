@@ -259,11 +259,9 @@ export default function TodayPage() {
             <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 900, marginBottom: 4 }}>
               {greeting}
             </h1>
-            {state.userName ? (
-              <p style={{ color: '#c9a84c', fontSize: 14, fontWeight: 600 }}>
-                {state.userName}
-              </p>
-            ) : null}
+            <p style={{ color: '#c9a84c', fontSize: 14, fontWeight: 600 }}>
+              {state.userName || (isAr ? 'المحارب' : 'Warrior')}
+            </p>
             <p style={{ color: '#555', fontSize: 11, marginTop: 6 }}>
               {formatTodayDate(isAr)}
             </p>

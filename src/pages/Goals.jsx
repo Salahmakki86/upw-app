@@ -620,9 +620,19 @@ export default function Goals() {
             )}
 
             {activeGoals.length === 0 && doneGoals.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-4xl mb-3">🎯</p>
-                <p className="text-base font-bold text-white mb-1">{t('goals_empty')}</p>
+              <div className="rounded-2xl p-6 text-center" style={{ background: '#0e0e0e', border: '1px dashed #2a2a2a' }}>
+                <p className="text-5xl mb-4">🎯</p>
+                <p className="text-base font-bold text-white mb-2">{t('goals_empty')}</p>
+                <p className="text-xs mb-5" style={{ color: '#666', lineHeight: 1.7 }}>
+                  {lang === 'ar'
+                    ? 'لا تبقى بدون هدف — الهدف يمنح حياتك معنى واتجاهاً\nاضغط "أضف هدفاً" لتبدأ رحلتك نحو نتائج استثنائية'
+                    : 'A goal gives your life meaning and direction.\nTap "Add Goal" to start your journey toward extraordinary results'}
+                </p>
+                <button onClick={() => setShowAdd(true)}
+                  className="btn-gold px-6 py-3 text-sm font-bold rounded-xl"
+                  style={{ background: 'linear-gradient(135deg,#c9a84c,#e8c96a)', color: '#0a0a0a', border: 'none', cursor: 'pointer' }}>
+                  🎯 {lang === 'ar' ? 'أضف أول هدف' : 'Add Your First Goal'}
+                </button>
               </div>
             ) : (
               <>

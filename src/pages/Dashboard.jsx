@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Flame, ChevronLeft, ChevronDown, ChevronUp,
+  Flame, ChevronLeft, ChevronDown, ChevronUp, Search,
   Star, Zap, Sun, Moon, Target,
   BarChart2, BookOpen, Briefcase, Compass, Calendar,
   TrendingUp, Shield, Clock,
@@ -15,6 +15,7 @@ import { useLang } from '../context/LangContext'
 import { useAuth } from '../context/AuthContext'
 import { upwApi } from '../api/upwApi'
 import OnboardingModal from '../components/OnboardingModal'
+import SearchModal from '../components/SearchModal'
 
 const QUOTES = {
   ar: [
@@ -43,6 +44,7 @@ export default function Dashboard() {
   const { lang, toggleLang, t } = useLang()
   const { currentUser, logout } = useAuth()
   const [showStateModal, setShowStateModal] = useState(false)
+  const [showSearch, setShowSearch]       = useState(false)
   const [supportSent, setSupportSent]     = useState(false)
   const [openCats, setOpenCats]           = useState({ daily: true, goals: false, programs: false, tools: false, admin: false })
   const isAr = lang === 'ar'
@@ -213,10 +215,18 @@ export default function Dashboard() {
             {new Date().toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
           <h1 className="text-2xl font-black text-white">
-            {isAr ? 'اطلق قواك الخفية' : 'Unleash Your Power'} <span style={{ color: '#c9a84c' }}>⚡</span>
+            {isAr ? 'أهلاً' : 'Hey'}{' '}
+            <span style={{ color: '#c9a84c' }}>
+              {state.userName || (isAr ? 'المحارب' : 'Warrior')} ⚡
+            </span>
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          <button onClick={() => setShowSearch(true)}
+            className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
+            style={{ background:'rgba(255,255,255,0.06)', border:'1px solid #2a2a2a' }}>
+            <Search size={15} style={{ color: '#aaa' }} />
+          </button>
           <button onClick={toggleLang}
             className="flex items-center justify-center rounded-full font-bold text-xs transition-all duration-200 active:scale-90"
             style={{ width:36, height:36, background:'rgba(201,168,76,0.1)', border:'1px solid rgba(201,168,76,0.3)', color:'#c9a84c',
@@ -244,50 +254,6 @@ export default function Dashboard() {
       </div>
 
       <div className="px-4 space-y-4 pb-8">
-
-        {/* ── Today Hub Smart Card ─────────────────────────────── */}
-        <button
-          onClick={() => navigate('/today')}
-          className="w-full rounded-2xl p-4 transition-all active:scale-[0.98]"
-          style={{ background: 'linear-gradient(135deg, #1a1500 0%, #181818 100%)', border: '1px solid rgba(201,168,76,0.35)' }}
-        >
-          <div className="flex items-center justify-between">
-            <div style={{ textAlign: isAr ? 'right' : 'left' }}>
-              <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
-                ⚡ {isAr ? 'يومك الذكي' : 'Smart Daily Hub'}
-              </p>
-              <p className="text-base font-black text-white">
-                {dailyScore}/7 {isAr ? 'مهام مكتملة' : 'tasks done'}
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: '#888' }}>
-                {isAr ? 'اضغط لرؤية خطة يومك' : 'Tap to see your daily plan'}
-              </p>
-            </div>
-            <div style={{ position: 'relative', width: 56, height: 56 }}>
-              <svg width="56" height="56" style={{ transform: 'rotate(-90deg)' }}>
-                <circle cx="28" cy="28" r="22" fill="none" stroke="#1e1e1e" strokeWidth="4" />
-                <circle cx="28" cy="28" r="22" fill="none"
-                  stroke={dailyScore === 7 ? '#2ecc71' : '#c9a84c'}
-                  strokeWidth="4"
-                  strokeDasharray={`${(dailyScore / 7) * 138.2} 138.2`}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span className="text-xs font-black" style={{ color: dailyScore === 7 ? '#2ecc71' : '#c9a84c' }}>
-                  {dailyScore}/7
-                </span>
-              </div>
-            </div>
-          </div>
-          {dailyScore === 7 && (
-            <div className="mt-3 rounded-xl p-2 text-center" style={{ background: '#2ecc7110', border: '1px solid #2ecc7130' }}>
-              <p className="text-xs font-bold" style={{ color: '#2ecc71' }}>
-                🏆 {isAr ? 'يوم مثالي! أنت استثنائي!' : 'Perfect day! You\'re extraordinary!'}
-              </p>
-            </div>
-          )}
-        </button>
 
         {/* ── State Card ─────────────────────────────────────── */}
         <button onClick={() => setShowStateModal(true)}
@@ -608,6 +574,9 @@ export default function Dashboard() {
         </div>
 
       </div>
+
+      {/* ── Search Modal ───────────────────────────────────── */}
+      {showSearch && <SearchModal onClose={() => setShowSearch(false)} />}
 
       {/* ── Onboarding (first login) ───────────────────────── */}
       {!state.onboardingDone && (
