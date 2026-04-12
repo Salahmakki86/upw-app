@@ -269,6 +269,7 @@ export const translations = {
     dash_link_protocol: 'بروتوكول الطاقة',
     dash_link_challenge: 'تحدي اليوم',
     dash_link_stats: 'إحصائياتي',
+    dash_link_scaling: 'Scaling Up',
 
     // Page titles & subtitles
     wins_title: 'يوميات الانتصارات',
@@ -559,6 +560,7 @@ export const translations = {
     dash_link_protocol: 'Energy Protocol',
     dash_link_challenge: 'Daily Challenge',
     dash_link_stats: 'My Stats',
+    dash_link_scaling: 'Scaling Up',
 
     // Page titles & subtitles
     wins_title: 'Daily Wins Journal',

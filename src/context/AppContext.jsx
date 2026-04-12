@@ -168,6 +168,19 @@ const INITIAL_STATE = {
     accepted: {},
     completed: {},
   },
+
+  // Scaling Up
+  scalingUp: {
+    bhag: '', corePurpose: '', brandPromise: '', coreCustomer: '',
+    targets3_5: '',
+    annualRocks: ['', '', '', '', ''],
+    quarterlyRocks: ['', '', ''],
+    dailyPriorities: {},
+    team: [],
+    network: [],
+    cashMetrics: { arr: '', cac: '', ltv: '', runway: '' },
+    cashStrategies: [false, false, false, false, false],
+  },
 }
 
 const AppContext = createContext(null)
@@ -459,6 +472,11 @@ export function AppProvider({ children, userId, hasData }) {
     setState(prev => ({ ...prev, annualPlan: { ...(prev.annualPlan || {}), [key]: value } }))
   }, [setState])
 
+  // Scaling Up
+  const updateScalingUp = useCallback((key, value) => {
+    setState(prev => ({ ...prev, scalingUp: { ...(prev.scalingUp || {}), [key]: value } }))
+  }, [setState])
+
   // Magic Questions
   const updateMagicQuestions = useCallback((key, value) => {
     setState(prev => ({ ...prev, magicQuestions: { ...(prev.magicQuestions || {}), [key]: value } }))
@@ -563,6 +581,7 @@ export function AppProvider({ children, userId, hasData }) {
       updateRelationships,
       updateEnergyProtocol,
       acceptChallenge, completeChallenge,
+      updateScalingUp,
     }}>
       {children}
     </AppContext.Provider>

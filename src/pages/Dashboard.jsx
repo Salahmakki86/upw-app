@@ -123,6 +123,7 @@ export default function Dashboard() {
     { path: '/protocol',      icon: Activity,  labelKey: 'dash_link_protocol',      color: '#1abc9c' },
     { path: '/challenge',     icon: Shuffle,   labelKey: 'dash_link_challenge',     color: '#e67e22' },
     { path: '/stats',         icon: PieChart,  labelKey: 'dash_link_stats',         color: '#9b59b6' },
+    { path: '/scaling',       icon: TrendingUp, labelKey: 'dash_link_scaling',       color: '#27ae60', adminOnly: true },
   ]
 
   return (
@@ -423,7 +424,7 @@ export default function Dashboard() {
         <div>
           <p className="section-title mb-3">{t('dash_quick_links')}</p>
           <div className="grid grid-cols-4 gap-2">
-            {QUICK_LINKS.map((link) => {
+            {QUICK_LINKS.filter(l => !l.adminOnly || currentUser?.role === 'admin').map((link) => {
               const Icon = link.icon
               return (
                 <button key={link.path} onClick={() => navigate(link.path)}

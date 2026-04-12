@@ -30,6 +30,7 @@ import RelationshipMastery from './pages/RelationshipMastery'
 import EnergyProtocol    from './pages/EnergyProtocol'
 import DailyChallenge    from './pages/DailyChallenge'
 import Statistics        from './pages/Statistics'
+import ScalingUp        from './pages/ScalingUp'
 
 function AppRoutes() {
   const { currentUser } = useAuth()
@@ -68,6 +69,10 @@ function AppRoutes() {
             <Route path="/protocol"      element={<EnergyProtocol />}      />
             <Route path="/challenge"     element={<DailyChallenge />}      />
             <Route path="/stats"         element={<Statistics />}          />
+            <Route
+              path="/scaling"
+              element={currentUser.role === 'admin' ? <ScalingUp /> : <Navigate to="/" />}
+            />
             <Route
               path="/admin"
               element={currentUser.role === 'admin' ? <AdminPage /> : <Navigate to="/" />}
