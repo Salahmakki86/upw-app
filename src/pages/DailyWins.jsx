@@ -130,6 +130,54 @@ export default function DailyWins() {
           </div>
         )}
 
+        {/* #13 — Win Category Distribution */}
+        {totalWins >= 3 && (
+          <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
+            <p className="text-xs font-black uppercase tracking-widest mb-3" style={{ color: '#c9a84c' }}>
+              📊 {isAr ? 'توزيع الانتصارات' : 'Win Distribution'}
+            </p>
+            <div className="space-y-2">
+              {Object.entries(CATEGORIES).map(([key, cat]) => {
+                const count = categoryCount[key] || 0
+                const pct = totalWins > 0 ? Math.round((count / totalWins) * 100) : 0
+                if (count === 0) return null
+                return (
+                  <div key={key}>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="flex items-center gap-1" style={{ color: cat.color }}>
+                        {cat.emoji} {isAr ? cat.ar : cat.en}
+                      </span>
+                      <span style={{ color: '#888' }}>{count} ({pct}%)</span>
+                    </div>
+                    <div style={{ background: '#2a2a2a', borderRadius: 4, height: 6 }}>
+                      <div style={{
+                        width: `${pct}%`, height: '100%', borderRadius: 4,
+                        background: cat.color, transition: 'width 0.4s ease',
+                      }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            {/* Insight text */}
+            {(() => {
+              const sortedCats = Object.entries(categoryCount).sort((a, b) => b[1] - a[1])
+              const top = sortedCats[0]
+              const bottom = sortedCats[sortedCats.length - 1]
+              if (!top || !bottom || top[0] === bottom[0]) return null
+              const topName = isAr ? CATEGORIES[top[0]]?.ar : CATEGORIES[top[0]]?.en
+              const bottomName = isAr ? CATEGORIES[bottom[0]]?.ar : CATEGORIES[bottom[0]]?.en
+              return (
+                <p className="text-xs mt-3" style={{ color: '#888' }}>
+                  💡 {isAr
+                    ? `أغلب انتصاراتك في "${topName}" — جرّب التركيز على "${bottomName}" هذا الأسبوع`
+                    : `Most of your wins are in "${topName}" — try focusing on "${bottomName}" this week`}
+                </p>
+              )
+            })()}
+          </div>
+        )}
+
         {/* Today's Wins */}
         <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid rgba(201,168,76,0.2)' }}>
           <div className="flex items-center justify-between mb-3">

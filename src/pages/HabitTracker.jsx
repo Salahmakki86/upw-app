@@ -100,6 +100,24 @@ export default function HabitTracker() {
   const totalCount = list.length
   const progressPct = totalCount > 0 ? (doneCount / totalCount) * 100 : 0
 
+  // #10 — Detect broken streaks for failure recovery messaging
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+  const yesterdayLog = log[yesterday] || []
+  const missedYesterday = yesterdayLog.length === 0 && Object.keys(log).length > 0
+
+  // #10 — Habit stacking suggestions
+  const stackingTip = useMemo(() => {
+    if (doneCount === 0) return null
+    const undone = list.filter(h => !todayLog.includes(h.id))
+    if (undone.length === 0) return null
+    const lastDone = list.find(h => todayLog.includes(h.id))
+    if (!lastDone) return null
+    return {
+      after: isAr ? lastDone.nameAr : lastDone.nameEn,
+      next: undone[0],
+    }
+  }, [doneCount, todayLog, list, isAr])
+
   function dayLabel(dateStr) {
     const d = new Date(dateStr)
     return d.toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { weekday: 'short' })
@@ -112,6 +130,18 @@ export default function HabitTracker() {
       helpKey="habits"
     >
       <div className="space-y-4 pt-2" dir={isAr ? 'rtl' : 'ltr'}>
+
+        {/* #10 — Failure Recovery Message */}
+        {missedYesterday && (
+          <div className="rounded-2xl p-3" style={{ background: 'rgba(231,76,60,0.06)', border: '1px solid rgba(231,76,60,0.2)' }}>
+            <p className="text-xs font-bold" style={{ color: '#e74c3c' }}>
+              🔄 {isAr ? 'فاتك يوم الأمس — لا بأس! الأبطال يسقطون ثم ينهضون أقوى.' : 'You missed yesterday — that\'s OK! Champions fall and rise stronger.'}
+            </p>
+            <p className="text-xs mt-1" style={{ color: '#888' }}>
+              {isAr ? 'ابدأ بعادة واحدة فقط اليوم وابنِ الزخم من جديد' : 'Start with just ONE habit today and rebuild momentum'}
+            </p>
+          </div>
+        )}
 
         {/* Progress Summary */}
         <div
@@ -155,6 +185,20 @@ export default function HabitTracker() {
             </p>
           )}
         </div>
+
+        {/* #10 — Habit Stacking Tip */}
+        {stackingTip && doneCount > 0 && doneCount < totalCount && (
+          <div className="rounded-2xl p-3" style={{ background: 'rgba(52,152,219,0.06)', border: '1px solid rgba(52,152,219,0.2)' }}>
+            <p className="text-xs font-bold" style={{ color: '#3498db' }}>
+              🔗 {isAr ? 'نصيحة التراكم' : 'Stacking Tip'}
+            </p>
+            <p className="text-xs mt-1 text-white">
+              {isAr
+                ? `بعد "${stackingTip.after}"، جرّب مباشرة "${isAr ? stackingTip.next.nameAr : stackingTip.next.nameEn}" ${stackingTip.next.emoji}`
+                : `After "${stackingTip.after}", try "${stackingTip.next.nameEn}" ${stackingTip.next.emoji} right away`}
+            </p>
+          </div>
+        )}
 
         {/* Today's Habits */}
         <div

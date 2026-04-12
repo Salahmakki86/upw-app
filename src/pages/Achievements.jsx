@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
+import { useToast } from '../context/ToastContext'
 import Layout from '../components/Layout'
 
 /* ─── ACHIEVEMENT DEFINITIONS ──────────────────────────────────────── */
@@ -173,6 +174,7 @@ function BadgeCard({ achievement, isUnlocked, isNew, unlockedAt, t, isAr }) {
 export default function Achievements() {
   const { state, update } = useApp()
   const { lang } = useLang()
+  const { showToast } = useToast()
   const isAr = lang === 'ar'
 
   const achievementsState = state.achievements || { unlocked: [], seen: [] }
@@ -181,7 +183,7 @@ export default function Achievements() {
 
   const t = (ar, en) => isAr ? ar : en
 
-  // On mount: evaluate all achievements, unlock new ones, mark all as seen
+  // #12 — On mount: evaluate achievements, unlock new ones, show toast celebrations
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0]
     const currentUnlockedIds = new Set(unlocked.map(u => u.id))
@@ -195,11 +197,23 @@ export default function Achievements() {
 
     if (newlyUnlocked.length > 0) {
       const updatedUnlocked = [...unlocked, ...newlyUnlocked]
-      // Mark all currently unlocked (but not new ones) as seen immediately
-      // New ones will show as "NEW!" until this page is visited again
       update('achievements', {
         unlocked: updatedUnlocked,
         seen,
+      })
+
+      // #12 — Show celebration toasts for each new achievement
+      newlyUnlocked.forEach((nu, i) => {
+        const ach = ACHIEVEMENTS.find(a => a.id === nu.id)
+        if (ach) {
+          setTimeout(() => {
+            showToast(
+              `${ach.emoji} ${isAr ? ach.nameAr : ach.nameEn} — ${isAr ? 'إنجاز جديد!' : 'New Achievement!'}`,
+              'gold',
+              4000
+            )
+          }, i * 1200)
+        }
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

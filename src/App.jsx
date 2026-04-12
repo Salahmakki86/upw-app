@@ -47,6 +47,7 @@ import InsightsPage     from './pages/InsightsPage'
 import CommitmentPage   from './pages/CommitmentPage'
 import GroupChallengePage from './pages/GroupChallengePage'
 import WeeklyReportPage from './pages/WeeklyReportPage'
+import MyWeeklySummary from './pages/MyWeeklySummary'
 
 function AppRoutes() {
   const { currentUser } = useAuth()
@@ -113,6 +114,7 @@ function AppRoutes() {
             <Route path="/insights"       element={<InsightsPage />}       />
             <Route path="/commitment"     element={<CommitmentPage />}     />
             <Route path="/group-challenge" element={<GroupChallengePage />} />
+            <Route path="/my-summary"     element={<MyWeeklySummary />}    />
             <Route
               path="/weekly-report"
               element={currentUser.role === 'admin' ? <WeeklyReportPage /> : <Navigate to="/" />}

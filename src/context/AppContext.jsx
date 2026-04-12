@@ -219,6 +219,9 @@ const INITIAL_STATE = {
     cashMetrics: { arr: '', cac: '', ltv: '', runway: '' },
     cashStrategies: [false, false, false, false, false],
   },
+
+  // #8 — Celebrated milestones tracking
+  celebratedMilestones: [],
 }
 
 const AppContext = createContext(null)

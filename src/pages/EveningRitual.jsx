@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
+import { getCompletionMessage } from '../utils/completionSignals'
 
 const EVENING_QUESTIONS = {
   ar: [
@@ -21,8 +22,9 @@ const EVENING_QUESTIONS = {
 }
 
 export default function EveningRitual() {
-  const { update } = useApp()
+  const { state, update } = useApp()
   const { lang, t } = useLang()
+  const isAr = lang === 'ar'
   const [answers, setAnswers] = useState({})
   const [qIndex, setQIndex] = useState(0)
   const [answer, setAnswer] = useState('')
@@ -33,6 +35,19 @@ export default function EveningRitual() {
   const [view, setView] = useState('questions')
 
   const QUESTIONS = EVENING_QUESTIONS[lang]
+
+  // #7 — Morning answers reference
+  const morningAnswers = state.morningAnswers || {}
+  const morningCommitment = morningAnswers[6] // "What step will I take today?"
+
+  // #5 — Commitment
+  const commitment = state.commitment
+
+  // #2 — Wheel of Life lowest area
+  const AREA_NAMES = { body: { ar: 'الصحة', en: 'Health' }, emotions: { ar: 'العواطف', en: 'Emotions' }, relationships: { ar: 'العلاقات', en: 'Relationships' }, time: { ar: 'الوقت', en: 'Time' }, career: { ar: 'المهنة', en: 'Career' }, money: { ar: 'المال', en: 'Money' }, contribution: { ar: 'المساهمة', en: 'Contribution' } }
+  const wheelScores = state.wheelScores || {}
+  const wheelEntries = Object.entries(wheelScores).filter(([, v]) => v !== 5)
+  const lowestArea = wheelEntries.length > 0 ? wheelEntries.reduce((a, b) => a[1] < b[1] ? a : b) : null
   const setGrat = (i, v) => { const g = [...gratitude]; g[i] = v; setGratitude(g) }
   const setTom  = (i, v) => { const tt = [...tomorrow]; tt[i] = v; setTomorrow(tt) }
 
@@ -137,6 +152,43 @@ export default function EveningRitual() {
   return (
     <Layout title={t('evening_title')} subtitle={t('evening_subtitle')} helpKey="evening">
       <div className="space-y-4 pt-2">
+
+        {/* #7 — Morning Reference */}
+        {morningCommitment && (
+          <div className="rounded-2xl p-3" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)' }}>
+            <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
+              ☀️ {isAr ? 'هذا الصباح قلت:' : 'This morning you said:'}
+            </p>
+            <p className="text-xs text-white leading-relaxed" style={{ fontStyle: 'italic' }}>
+              "{morningCommitment}"
+            </p>
+            <p className="text-xs mt-1" style={{ color: '#888' }}>
+              {isAr ? 'هل نفذتها؟ فكّر في ذلك أثناء أسئلتك المسائية' : 'Did you follow through? Reflect on this during your evening questions'}
+            </p>
+          </div>
+        )}
+
+        {/* #5 — Commitment Reminder */}
+        {commitment?.text && !morningCommitment && (
+          <div className="rounded-2xl p-3" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)' }}>
+            <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
+              📜 {isAr ? 'تذكّر التزامك' : 'Remember Your Commitment'}
+            </p>
+            <p className="text-xs text-white leading-relaxed" style={{ fontStyle: 'italic' }}>"{commitment.text}"</p>
+          </div>
+        )}
+
+        {/* #2 — Wheel of Life Reflection */}
+        {lowestArea && (
+          <div className="rounded-2xl p-3" style={{ background: 'rgba(230,57,70,0.06)', border: '1px solid rgba(230,57,70,0.15)' }}>
+            <p className="text-xs font-bold" style={{ color: '#e63946' }}>
+              ⚙️ {isAr
+                ? `ماذا فعلت اليوم لتحسين "${AREA_NAMES[lowestArea[0]]?.ar || lowestArea[0]}"؟`
+                : `What did you do today to improve "${AREA_NAMES[lowestArea[0]]?.en || lowestArea[0]}"?`}
+            </p>
+          </div>
+        )}
+
         <div className="progress-bar-bg">
           <div className="progress-bar-fill" style={{ width: `${((qIndex + 1) / QUESTIONS.length) * 100}%` }} />
         </div>

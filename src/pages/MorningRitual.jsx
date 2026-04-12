@@ -3,6 +3,7 @@ import { CheckCircle, Play, Pause, RotateCcw } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
+import { getCompletionMessage } from '../utils/completionSignals'
 
 const PHASES_DATA = {
   ar: [
@@ -279,9 +280,62 @@ export default function MorningRitual() {
     )
   }
 
+  // #2 — Wheel of Life lowest area
+  const AREA_NAMES = { body: { ar: 'الصحة', en: 'Health' }, emotions: { ar: 'العواطف', en: 'Emotions' }, relationships: { ar: 'العلاقات', en: 'Relationships' }, time: { ar: 'الوقت', en: 'Time' }, career: { ar: 'المهنة', en: 'Career' }, money: { ar: 'المال', en: 'Money' }, contribution: { ar: 'المساهمة', en: 'Contribution' } }
+  const wheelScores = state.wheelScores || {}
+  const wheelEntries = Object.entries(wheelScores).filter(([, v]) => v !== 5)
+  const lowestArea = wheelEntries.length > 0
+    ? wheelEntries.reduce((a, b) => a[1] < b[1] ? a : b)
+    : null
+
+  // #3 — Sleep → Energy chain
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  const lastSleep = state.sleepLog?.[yesterday]
+  const poorSleep = lastSleep && lastSleep.hours < 6.5
+
+  // #5 — Commitment reference
+  const commitment = state.commitment
+
   return (
     <Layout title={t('morning_title')} subtitle={t('morning_subtitle')} helpKey="morning">
       <div className="space-y-4 pt-2">
+
+        {/* #3 — Poor Sleep Energy Alert */}
+        {poorSleep && (
+          <div className="rounded-2xl p-3" style={{ background: 'rgba(231,76,60,0.08)', border: '1px solid rgba(231,76,60,0.2)' }}>
+            <p className="text-xs font-bold" style={{ color: '#e74c3c' }}>
+              ⚠️ {isAr
+                ? `نمت ${lastSleep.hours} ساعة فقط البارحة — ركّز اليوم على الطاقة الجسدية أكثر!`
+                : `You only slept ${lastSleep.hours}h last night — focus extra on physical energy today!`}
+            </p>
+            <p className="text-xs mt-1" style={{ color: '#888' }}>
+              {isAr ? 'تنفس أعمق، تحرك أكثر، اشرب ماء فوراً' : 'Breathe deeper, move more, drink water immediately'}
+            </p>
+          </div>
+        )}
+
+        {/* #5 — Commitment Reminder */}
+        {commitment?.text && (
+          <div className="rounded-2xl p-3" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)' }}>
+            <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
+              📜 {isAr ? 'التزامك اليوم' : 'Your Commitment'}
+            </p>
+            <p className="text-xs text-white leading-relaxed" style={{ fontStyle: 'italic' }}>
+              "{commitment.text}"
+            </p>
+          </div>
+        )}
+
+        {/* #2 — Wheel of Life Lowest Area Prompt */}
+        {lowestArea && (
+          <div className="rounded-2xl p-3" style={{ background: 'rgba(230,57,70,0.06)', border: '1px solid rgba(230,57,70,0.15)' }}>
+            <p className="text-xs font-bold" style={{ color: '#e63946' }}>
+              ⚙️ {isAr
+                ? `مجال "${AREA_NAMES[lowestArea[0]]?.ar || lowestArea[0]}" (${lowestArea[1]}/10) يحتاج اهتمامك — ماذا ستفعل اليوم لتحسينه؟`
+                : `"${AREA_NAMES[lowestArea[0]]?.en || lowestArea[0]}" (${lowestArea[1]}/10) needs your attention — what will you do today to improve it?`}
+            </p>
+          </div>
+        )}
 
         {/* Mode toggle */}
         <div className="flex rounded-2xl overflow-hidden" style={{ background: '#111', border: '1px solid #222' }}>

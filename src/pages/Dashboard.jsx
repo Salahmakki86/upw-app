@@ -16,7 +16,12 @@ import { useAuth } from '../context/AuthContext'
 import { upwApi } from '../api/upwApi'
 import OnboardingModal from '../components/OnboardingModal'
 import SearchModal from '../components/SearchModal'
+import DiscoveryCard from '../components/DiscoveryCard'
+import GoalNudge from '../components/GoalNudge'
+import MilestoneModal from '../components/MilestoneModal'
 import { calcDailyScore, DAILY_TASKS_TOTAL } from '../utils/dailyScore'
+import { checkMilestones } from '../utils/milestones'
+import { getUnlockTier, isFeatureUnlocked, getNextUnlockMessage } from '../utils/featureUnlock'
 
 const QUOTES = {
   ar: [
@@ -54,6 +59,7 @@ export default function Dashboard() {
   const [showSearch, setShowSearch]       = useState(false)
   const [supportSent, setSupportSent]     = useState(false)
   const [openCats, setOpenCats]           = useState({ daily: true, goals: false, programs: false, tools: false, admin: false })
+  const [milestoneToShow, setMilestoneToShow] = useState(null)
   const isAr = lang === 'ar'
 
   const toggleCat = (key) => setOpenCats(prev => ({ ...prev, [key]: !prev[key] }))
@@ -128,6 +134,12 @@ export default function Dashboard() {
   // ── Daily Score (7 tasks) ────────────────────────────────
   const dailyScore = useMemo(() => calcDailyScore(state), [state])
 
+  // #8 — Check for milestones
+  useMemo(() => {
+    const m = checkMilestones(state)
+    if (m && !milestoneToShow) setMilestoneToShow(m)
+  }, [state.streak, state.gratitude, state.goals])
+
   // ── Categorised Links ────────────────────────────────────
   const LINK_CATEGORIES = [
     {
@@ -187,6 +199,7 @@ export default function Dashboard() {
         { path: '/reading',     icon: BookOpen,   labelKey: 'dash_link_reading',     color: '#3498db' },
         { path: '/vision',      icon: Eye,        labelKey: 'dash_link_vision',      color: '#e91e8c' },
         { path: '/achievements',icon: Trophy,     labelKey: 'dash_link_achievements',color: '#c9a84c' },
+        { path: '/my-summary',  icon: BarChart2,  labelKey: 'dash_link_my_summary',  color: '#27ae60' },
         { path: '/stats',       icon: PieChart,   labelKey: 'dash_link_stats',       color: '#9b59b6' },
       ],
     },
@@ -209,6 +222,10 @@ export default function Dashboard() {
   const dashScore = dailyScore
   const dashPct   = Math.round((dashScore / DAILY_TASKS_TOTAL) * 100)
   const dashComplete = dashScore === DAILY_TASKS_TOTAL
+
+  // #6 — Progressive unlocking
+  const unlockTier = useMemo(() => getUnlockTier(state), [state.streak, state.morningDone, state.eveningDone, state.goals, state.sleepLog])
+  const nextUnlockMsg = getNextUnlockMessage(unlockTier, lang)
 
   return (
     <div className="flex flex-col" style={{ background: '#090909', minHeight: '100%' }}>
@@ -343,6 +360,12 @@ export default function Dashboard() {
             </div>
           </div>
         </button>
+
+        {/* #1 — Discovery of the Day */}
+        <DiscoveryCard />
+
+        {/* #4 — Goal Nudge */}
+        <GoalNudge />
 
         {/* ── يوم متكامل ─────────────────────────────────────── */}
         <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: `1px solid ${allDone ? '#c9a84c40' : '#1e1e1e'}` }}>
@@ -594,16 +617,22 @@ export default function Dashboard() {
                     <div className="grid grid-cols-4 gap-2 px-3 pb-3">
                       {cat.links.map(link => {
                         const Icon = link.icon
+                        const locked = !isFeatureUnlocked(link.path, unlockTier)
                         return (
-                          <button key={link.path} onClick={() => navigate(link.path)}
-                            className="flex flex-col items-center gap-2 rounded-xl p-2.5 transition-all duration-200 active:scale-95"
-                            style={{ background: '#151515', border: '1px solid #252525' }}>
+                          <button key={link.path}
+                            onClick={() => !locked && navigate(link.path)}
+                            className="flex flex-col items-center gap-2 rounded-xl p-2.5 transition-all duration-200 active:scale-95 relative"
+                            style={{
+                              background: '#151515', border: '1px solid #252525',
+                              opacity: locked ? 0.4 : 1,
+                              filter: locked ? 'grayscale(0.8)' : 'none',
+                            }}>
                             <div className="w-9 h-9 rounded-lg flex items-center justify-center"
                               style={{ background: `${link.color}18` }}>
-                              <Icon size={17} style={{ color: link.color }} />
+                              {locked ? <span style={{ fontSize: 14 }}>🔒</span> : <Icon size={17} style={{ color: link.color }} />}
                             </div>
                             <span className="text-center leading-tight font-semibold"
-                              style={{ color: '#aaa', fontSize: 9 }}>
+                              style={{ color: locked ? '#444' : '#aaa', fontSize: 9 }}>
                               {t(link.labelKey)}
                             </span>
                           </button>
@@ -615,6 +644,24 @@ export default function Dashboard() {
               )
             })}
         </div>
+
+        {/* #6 — Unlock Progress */}
+        {unlockTier < 4 && (
+          <div className="rounded-2xl p-3 text-center" style={{ background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.15)' }}>
+            <p className="text-xs font-bold" style={{ color: '#c9a84c' }}>
+              🔓 {nextUnlockMsg}
+            </p>
+            <div className="mt-2 flex justify-center gap-1">
+              {[1, 2, 3, 4].map(tier => (
+                <div key={tier} className="rounded-full" style={{
+                  width: 8, height: 8,
+                  background: tier <= unlockTier ? '#c9a84c' : '#333',
+                  transition: 'background 0.3s',
+                }} />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Affirmation Banner ──────────────────────────────── */}
         <div className="rounded-2xl p-4 flex items-center gap-3"
@@ -657,6 +704,19 @@ export default function Dashboard() {
             ? (isAr ? 'تم الإرسال ✓' : 'Sent ✓')
             : (isAr ? 'أحتاج دعماً' : 'Need Support')}
         </button>
+      )}
+
+      {/* #8 — Milestone Celebration Modal */}
+      {milestoneToShow && (
+        <MilestoneModal
+          milestone={milestoneToShow}
+          lang={lang}
+          onClose={() => {
+            const celebrated = state.celebratedMilestones || []
+            update('celebratedMilestones', [...celebrated, milestoneToShow.id])
+            setMilestoneToShow(null)
+          }}
+        />
       )}
 
       {/* ── State Modal ─────────────────────────────────────── */}
