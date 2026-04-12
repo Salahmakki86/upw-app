@@ -1023,24 +1023,56 @@ export default function DateWithDestiny() {
         </div>
       </div>
 
-      {/* ── Tabs ───────────────────────────────────────────── */}
-      <div className="mx-5 mb-5">
+      {/* ── Tabs with progress badges ────────────────────────── */}
+      <div className="mx-5 mb-3">
+        {/* Tab pills */}
         <div className="flex rounded-2xl overflow-hidden"
           style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
-          {tabs.map(tab => (
-            <button key={tab.id}
-              className="flex-1 py-3 text-xs font-bold transition-all"
-              style={{
-                background: activeTab === tab.id
-                  ? 'linear-gradient(135deg, #c9a84c, #e8c96a)'
-                  : 'transparent',
-                color: activeTab === tab.id ? '#000' : '#444',
-              }}
-              onClick={() => setActiveTab(tab.id)}>
-              {tab.label}
-            </button>
-          ))}
+          {tabs.map(tab => {
+            // Compute simple completion dot per tab
+            const tabDone =
+              tab.id === 0 ? completedDays > 0 :
+              tab.id === 1 ? (needsScores.certainty !== 5 || values.some(v => v.trim())) :
+              tab.id === 2 ? (identityStatements.trim().length > 0 || emotionalHomeCurrent.length > 0) :
+              tab.id === 3 ? (mission.trim().length > 0 || legacy.trim().length > 0) : false
+            return (
+              <button key={tab.id}
+                className="flex-1 py-3 text-xs font-bold transition-all relative"
+                style={{
+                  background: activeTab === tab.id
+                    ? 'linear-gradient(135deg, #c9a84c, #e8c96a)'
+                    : 'transparent',
+                  color: activeTab === tab.id ? '#000' : '#444',
+                }}
+                onClick={() => setActiveTab(tab.id)}>
+                {tab.label}
+                {tabDone && activeTab !== tab.id && (
+                  <span style={{
+                    position: 'absolute', top: 6, right: 6,
+                    width: 6, height: 6, borderRadius: '50%',
+                    background: '#2ecc71',
+                  }} />
+                )}
+              </button>
+            )
+          })}
         </div>
+
+        {/* "Continue" shortcut — first incomplete day */}
+        {activeTab === 0 && completedDays < 6 && (() => {
+          const nextDay = days.find(d => !daysDone[d.key])
+          if (!nextDay) return null
+          return (
+            <button
+              onClick={() => setExpandedDay(expandedDay === nextDay.key ? null : nextDay.key)}
+              className="w-full mt-2 py-2 rounded-xl text-xs font-bold transition-all active:scale-95"
+              style={{ background: '#1a1a1a', border: `1px solid ${nextDay.color}40`, color: nextDay.color }}>
+              {isAr
+                ? `⚡ كمّل من اليوم ${nextDay.num} — ${nextDay.title}`
+                : `⚡ Continue from Day ${nextDay.num} — ${nextDay.title}`}
+            </button>
+          )
+        })()}
       </div>
 
       {/* ── Tab content ────────────────────────────────────── */}
@@ -1049,6 +1081,18 @@ export default function DateWithDestiny() {
         {activeTab === 1 && renderValuesTab()}
         {activeTab === 2 && renderIdentityTab()}
         {activeTab === 3 && renderMissionTab()}
+
+        {/* Next tab navigator */}
+        {activeTab < tabs.length - 1 && (
+          <button
+            onClick={() => setActiveTab(activeTab + 1)}
+            className="w-full mt-6 py-3 rounded-2xl text-sm font-bold transition-all active:scale-95"
+            style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#888' }}>
+            {isAr
+              ? `${tabs[activeTab + 1].label} ←`
+              : `→ ${tabs[activeTab + 1].label}`}
+          </button>
+        )}
       </div>
 
       <BottomNav />

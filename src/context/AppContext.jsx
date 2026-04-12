@@ -196,6 +196,7 @@ const INITIAL_STATE = {
 
   // Onboarding
   onboardingDone: false,
+  startHereDismissed: false,
 
   // Baseline assessment: { date, scores: { health, career, finances, relationships, family, fun, growth, spirituality, contribution, environment } }
   baseline: null,

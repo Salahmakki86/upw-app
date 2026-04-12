@@ -2,10 +2,17 @@ import { useState } from 'react'
 import BottomNav from './BottomNav'
 import { useLang } from '../context/LangContext'
 import HelpDrawer from './HelpDrawer'
+import { useApp } from '../context/AppContext'
+import { calcDailyScore, DAILY_TASKS_TOTAL } from '../utils/dailyScore'
 
 export default function Layout({ children, title, subtitle, rightAction, helpKey }) {
   const { lang, toggleLang, t } = useLang()
+  const { state } = useApp()
   const [showHelp, setShowHelp] = useState(false)
+
+  const score = calcDailyScore(state)
+  const pct   = Math.round((score / DAILY_TASKS_TOTAL) * 100)
+  const isComplete = score === DAILY_TASKS_TOTAL
 
   return (
     <div className="flex flex-col h-full" style={{ background: '#090909' }}>
@@ -56,6 +63,39 @@ export default function Layout({ children, title, subtitle, rightAction, helpKey
             </button>
           </div>
         </header>
+      )}
+
+      {/* ── Daily Progress Bar ──────────────────────────────── */}
+      <div style={{ height: 3, background: '#111', flexShrink: 0 }}>
+        <div
+          style={{
+            height: '100%',
+            width: `${pct}%`,
+            background: isComplete
+              ? 'linear-gradient(90deg, #2ecc71, #27ae60)'
+              : 'linear-gradient(90deg, #c9a84c, #e8c96a)',
+            transition: 'width 0.6s ease',
+            boxShadow: isComplete ? '0 0 6px #2ecc7180' : '0 0 6px #c9a84c60',
+          }}
+        />
+      </div>
+
+      {/* Score pill — shown only when at least 1 task done */}
+      {score > 0 && (
+        <div style={{
+          display: 'flex', justifyContent: 'flex-end', paddingRight: 16, paddingTop: 4, flexShrink: 0,
+        }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            background: isComplete ? 'rgba(46,204,113,0.1)' : 'rgba(201,168,76,0.1)',
+            border: `1px solid ${isComplete ? 'rgba(46,204,113,0.3)' : 'rgba(201,168,76,0.25)'}`,
+            borderRadius: 20, padding: '2px 8px',
+          }}>
+            <span style={{ fontSize: 9, fontWeight: 800, color: isComplete ? '#2ecc71' : '#c9a84c' }}>
+              {isComplete ? '🏆' : '⚡'} {score}/{DAILY_TASKS_TOTAL}
+            </span>
+          </div>
+        </div>
       )}
 
       {/* Page content */}

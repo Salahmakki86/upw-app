@@ -16,6 +16,7 @@ import { useAuth } from '../context/AuthContext'
 import { upwApi } from '../api/upwApi'
 import OnboardingModal from '../components/OnboardingModal'
 import SearchModal from '../components/SearchModal'
+import { calcDailyScore, DAILY_TASKS_TOTAL } from '../utils/dailyScore'
 
 const QUOTES = {
   ar: [
@@ -38,8 +39,14 @@ const QUOTES = {
   ],
 }
 
+const FIRST_STEPS = [
+  { emoji: '☀️', labelAr: 'الروتين الصباحي', labelEn: 'Morning Ritual',   path: '/morning', descAr: 'ابدأ يومك بقوة وطاقة', descEn: 'Start your day with power' },
+  { emoji: '🎯', labelAr: 'أضف أول هدف',     labelEn: 'Add First Goal',   path: '/goals',   descAr: 'حدد ما تريد تحقيقه',   descEn: 'Define what you want' },
+  { emoji: '⚡', labelAr: 'سجّل حالتك',       labelEn: 'Log Your State',   path: '/state',   descAr: 'راقب طاقتك اليومية',   descEn: 'Track your daily energy' },
+]
+
 export default function Dashboard() {
-  const { state, logState } = useApp()
+  const { state, logState, update } = useApp()
   const navigate = useNavigate()
   const { lang, toggleLang, t } = useLang()
   const { currentUser, logout } = useAuth()
@@ -119,13 +126,7 @@ export default function Dashboard() {
   const hasStateHistory = (state.stateLog || []).length > 0
 
   // ── Daily Score (7 tasks) ────────────────────────────────
-  const dailyScore = useMemo(() => {
-    const gratitudeDone = (state.gratitude?.[today] || []).filter(Boolean).length >= 3
-    const habitsDone    = (state.habitTracker?.log?.[today] || []).length > 0
-    const winsDone      = (state.dailyWins?.[today] || []).length > 0
-    const sleepDone     = !!(state.sleepLog?.[today])
-    return [state.morningDone, gratitudeDone, habitsDone, !!state.todayState, winsDone, state.eveningDone, sleepDone].filter(Boolean).length
-  }, [state, today])
+  const dailyScore = useMemo(() => calcDailyScore(state), [state])
 
   // ── Categorised Links ────────────────────────────────────
   const LINK_CATEGORIES = [
@@ -205,11 +206,27 @@ export default function Dashboard() {
     },
   ]
 
+  const dashScore = dailyScore
+  const dashPct   = Math.round((dashScore / DAILY_TASKS_TOTAL) * 100)
+  const dashComplete = dashScore === DAILY_TASKS_TOTAL
+
   return (
     <div className="flex flex-col" style={{ background: '#090909', minHeight: '100%' }}>
 
+      {/* ── Daily Progress Bar (Dashboard has its own layout) ── */}
+      <div style={{ height: 3, background: '#111', flexShrink: 0 }}>
+        <div style={{
+          height: '100%', width: `${dashPct}%`,
+          background: dashComplete
+            ? 'linear-gradient(90deg,#2ecc71,#27ae60)'
+            : 'linear-gradient(90deg,#c9a84c,#e8c96a)',
+          transition: 'width 0.6s ease',
+          boxShadow: dashComplete ? '0 0 6px #2ecc7180' : '0 0 6px #c9a84c60',
+        }} />
+      </div>
+
       {/* ── Header ─────────────────────────────────────────── */}
-      <div className="px-5 pt-14 pb-3 flex items-center justify-between">
+      <div className="px-5 pt-12 pb-3 flex items-center justify-between">
         <div>
           <p className="text-xs mb-0.5" style={{ color: '#888' }}>
             {new Date().toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
@@ -254,6 +271,46 @@ export default function Dashboard() {
       </div>
 
       <div className="px-4 space-y-4 pb-8">
+
+        {/* ── Start Here card (new users) ─────────────────────── */}
+        {!state.startHereDismissed && (state.streak || 0) < 3 && !state.morningDone && (
+          <div className="rounded-2xl overflow-hidden"
+            style={{ background: 'linear-gradient(135deg,#1a1500,#181818)', border: '1px solid rgba(201,168,76,0.4)' }}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 pt-4 pb-2">
+              <div>
+                <p className="text-xs font-black" style={{ color: '#c9a84c' }}>
+                  🚀 {isAr ? 'ابدأ رحلتك من هنا' : 'Start Your Journey Here'}
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: '#666' }}>
+                  {isAr ? '٣ خطوات تبنى عليها كل شيء' : '3 steps everything else is built on'}
+                </p>
+              </div>
+              <button onClick={() => update('startHereDismissed', true)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', fontSize: 16 }}>
+                ×
+              </button>
+            </div>
+            {/* Steps */}
+            <div className="px-3 pb-4 space-y-2">
+              {FIRST_STEPS.map((step, i) => (
+                <button key={i} onClick={() => navigate(step.path)}
+                  className="w-full flex items-center gap-3 rounded-xl p-3 transition-all active:scale-[0.98]"
+                  style={{ background: '#111', border: '1px solid #222', textAlign: isAr ? 'right' : 'left' }}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'rgba(201,168,76,0.12)', fontSize: 16 }}>
+                    {step.emoji}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-white">{isAr ? step.labelAr : step.labelEn}</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#555' }}>{isAr ? step.descAr : step.descEn}</p>
+                  </div>
+                  <span style={{ color: '#333', fontSize: 14 }}>{isAr ? '←' : '→'}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── State Card ─────────────────────────────────────── */}
         <button onClick={() => setShowStateModal(true)}
