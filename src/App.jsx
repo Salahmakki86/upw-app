@@ -31,6 +31,7 @@ import EnergyProtocol    from './pages/EnergyProtocol'
 import DailyChallenge    from './pages/DailyChallenge'
 import Statistics        from './pages/Statistics'
 import ScalingUp        from './pages/ScalingUp'
+import Lifebook         from './pages/Lifebook'
 
 function AppRoutes() {
   const { currentUser } = useAuth()
@@ -72,6 +73,10 @@ function AppRoutes() {
             <Route
               path="/scaling"
               element={currentUser.role === 'admin' ? <ScalingUp /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/lifebook"
+              element={currentUser.role === 'admin' ? <Lifebook /> : <Navigate to="/" />}
             />
             <Route
               path="/admin"

@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Home, Sun, Target, Moon, Briefcase } from 'lucide-react'
+import { Home, Sun, Target, Briefcase, BookOpen } from 'lucide-react'
 import { useLang } from '../context/LangContext'
 import { useAuth } from '../context/AuthContext'
 
@@ -15,7 +15,8 @@ export default function BottomNav() {
     { path: '/morning',  icon: Sun,       labelKey: 'nav_morning'  },
     { path: '/state',    icon: null,      labelKey: 'nav_sos',     center: true },
     { path: '/goals',    icon: Target,    labelKey: 'nav_goals'    },
-    { path: '/business', icon: Briefcase, labelKey: 'nav_business', adminOnly: true },
+    { path: '/business',  icon: Briefcase, labelKey: 'nav_business',  adminOnly: true },
+    { path: '/lifebook',  icon: BookOpen,  labelKey: 'nav_lifebook',  adminOnly: true },
   ].filter(tab => !tab.adminOnly || isAdmin)
 
   return (

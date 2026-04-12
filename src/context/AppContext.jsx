@@ -169,6 +169,9 @@ const INITIAL_STATE = {
     completed: {},
   },
 
+  // Lifebook
+  lifebook: {},
+
   // Scaling Up
   scalingUp: {
     bhag: '', corePurpose: '', brandPromise: '', coreCustomer: '',
