@@ -142,6 +142,8 @@ function PhaseTimer({ phase, onComplete, t }) {
   )
 }
 
+const VIDEO_URL = 'https://www.youtube.com/embed/faTGTgid8Uc?start=787'
+
 export default function MorningRitual() {
   const { state, completeMorning, update } = useApp()
   const { lang, t } = useLang()
@@ -151,6 +153,7 @@ export default function MorningRitual() {
   const [answers, setAnswers] = useState({})
   const [qIndex, setQIndex] = useState(0)
   const [answer, setAnswer] = useState('')
+  const [videoMode, setVideoMode] = useState(false)
 
   const PHASES = PHASES_DATA[lang]
   const QUESTIONS = POWER_QUESTIONS[lang]
@@ -279,61 +282,127 @@ export default function MorningRitual() {
   return (
     <Layout title={t('morning_title')} subtitle={t('morning_subtitle')} helpKey="morning">
       <div className="space-y-4 pt-2">
-        <div className="grid grid-cols-4 gap-1.5">
-          {PHASES.map((ph) => {
-            const done = donePhases.includes(ph.id)
-            const active = activePhase === ph.id
-            return (
-              <button key={ph.id} onClick={() => setActivePhase(ph.id)}
-                className="flex flex-col items-center gap-1 rounded-xl py-2 px-1 transition-all"
-                style={{
-                  background: done ? `${ph.color}18` : active ? '#222' : '#111',
-                  border: `1px solid ${done ? ph.color + '44' : active ? '#444' : '#1e1e1e'}`,
-                }}>
-                <span className="text-lg">{done ? '✅' : ph.emoji}</span>
-                <span className="text-xs text-center leading-tight" style={{ color: done ? ph.color : '#666', fontSize: 10 }}>
-                  {ph.title}
-                </span>
-              </button>
-            )
-          })}
+
+        {/* Mode toggle */}
+        <div className="flex rounded-2xl overflow-hidden" style={{ background: '#111', border: '1px solid #222' }}>
+          <button
+            onClick={() => setVideoMode(false)}
+            className="flex-1 py-2.5 text-xs font-bold transition-all"
+            style={{
+              background: !videoMode ? 'linear-gradient(135deg, #c9a84c, #a88930)' : 'transparent',
+              color: !videoMode ? '#090909' : '#555',
+            }}
+          >
+            ⚡ {isAr ? 'التفاعلي' : 'Interactive'}
+          </button>
+          <button
+            onClick={() => setVideoMode(true)}
+            className="flex-1 py-2.5 text-xs font-bold transition-all"
+            style={{
+              background: videoMode ? 'linear-gradient(135deg, #e74c3c, #c0392b)' : 'transparent',
+              color: videoMode ? '#fff' : '#555',
+            }}
+          >
+            ▶ {isAr ? 'مع توني' : 'With Tony'}
+          </button>
         </div>
 
-        <div className="card">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-xl">{PHASES[activePhase].emoji}</span>
-            <div>
-              <h3 className="font-black text-white">{PHASES[activePhase].title}</h3>
-              <p className="text-xs" style={{ color: PHASES[activePhase].color }}>{PHASES[activePhase].subtitle}</p>
+        {/* Video mode */}
+        {videoMode && (
+          <div className="space-y-3">
+            <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2a2a2a', background: '#000' }}>
+              <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+                <iframe
+                  src={VIDEO_URL}
+                  title="Morning Priming with Tony Robbins"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                />
+              </div>
             </div>
-          </div>
-          <p className="text-xs leading-relaxed mb-4" style={{ color: '#aaa' }}>
-            {PHASES[activePhase].instruction}
-          </p>
-
-          {/* Show top 3 goals in Visualization phase (phase 3) */}
-          {activePhase === 3 && state.goals.length > 0 && (
-            <div className="mb-4 rounded-xl p-3 space-y-2"
-              style={{ background: '#9b59b615', border: '1px solid #9b59b630' }}>
-              <p className="text-xs font-bold" style={{ color: '#9b59b6' }}>
-                🎯 {isAr ? 'تخيّل هذه الأهداف محققة الآن:' : 'Visualize these goals as already achieved:'}
+            <div className="rounded-2xl p-4" style={{ background: 'rgba(231,76,60,0.06)', border: '1px solid rgba(231,76,60,0.2)' }}>
+              <p className="text-xs font-bold mb-1" style={{ color: '#e74c3c' }}>
+                🎬 {isAr ? 'طقوس الصباح مع توني روبينز' : 'Morning Priming with Tony Robbins'}
               </p>
-              {state.goals.filter(g => (g.progress || 0) < 100).slice(0, 3).map((g, i) => (
-                <div key={g.id} className="flex items-center gap-2">
-                  <span className="text-xs font-bold" style={{ color: '#9b59b6' }}>{i + 1}.</span>
-                  <span className="text-xs font-bold text-white">{g.result}</span>
-                </div>
-              ))}
+              <p className="text-xs leading-relaxed" style={{ color: '#888' }}>
+                {isAr
+                  ? 'الفيديو يبدأ من لحظة التمرين مباشرةً (13:07). اتبع توني خطوة بخطوة.'
+                  : 'Video starts directly at the exercise (13:07). Follow Tony step by step.'}
+              </p>
             </div>
-          )}
+            <button
+              onClick={() => setView('questions')}
+              className="w-full py-3 rounded-2xl font-bold text-sm"
+              style={{ background: 'linear-gradient(135deg, #c9a84c, #a88930)', color: '#090909' }}
+            >
+              {isAr ? 'انتهيت من الفيديو ← الأسئلة' : 'Done with video → Questions'} ✓
+            </button>
+          </div>
+        )}
 
-          <PhaseTimer key={`${activePhase}-${lang}`} phase={PHASES[activePhase]}
-            onComplete={() => handlePhaseComplete(activePhase)} t={t} />
-        </div>
+        {/* Interactive mode */}
+        {!videoMode && (
+          <>
+            <div className="grid grid-cols-4 gap-1.5">
+              {PHASES.map((ph) => {
+                const done = donePhases.includes(ph.id)
+                const active = activePhase === ph.id
+                return (
+                  <button key={ph.id} onClick={() => setActivePhase(ph.id)}
+                    className="flex flex-col items-center gap-1 rounded-xl py-2 px-1 transition-all"
+                    style={{
+                      background: done ? `${ph.color}18` : active ? '#222' : '#111',
+                      border: `1px solid ${done ? ph.color + '44' : active ? '#444' : '#1e1e1e'}`,
+                    }}>
+                    <span className="text-lg">{done ? '✅' : ph.emoji}</span>
+                    <span className="text-xs text-center leading-tight" style={{ color: done ? ph.color : '#666', fontSize: 10 }}>
+                      {ph.title}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
 
-        <button onClick={() => setView('questions')} className="w-full text-xs py-2" style={{ color: '#555' }}>
-          {t('skip')} → {t('morning_questions_title')}
-        </button>
+            <div className="card">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-xl">{PHASES[activePhase].emoji}</span>
+                <div>
+                  <h3 className="font-black text-white">{PHASES[activePhase].title}</h3>
+                  <p className="text-xs" style={{ color: PHASES[activePhase].color }}>{PHASES[activePhase].subtitle}</p>
+                </div>
+              </div>
+              <p className="text-xs leading-relaxed mb-4" style={{ color: '#aaa' }}>
+                {PHASES[activePhase].instruction}
+              </p>
+
+              {/* Show top 3 goals in Visualization phase (phase 3) */}
+              {activePhase === 3 && state.goals.length > 0 && (
+                <div className="mb-4 rounded-xl p-3 space-y-2"
+                  style={{ background: '#9b59b615', border: '1px solid #9b59b630' }}>
+                  <p className="text-xs font-bold" style={{ color: '#9b59b6' }}>
+                    🎯 {isAr ? 'تخيّل هذه الأهداف محققة الآن:' : 'Visualize these goals as already achieved:'}
+                  </p>
+                  {state.goals.filter(g => (g.progress || 0) < 100).slice(0, 3).map((g, i) => (
+                    <div key={g.id} className="flex items-center gap-2">
+                      <span className="text-xs font-bold" style={{ color: '#9b59b6' }}>{i + 1}.</span>
+                      <span className="text-xs font-bold text-white">{g.result}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <PhaseTimer key={`${activePhase}-${lang}`} phase={PHASES[activePhase]}
+                onComplete={() => handlePhaseComplete(activePhase)} t={t} />
+            </div>
+
+            <button onClick={() => setView('questions')} className="w-full text-xs py-2" style={{ color: '#555' }}>
+              {t('skip')} → {t('morning_questions_title')}
+            </button>
+          </>
+        )}
+
       </div>
     </Layout>
   )
