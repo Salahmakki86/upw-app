@@ -142,7 +142,7 @@ function PhaseTimer({ phase, onComplete, t }) {
   )
 }
 
-const VIDEO_URL = 'https://www.youtube.com/watch?v=faTGTgid8Uc&t=787s'
+const VIDEO_URL = 'https://www.youtube.com/watch?v=faTGTgid8Uc'
 
 export default function MorningRitual() {
   const { state, completeMorning, update } = useApp()
@@ -347,11 +347,11 @@ export default function MorningRitual() {
               </p>
               <div className="space-y-2">
                 {(isAr ? [
-                  '⏱ الفيديو يبدأ مباشرةً من الدقيقة 13:07',
+                  '⏱ الفيديو يبدأ من البداية',
                   '📱 سيفتح في تطبيق يوتيوب أو المتصفح',
                   '🔄 ارجع هنا بعد الانتهاء واضغط "انتهيت"',
                 ] : [
-                  '⏱ Video starts directly at 13:07',
+                  '⏱ Video starts from the beginning',
                   '📱 Opens in YouTube app or browser',
                   '🔄 Come back here after and tap "Done"',
                 ]).map((tip, i) => (
