@@ -3,6 +3,13 @@ import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
 
+const CONTACT_TYPES = [
+  { key: 'dream_client',     emoji: '🎯', ar: 'عميل مثالي',   en: 'Dream Client',     color: '#c9a84c' },
+  { key: 'dream_partner',    emoji: '🤝', ar: 'شريك مثالي',   en: 'Dream Partner',    color: '#3498db' },
+  { key: 'dream_influencer', emoji: '⭐', ar: 'مؤثر مثالي',   en: 'Dream Influencer', color: '#9b59b6' },
+  { key: 'general',          emoji: '👤', ar: 'عام',           en: 'General',          color: '#555'    },
+]
+
 const EMPTY_CONTACT = {
   name: '',
   role: '',
@@ -12,6 +19,15 @@ const EMPTY_CONTACT = {
   nextFollowUp: '',
   given: '',
   notes: '',
+  type: 'general',
+}
+
+function getRelationshipStatus(lastContactDate, today) {
+  if (!lastContactDate) return { emoji: '⭕', label: { ar: 'جديد', en: 'New' }, color: '#666' }
+  const days = Math.floor((new Date(today) - new Date(lastContactDate)) / (1000 * 60 * 60 * 24))
+  if (days < 7)  return { emoji: '🔥', label: { ar: 'نشط',   en: 'Hot'  }, color: '#2ecc71' }
+  if (days <= 30) return { emoji: '🌡️', label: { ar: 'دافئ', en: 'Warm' }, color: '#e67e22' }
+  return           { emoji: '❄️', label: { ar: 'بارد',  en: 'Cold' }, color: '#3498db' }
 }
 
 export default function NetworkTracker() {
@@ -24,7 +40,7 @@ export default function NetworkTracker() {
   const [form, setForm] = useState(EMPTY_CONTACT)
   const [editId, setEditId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
-  const [filter, setFilter] = useState('all') // all, overdue, recent
+  const [filter, setFilter] = useState('all') // all, overdue, recent, dream100
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -48,6 +64,7 @@ export default function NetworkTracker() {
       nextFollowUp: contact.nextFollowUp || '',
       given: contact.given || '',
       notes: contact.notes || '',
+      type: contact.type || 'general',
     })
     setEditId(contact.id)
     setShowForm(true)
@@ -65,6 +82,7 @@ export default function NetworkTracker() {
       nextFollowUp: form.nextFollowUp,
       given: form.given.trim(),
       notes: form.notes.trim(),
+      type: form.type || 'general',
       createdAt: editId ? (contacts.find(c => c.id === editId)?.createdAt || today) : today,
     }
     if (editId) {
@@ -100,28 +118,40 @@ export default function NetworkTracker() {
     }),
     [contacts, today]
   )
+  const dream100Contacts = useMemo(() =>
+    contacts.filter(c => c.type && c.type !== 'general'),
+    [contacts]
+  )
 
   // Filter logic
   const filteredContacts = useMemo(() => {
-    if (filter === 'overdue') return overdueContacts
-    if (filter === 'recent') return recentContacts
+    if (filter === 'overdue')  return overdueContacts
+    if (filter === 'recent')   return recentContacts
+    if (filter === 'dream100') return dream100Contacts
     return [...contacts].sort((a, b) => {
-      // Overdue first, then by next follow-up
       const aOverdue = a.nextFollowUp && a.nextFollowUp <= today
       const bOverdue = b.nextFollowUp && b.nextFollowUp <= today
       if (aOverdue && !bOverdue) return -1
       if (!aOverdue && bOverdue) return 1
       return (a.nextFollowUp || 'z').localeCompare(b.nextFollowUp || 'z')
     })
-  }, [contacts, filter, today])
+  }, [contacts, filter, today, overdueContacts, recentContacts, dream100Contacts])
 
   const getDaysSince = (dateStr) => {
     if (!dateStr) return null
-    const diff = Math.floor((new Date(today) - new Date(dateStr)) / (1000 * 60 * 60 * 24))
-    return diff
+    return Math.floor((new Date(today) - new Date(dateStr)) / (1000 * 60 * 60 * 24))
   }
 
-  const inputStyle = { background: '#111', border: '1px solid #333', color: 'white', borderRadius: 12, padding: '10px 14px', width: '100%', fontSize: 13, outline: 'none' }
+  const inputStyle = {
+    background: '#111',
+    border: '1px solid #333',
+    color: 'white',
+    borderRadius: 12,
+    padding: '10px 14px',
+    width: '100%',
+    fontSize: 13,
+    outline: 'none',
+  }
 
   return (
     <Layout
@@ -134,9 +164,9 @@ export default function NetworkTracker() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-2">
           {[
-            { label: isAr ? 'جهات الاتصال' : 'Contacts', value: totalContacts, color: '#c9a84c', emoji: '👥' },
-            { label: isAr ? 'بحاجة متابعة' : 'Overdue', value: overdueContacts.length, color: '#e63946', emoji: '⚠️' },
-            { label: isAr ? 'تواصل حديث' : 'Recent', value: recentContacts.length, color: '#2ecc71', emoji: '✅' },
+            { label: isAr ? 'جهات الاتصال' : 'Contacts', value: totalContacts,          color: '#c9a84c', emoji: '👥' },
+            { label: isAr ? 'بحاجة متابعة' : 'Overdue',  value: overdueContacts.length, color: '#e63946', emoji: '⚠️' },
+            { label: isAr ? 'تواصل حديث'  : 'Recent',    value: recentContacts.length,  color: '#2ecc71', emoji: '✅' },
           ].map((s, i) => (
             <div key={i} className="rounded-xl p-3 text-center" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
               <span className="text-lg">{s.emoji}</span>
@@ -144,6 +174,31 @@ export default function NetworkTracker() {
               <div className="text-xs mt-0.5" style={{ color: '#666' }}>{s.label}</div>
             </div>
           ))}
+        </div>
+
+        {/* Dream 100 progress */}
+        <div className="rounded-2xl px-4 py-3 flex items-center justify-between"
+          style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.18)' }}>
+          <div>
+            <p className="text-xs font-black" style={{ color: '#c9a84c' }}>
+              🌟 Dream 100
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: '#666' }}>
+              {isAr
+                ? `${dream100Contacts.length} / 100 محترفين في شبكتك`
+                : `${dream100Contacts.length} / 100 professionals in your network`}
+            </p>
+          </div>
+          {/* Mini progress bar */}
+          <div className="rounded-full overflow-hidden" style={{ background: '#1a1a1a', width: 80, height: 6 }}>
+            <div style={{
+              width: `${Math.min((dream100Contacts.length / 100) * 100, 100)}%`,
+              height: '100%',
+              background: 'linear-gradient(90deg, #c9a84c, #e8c96a)',
+              borderRadius: 9999,
+              transition: 'width 0.5s ease',
+            }} />
+          </div>
         </div>
 
         {/* Overdue Alert */}
@@ -158,11 +213,12 @@ export default function NetworkTracker() {
         )}
 
         {/* Filter Tabs */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {[
-            { id: 'all', ar: 'الكل', en: 'All' },
-            { id: 'overdue', ar: 'بحاجة متابعة', en: 'Overdue' },
-            { id: 'recent', ar: 'حديث', en: 'Recent' },
+            { id: 'all',      ar: 'الكل',       en: 'All'      },
+            { id: 'overdue',  ar: 'بحاجة متابعة', en: 'Overdue' },
+            { id: 'recent',   ar: 'حديث',        en: 'Recent'  },
+            { id: 'dream100', ar: 'Dream 100',    en: 'Dream 100' },
           ].map(tab => (
             <button key={tab.id} onClick={() => setFilter(tab.id)}
               className="flex-1 rounded-full px-3 py-1.5 text-xs font-bold transition-all"
@@ -170,11 +226,20 @@ export default function NetworkTracker() {
                 background: filter === tab.id ? '#c9a84c' : '#1a1a1a',
                 color: filter === tab.id ? '#000' : '#888',
                 border: `1px solid ${filter === tab.id ? '#c9a84c' : '#2a2a2a'}`,
+                minWidth: 60,
               }}>
               {isAr ? tab.ar : tab.en}
               {tab.id === 'overdue' && overdueContacts.length > 0 && (
                 <span className="ms-1 px-1.5 py-0.5 rounded-full text-xs"
-                  style={{ background: '#e63946', color: '#fff', fontSize: 9 }}>{overdueContacts.length}</span>
+                  style={{ background: '#e63946', color: '#fff', fontSize: 9 }}>
+                  {overdueContacts.length}
+                </span>
+              )}
+              {tab.id === 'dream100' && dream100Contacts.length > 0 && (
+                <span className="ms-1 px-1.5 py-0.5 rounded-full text-xs"
+                  style={{ background: '#c9a84c40', color: '#c9a84c', fontSize: 9 }}>
+                  {dream100Contacts.length}
+                </span>
               )}
             </button>
           ))}
@@ -193,6 +258,34 @@ export default function NetworkTracker() {
             <p className="text-xs font-black uppercase tracking-widest" style={{ color: '#c9a84c' }}>
               {editId ? (isAr ? 'تعديل جهة الاتصال' : 'Edit Contact') : (isAr ? 'جهة اتصال جديدة' : 'New Contact')}
             </p>
+
+            {/* Contact Type Pills */}
+            <div>
+              <p className="text-xs mb-2" style={{ color: '#888' }}>
+                {isAr ? 'نوع جهة الاتصال' : 'Contact Type'}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {CONTACT_TYPES.map(ct => {
+                  const isSelected = form.type === ct.key
+                  return (
+                    <button
+                      key={ct.key}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, type: ct.key }))}
+                      className="rounded-xl px-3 py-2 text-xs font-bold transition-all"
+                      style={{
+                        background: isSelected ? `${ct.color}20` : '#111',
+                        border: `1px solid ${isSelected ? ct.color : '#333'}`,
+                        color: isSelected ? ct.color : '#555',
+                        textAlign: isAr ? 'right' : 'left',
+                      }}
+                    >
+                      {ct.emoji} {isAr ? ct.ar : ct.en}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
 
             <input type="text" value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
@@ -281,7 +374,11 @@ export default function NetworkTracker() {
               const isExpanded = expandedId === contact.id
               const isOverdue = contact.nextFollowUp && contact.nextFollowUp <= today
               const daysSinceLast = getDaysSince(contact.lastContact)
-              const daysToNext = contact.nextFollowUp ? Math.floor((new Date(contact.nextFollowUp) - new Date(today)) / (1000 * 60 * 60 * 24)) : null
+              const daysToNext = contact.nextFollowUp
+                ? Math.floor((new Date(contact.nextFollowUp) - new Date(today)) / (1000 * 60 * 60 * 24))
+                : null
+              const relStatus = getRelationshipStatus(contact.lastContact, today)
+              const contactType = CONTACT_TYPES.find(ct => ct.key === (contact.type || 'general'))
 
               return (
                 <div key={contact.id} className="rounded-2xl overflow-hidden"
@@ -294,9 +391,9 @@ export default function NetworkTracker() {
                     {/* Avatar */}
                     <div className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-lg font-black"
                       style={{
-                        background: isOverdue ? '#e6394618' : '#c9a84c15',
-                        border: `2px solid ${isOverdue ? '#e63946' : '#c9a84c40'}`,
-                        color: isOverdue ? '#e63946' : '#c9a84c',
+                        background: isOverdue ? '#e6394618' : `${contactType?.color ?? '#c9a84c'}15`,
+                        border: `2px solid ${isOverdue ? '#e63946' : `${contactType?.color ?? '#c9a84c'}40`}`,
+                        color: isOverdue ? '#e63946' : (contactType?.color ?? '#c9a84c'),
                       }}>
                       {contact.name.charAt(0).toUpperCase()}
                     </div>
@@ -311,15 +408,30 @@ export default function NetworkTracker() {
                             </p>
                           )}
                         </div>
-                        {isOverdue && (
-                          <span className="flex-shrink-0 text-xs font-bold px-2 py-0.5 rounded-full"
-                            style={{ background: '#e6394622', color: '#e63946' }}>
-                            {isAr ? 'متأخر' : 'Overdue'}
+
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {/* Relationship status badge */}
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                            style={{ background: `${relStatus.color}18`, color: relStatus.color, border: `1px solid ${relStatus.color}30` }}>
+                            {relStatus.emoji} {isAr ? relStatus.label.ar : relStatus.label.en}
                           </span>
-                        )}
+                          {isOverdue && (
+                            <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                              style={{ background: '#e6394622', color: '#e63946' }}>
+                              {isAr ? 'متأخر' : 'Overdue'}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                        {/* Contact type tag (if not general) */}
+                        {contactType && contactType.key !== 'general' && (
+                          <span className="text-xs font-bold px-1.5 py-0.5 rounded"
+                            style={{ background: `${contactType.color}18`, color: contactType.color }}>
+                            {contactType.emoji} {isAr ? contactType.ar : contactType.en}
+                          </span>
+                        )}
                         {daysSinceLast !== null && (
                           <span className="text-xs" style={{ color: daysSinceLast > 30 ? '#e63946' : daysSinceLast > 14 ? '#e67e22' : '#2ecc71' }}>
                             {isAr ? `آخر تواصل: ${daysSinceLast} يوم` : `Last: ${daysSinceLast}d ago`}

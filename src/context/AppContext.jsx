@@ -230,7 +230,15 @@ const INITIAL_STATE = {
   powerHour: {},          // { 'YYYY-MM-DD': { task, startedAt, result, completedAt } }
   decisionJournal: [],    // [{ id, decision, reason, alternatives, expectedResult, emotion, date, reviewDate, review }]
   skillStack: { scores: {}, history: [], customSkills: null },
-  networkTracker: [],     // [{ id, name, role, value, lastContact, nextFollowUp, given }]
+  networkTracker: [],     // [{ id, name, role, value, lastContact, nextFollowUp, given, type }]
+
+  // New Business Intelligence Features
+  salesPipeline: { deals: [], closedLost: [] },  // Sales funnel stages
+  customerAvatars: [],   // [{ id, name, primaryAvatar, ageRange, gender, painPoints, ... }]
+  coreStory: {},         // { title, bigProblem, stats, solution, differentiator, transformation }
+  contentLog: [],        // [{ id, date, platform, type, topic, caption, leadsGenerated }]
+  contentIdeas: [],      // [{ id, idea, used, createdAt }]
+  leadMagnets: [],       // [{ id, name, type, createdDate, signups, conversionPct }]
 }
 
 const AppContext = createContext(null)

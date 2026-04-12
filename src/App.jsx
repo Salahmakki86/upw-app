@@ -54,6 +54,11 @@ import PowerHour from './pages/PowerHour'
 import DecisionJournal from './pages/DecisionJournal'
 import SkillStack from './pages/SkillStack'
 import NetworkTracker from './pages/NetworkTracker'
+import SalesPipeline from './pages/SalesPipeline'
+import BizDashboard from './pages/BizDashboard'
+import CustomerAvatar from './pages/CustomerAvatar'
+import ContentTracker from './pages/ContentTracker'
+import ErrorBoundary from './components/ErrorBoundary'
 
 function AppRoutes() {
   const { currentUser } = useAuth()
@@ -127,6 +132,10 @@ function AppRoutes() {
             <Route path="/decisions"     element={<DecisionJournal />}   />
             <Route path="/skills"        element={<SkillStack />}        />
             <Route path="/network"       element={<NetworkTracker />}    />
+            <Route path="/pipeline"        element={<SalesPipeline />}     />
+            <Route path="/biz-dashboard"   element={<BizDashboard />}      />
+            <Route path="/avatar"          element={<CustomerAvatar />}    />
+            <Route path="/content"         element={<ContentTracker />}    />
             <Route
               path="/weekly-report"
               element={currentUser.role === 'admin' ? <WeeklyReportPage /> : <Navigate to="/" />}
@@ -146,8 +155,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }
