@@ -142,7 +142,7 @@ function PhaseTimer({ phase, onComplete, t }) {
   )
 }
 
-const VIDEO_URL = 'https://www.youtube.com/embed/faTGTgid8Uc?start=787'
+const VIDEO_URL = 'https://www.youtube.com/watch?v=faTGTgid8Uc&t=787s'
 
 export default function MorningRitual() {
   const { state, completeMorning, update } = useApp()
@@ -309,29 +309,64 @@ export default function MorningRitual() {
 
         {/* Video mode */}
         {videoMode && (
-          <div className="space-y-3">
-            <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #2a2a2a', background: '#000' }}>
-              <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
-                <iframe
-                  src={VIDEO_URL}
-                  title="Morning Priming with Tony Robbins"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                />
-              </div>
+          <div className="space-y-4">
+            {/* Thumbnail card */}
+            <div
+              className="rounded-2xl overflow-hidden relative flex items-center justify-center"
+              style={{ background: '#0f0f0f', border: '1px solid #2a2a2a', minHeight: 200 }}
+            >
+              <img
+                src={`https://img.youtube.com/vi/faTGTgid8Uc/hqdefault.jpg`}
+                alt="Tony Robbins Priming"
+                className="w-full object-cover"
+                style={{ opacity: 0.6 }}
+              />
+              <button
+                onClick={() => window.open(VIDEO_URL, '_blank')}
+                className="absolute flex flex-col items-center gap-2"
+              >
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center"
+                  style={{
+                    background: '#e74c3c',
+                    boxShadow: '0 0 30px rgba(231,76,60,0.6)',
+                  }}
+                >
+                  <span className="text-white text-2xl ml-1">▶</span>
+                </div>
+                <span className="text-white text-xs font-bold px-3 py-1 rounded-full"
+                  style={{ background: 'rgba(0,0,0,0.7)' }}>
+                  {isAr ? 'افتح الفيديو' : 'Open Video'}
+                </span>
+              </button>
             </div>
-            <div className="rounded-2xl p-4" style={{ background: 'rgba(231,76,60,0.06)', border: '1px solid rgba(231,76,60,0.2)' }}>
-              <p className="text-xs font-bold mb-1" style={{ color: '#e74c3c' }}>
+
+            <div className="rounded-2xl p-4 space-y-3" style={{ background: 'rgba(231,76,60,0.06)', border: '1px solid rgba(231,76,60,0.2)' }}>
+              <p className="text-sm font-black" style={{ color: '#e74c3c' }}>
                 🎬 {isAr ? 'طقوس الصباح مع توني روبينز' : 'Morning Priming with Tony Robbins'}
               </p>
-              <p className="text-xs leading-relaxed" style={{ color: '#888' }}>
-                {isAr
-                  ? 'الفيديو يبدأ من لحظة التمرين مباشرةً (13:07). اتبع توني خطوة بخطوة.'
-                  : 'Video starts directly at the exercise (13:07). Follow Tony step by step.'}
-              </p>
+              <div className="space-y-2">
+                {(isAr ? [
+                  '⏱ الفيديو يبدأ مباشرةً من الدقيقة 13:07',
+                  '📱 سيفتح في تطبيق يوتيوب أو المتصفح',
+                  '🔄 ارجع هنا بعد الانتهاء واضغط "انتهيت"',
+                ] : [
+                  '⏱ Video starts directly at 13:07',
+                  '📱 Opens in YouTube app or browser',
+                  '🔄 Come back here after and tap "Done"',
+                ]).map((tip, i) => (
+                  <p key={i} className="text-xs" style={{ color: '#aaa' }}>{tip}</p>
+                ))}
+              </div>
+              <button
+                onClick={() => window.open(VIDEO_URL, '_blank')}
+                className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+                style={{ background: 'linear-gradient(135deg, #e74c3c, #c0392b)', color: '#fff' }}
+              >
+                ▶ {isAr ? 'شاهد الفيديو الآن' : 'Watch Video Now'}
+              </button>
             </div>
+
             <button
               onClick={() => setView('questions')}
               className="w-full py-3 rounded-2xl font-bold text-sm"
