@@ -55,7 +55,7 @@ function AppRoutes() {
             <Route path="/energy"  element={<EnergyChallenge />} />
             <Route path="/evening" element={<EveningRitual />}   />
             <Route path="/library"   element={<Library />}          />
-            <Route path="/business"  element={<BusinessMastery />}  />
+            <Route path="/business"  element={currentUser.role === 'admin' ? <BusinessMastery /> : <Navigate to="/" />} />
             <Route path="/destiny"   element={<DateWithDestiny />}  />
             <Route path="/weekly"    element={<WeeklyReview />}     />
             <Route path="/freedom"   element={<FinancialFreedom />} />

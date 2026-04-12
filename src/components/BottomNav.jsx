@@ -1,19 +1,22 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Home, Sun, Target, Moon, Briefcase } from 'lucide-react'
 import { useLang } from '../context/LangContext'
+import { useAuth } from '../context/AuthContext'
 
 export default function BottomNav() {
   const location = useLocation()
   const navigate = useNavigate()
   const { t } = useLang()
+  const { currentUser } = useAuth()
+  const isAdmin = currentUser?.role === 'admin'
 
   const TABS = [
     { path: '/',         icon: Home,      labelKey: 'nav_home'     },
     { path: '/morning',  icon: Sun,       labelKey: 'nav_morning'  },
     { path: '/state',    icon: null,      labelKey: 'nav_sos',     center: true },
     { path: '/goals',    icon: Target,    labelKey: 'nav_goals'    },
-    { path: '/business', icon: Briefcase, labelKey: 'nav_business' },
-  ]
+    { path: '/business', icon: Briefcase, labelKey: 'nav_business', adminOnly: true },
+  ].filter(tab => !tab.adminOnly || isAdmin)
 
   return (
     <nav
