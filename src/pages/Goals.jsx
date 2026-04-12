@@ -17,6 +17,8 @@ function GoalCard({ goal, onUpdate, onDelete, t }) {
   const [weeklyNote, setWeeklyNote] = useState(goal.weeklyNote || '')
   const [dailyInput, setDailyInput] = useState('')
   const [editingDaily, setEditingDaily] = useState(false)
+  const [newAction, setNewAction] = useState('')
+  const [showActionInput, setShowActionInput] = useState(false)
 
   const today = new Date().toISOString().split('T')[0]
   const dailyLog = goal.dailyLog || {}       // { 'YYYY-MM-DD': { task, done } }
@@ -73,6 +75,25 @@ function GoalCard({ goal, onUpdate, onDelete, t }) {
       actionsDone: updated,
       progress: Math.round((Object.values(updated).filter(Boolean).length / actions.length) * 100),
     })
+  }
+
+  const addAction = () => {
+    if (!newAction.trim()) return
+    const updated = [...actions, newAction.trim()]
+    onUpdate(goal.id, { actions: updated })
+    setNewAction('')
+    setShowActionInput(false)
+  }
+
+  const deleteAction = (i) => {
+    const updatedActions = actions.filter((_, idx) => idx !== i)
+    const updatedDone = {}
+    Object.keys(actionsDone).forEach(k => {
+      const ki = parseInt(k)
+      if (ki < i) updatedDone[ki] = actionsDone[ki]
+      else if (ki > i) updatedDone[ki - 1] = actionsDone[ki]
+    })
+    onUpdate(goal.id, { actions: updatedActions, actionsDone: updatedDone })
   }
 
   const saveWeeklyNote = () => { onUpdate(goal.id, { weeklyNote }); setShowWeeklyNote(false) }
@@ -229,36 +250,73 @@ function GoalCard({ goal, onUpdate, onDelete, t }) {
             )}
           </div>
 
-          {/* ── Action Steps (checkable) ── */}
-          {actions.length > 0 && (
-            <div>
-              <p className="text-xs font-bold mb-2" style={{ color: '#c9a84c' }}>
-                🎯 خطة العمل:
-                <span className="mr-1 font-normal" style={{ color: '#666' }}>
-                  ({doneCount}/{actions.length})
-                </span>
+          {/* ── Action Steps (checkable + add/delete) ── */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold" style={{ color: '#c9a84c' }}>
+                🎯 خطة العمل
+                {actions.length > 0 && (
+                  <span className="mr-1 font-normal" style={{ color: '#666' }}>
+                    ({doneCount}/{actions.length})
+                  </span>
+                )}
               </p>
-              <div className="space-y-2">
-                {actions.map((a, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <button
-                      onClick={() => toggleAction(i)}
-                      className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center mt-0.5 transition-all"
-                      style={{
-                        background: actionsDone[i] ? 'rgba(46,204,113,0.2)' : '#1e1e1e',
-                        border: `1px solid ${actionsDone[i] ? '#2ecc71' : '#333'}`,
-                      }}>
-                      {actionsDone[i] && <Check size={10} color="#2ecc71" />}
-                    </button>
-                    <p className="text-xs flex-1 mt-0.5" style={{
-                      color: actionsDone[i] ? '#555' : '#aaa',
-                      textDecoration: actionsDone[i] ? 'line-through' : 'none',
-                    }}>{a}</p>
-                  </div>
-                ))}
-              </div>
+              <button
+                onClick={() => setShowActionInput(v => !v)}
+                className="text-xs px-2 py-0.5 rounded-lg"
+                style={{ background: 'rgba(201,168,76,0.1)', color: '#c9a84c' }}>
+                <Plus size={11} style={{ display: 'inline', marginBottom: 1 }} /> أضف خطوة
+              </button>
             </div>
-          )}
+
+            {actions.length === 0 && !showActionInput && (
+              <p className="text-xs" style={{ color: '#444' }}>لم تُضف خطوات بعد</p>
+            )}
+
+            <div className="space-y-2">
+              {actions.map((a, i) => (
+                <div key={i} className="flex items-start gap-2 group">
+                  <button
+                    onClick={() => toggleAction(i)}
+                    className="flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center mt-0.5 transition-all"
+                    style={{
+                      background: actionsDone[i] ? 'rgba(46,204,113,0.2)' : '#1e1e1e',
+                      border: `1px solid ${actionsDone[i] ? '#2ecc71' : '#333'}`,
+                    }}>
+                    {actionsDone[i] && <Check size={10} color="#2ecc71" />}
+                  </button>
+                  <p className="text-xs flex-1 mt-0.5" style={{
+                    color: actionsDone[i] ? '#555' : '#aaa',
+                    textDecoration: actionsDone[i] ? 'line-through' : 'none',
+                  }}>{a}</p>
+                  <button
+                    onClick={() => deleteAction(i)}
+                    className="p-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                    style={{ color: '#444' }}>
+                    <Trash2 size={11} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {showActionInput && (
+              <div className="flex gap-2 mt-2">
+                <input
+                  value={newAction}
+                  onChange={e => setNewAction(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && addAction()}
+                  placeholder="أضف خطوة جديدة..."
+                  className="input-dark flex-1 text-xs py-1.5"
+                  autoFocus
+                />
+                <button onClick={addAction}
+                  className="p-1.5 rounded-lg flex-shrink-0"
+                  style={{ background: 'rgba(201,168,76,0.15)', color: '#c9a84c' }}>
+                  <Check size={14} />
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* ── Purpose ── */}
           {goal.purpose && (
