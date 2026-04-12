@@ -643,7 +643,7 @@ export default function DateWithDestiny() {
         <div className="space-y-2">
           {values.map((val, idx) => {
             const isEditing = editingValIdx === idx
-            const rankColors = ['#c9a84c','#aaa','#cd7f32','#c9a84c88','#aaa88','#aaa44']
+            const rankColors = ['#c9a84c','#aaaaaa','#cd7f32','rgba(201,168,76,0.5)','#777777','#555555']
             return (
               <div key={idx} className="rounded-xl flex items-center gap-3 p-3"
                 style={{ background: '#0e0e0e', border: `1px solid ${val ? '#2a2a2a' : '#181818'}` }}>

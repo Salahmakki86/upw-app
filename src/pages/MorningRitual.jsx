@@ -220,7 +220,7 @@ export default function MorningRitual() {
           </p>
 
           {/* Regular incantations */}
-          {state.incantations.map((inc, i) => (
+          {(state.incantations || []).map((inc, i) => (
             <div key={i} className="rounded-2xl p-4" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
               <span className="text-xs font-bold mb-2 block" style={{ color: '#c9a84c' }}>#{i + 1}</span>
               <p className="text-base font-bold text-white leading-relaxed">{inc}</p>
@@ -440,13 +440,13 @@ export default function MorningRitual() {
               </p>
 
               {/* Show top 3 goals in Visualization phase (phase 3) */}
-              {activePhase === 3 && state.goals.length > 0 && (
+              {activePhase === 3 && (state.goals || []).length > 0 && (
                 <div className="mb-4 rounded-xl p-3 space-y-2"
                   style={{ background: '#9b59b615', border: '1px solid #9b59b630' }}>
                   <p className="text-xs font-bold" style={{ color: '#9b59b6' }}>
                     🎯 {isAr ? 'تخيّل هذه الأهداف محققة الآن:' : 'Visualize these goals as already achieved:'}
                   </p>
-                  {state.goals.filter(g => (g.progress || 0) < 100).slice(0, 3).map((g, i) => (
+                  {(state.goals || []).filter(g => (g.progress || 0) < 100).slice(0, 3).map((g, i) => (
                     <div key={g.id} className="flex items-center gap-2">
                       <span className="text-xs font-bold" style={{ color: '#9b59b6' }}>{i + 1}.</span>
                       <span className="text-xs font-bold text-white">{g.result}</span>

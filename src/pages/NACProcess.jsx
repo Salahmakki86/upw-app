@@ -73,12 +73,23 @@ const STEPS_META = [
   },
 ]
 
-function getTodayAndNext6() {
+function get21DaysFrom(startDateStr) {
   const days = []
-  for (let i = 0; i < 7; i++) {
-    const d = new Date()
-    d.setDate(d.getDate() + i)
-    days.push(d.toISOString().split('T')[0])
+  // If no start date provided, use today
+  const start = startDateStr ? new Date(startDateStr) : new Date()
+  for (let i = 0; i < 21; i++) {
+    const d = new Date(start)
+    d.setDate(start.getDate() + i)
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+    const today = new Date()
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`
+    days.push({
+      key,
+      label: `${d.getDate()}/${d.getMonth()+1}`,
+      isToday: key === todayKey,
+      isPast: key < todayKey,
+      isFuture: key > todayKey,
+    })
   }
   return days
 }
@@ -99,12 +110,19 @@ export default function NACProcess() {
   const [selectedInterrupt, setSelectedInterrupt] = useState(null)
   const [newBehavior, setNewBehavior] = useState('')
   const [newBehaviorNeed, setNewBehaviorNeed] = useState('')
-  const [checkedDays, setCheckedDays] = useState({})
+  const [checkedDays, setCheckedDays] = useState(() => {
+    const lastSession = state.nacSessions?.[state.nacSessions.length - 1]
+    return lastSession?.checkedDays || {}
+  })
   const [testResponse, setTestResponse] = useState('')
   const [completed, setCompleted] = useState(false)
   const [incantationAdded, setIncantationAdded] = useState(false)
 
-  const days = getTodayAndNext6()
+  // Use session start date if available (last completed session), otherwise today
+  const nacSessionStart = state.nacSessions?.length > 0
+    ? state.nacSessions[state.nacSessions.length - 1]?.timestamp?.split('T')[0]
+    : null
+  const days = get21DaysFrom(nacSessionStart)
 
   function updatePain(index, field, value) {
     setPains(prev => prev.map((p, i) => i === index ? { ...p, [field]: value } : p))
@@ -115,7 +133,16 @@ export default function NACProcess() {
   }
 
   function toggleDay(day) {
-    setCheckedDays(prev => ({ ...prev, [day]: !prev[day] }))
+    setCheckedDays(prev => {
+      const newCheckedDays = { ...prev, [day]: !prev[day] }
+      // Persist checkedDays immediately
+      const sessions = [...(state.nacSessions || [])]
+      if (sessions.length > 0) {
+        sessions[sessions.length - 1] = { ...sessions[sessions.length - 1], checkedDays: newCheckedDays }
+        update('nacSessions', sessions)
+      }
+      return newCheckedDays
+    })
   }
 
   function canProceed() {
@@ -471,25 +498,26 @@ export default function NACProcess() {
 
               <div className="bg-[#111] rounded-xl p-4 border border-[#333]">
                 <div className="text-sm font-semibold text-gray-300 mb-3">
-                  {isAr ? 'الأيام السبعة القادمة:' : 'Next 7 days:'}
+                  {isAr ? 'أيام الـ٢١ يوم:' : '21-Day Conditioning:'}
                 </div>
                 <div className="space-y-2">
-                  {days.map((day, i) => {
-                    const checked = !!checkedDays[day]
-                    const isToday = i === 0
-                    const dateObj = new Date(day)
+                  {days.map((day) => {
+                    const checked = !!checkedDays[day.key]
+                    const dateObj = new Date(day.key)
                     const label = dateObj.toLocaleDateString(isAr ? 'ar-SA' : 'en-US', {
                       weekday: 'long', month: 'short', day: 'numeric'
                     })
                     return (
                       <button
-                        key={day}
-                        onClick={() => toggleDay(day)}
+                        key={day.key}
+                        onClick={() => toggleDay(day.key)}
                         className={`w-full flex items-center gap-3 rounded-xl p-3 border transition-all ${
                           checked
                             ? 'border-[#c9a84c] bg-[#c9a84c]/10'
-                            : isToday
+                            : day.isToday
                             ? 'border-[#c9a84c]/40 bg-[#c9a84c]/05'
+                            : day.isPast
+                            ? 'border-[#222] opacity-60 hover:border-[#333]'
                             : 'border-[#222] hover:border-[#333]'
                         }`}
                       >
@@ -501,7 +529,7 @@ export default function NACProcess() {
                         <span className={`text-sm flex-1 text-start ${checked ? 'text-[#c9a84c]' : 'text-gray-300'}`}>
                           {label}
                         </span>
-                        {isToday && (
+                        {day.isToday && (
                           <span className="text-xs bg-[#c9a84c]/20 text-[#c9a84c] px-2 py-0.5 rounded-full font-semibold">
                             {isAr ? 'اليوم' : 'Today'}
                           </span>

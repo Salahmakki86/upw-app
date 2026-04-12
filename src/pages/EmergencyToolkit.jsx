@@ -473,7 +473,7 @@ function IncantationView({ incantations, onDone, isAr }) {
   )
 }
 
-function PowerQuestionView({ onDone, isAr }) {
+function PowerQuestionView({ onDone, isAr, onSaveAnswer }) {
   const [idx] = useState(() => Math.floor(Math.random() * POWER_QUESTIONS.ar.length))
   const [currentIdx, setCurrentIdx] = useState(idx)
   const [answer, setAnswer] = useState('')
@@ -510,7 +510,12 @@ function PowerQuestionView({ onDone, isAr }) {
           {isAr ? 'سؤال آخر ←' : 'Next Question →'}
         </button>
         <button
-          onClick={onDone}
+          onClick={() => {
+            if (answer.trim()) {
+              onSaveAnswer(POWER_QUESTIONS[isAr ? 'ar' : 'en'][currentIdx], answer.trim())
+            }
+            onDone()
+          }}
           style={{ flex: 1, background: 'linear-gradient(135deg,#c9a84c,#a88930)', color: '#090909', borderRadius: 14, padding: '14px', fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer' }}
         >
           {isAr ? 'تم ✓' : 'Done ✓'}
@@ -593,7 +598,15 @@ export default function EmergencyToolkit() {
           {toolId === 'flooding'    && <FloodingView    onDone={() => closeTool(toolId)} isAr={isAr} />}
           {toolId === 'reframe'     && <ReframeView     onDone={() => closeTool(toolId)} isAr={isAr} />}
           {toolId === 'incantation' && <IncantationView incantations={state.incantations || []} onDone={() => closeTool(toolId)} isAr={isAr} />}
-          {toolId === 'question'    && <PowerQuestionView onDone={() => closeTool(toolId)} isAr={isAr} />}
+          {toolId === 'question'    && <PowerQuestionView onDone={() => closeTool(toolId)} isAr={isAr} onSaveAnswer={(question, answer) => {
+            const log = state.powerQuestionLog || []
+            update('powerQuestionLog', [...log, {
+              date: new Date().toISOString().split('T')[0],
+              question,
+              answer,
+              ts: Date.now()
+            }])
+          }} />}
         </div>
       </div>
     )

@@ -302,6 +302,15 @@ const INITIAL_STATE = {
 
   // Monthly Reset ceremonies: [{ monthKey, completedAt, wins, release, word, goal, scores }]
   monthlyResets: [],
+
+  // Evening ritual daily log: { 'YYYY-MM-DD': { answers, gratitude, dayRating, tomorrow, reflection, completedAt } }
+  eveningLog: {},
+
+  // Dickens Process sessions: [{ date, belief, answers, joyText, newBelief, completedAt }]
+  dickensLog: [],
+
+  // Power Question answers log: [{ date, question, answer, ts }]
+  powerQuestionLog: [],
 }
 
 const AppContext = createContext(null)
@@ -364,6 +373,22 @@ export function AppProvider({ children, userId, hasData }) {
     return () => { isMounted.current = false }
   }, [userId]) // eslint-disable-line
 
+  // ── Daily reset: clear today-flags when a new day starts ──────────────────
+  useEffect(() => {
+    setStateRaw(prev => {
+      if (!prev.lastActiveDate) return prev          // brand new user
+      if (prev.lastActiveDate === today) return prev // same day, no reset
+      // New day — reset all daily completion flags
+      return {
+        ...prev,
+        morningDone:       false,
+        eveningDone:       false,
+        primingPhasesDone: [],
+        todayState: (prev.stateLog || []).find(e => e.date === today)?.state || null,
+      }
+    })
+  }, [today]) // today is stable within a session; re-runs only if date changes
+
   const setState = useCallback((updater) => {
     setStateRaw(prev => {
       const next = typeof updater === 'function' ? updater(prev) : { ...prev, ...updater }
@@ -372,8 +397,14 @@ export function AppProvider({ children, userId, hasData }) {
       if (syncTimer.current) clearTimeout(syncTimer.current)
       syncTimer.current = setTimeout(() => {
         upwApi.saveState(next)
-          .then(() => showToast('تم الحفظ ✓', 'success', 2000))
-          .catch(() => showToast('خطأ في الحفظ — تحقق من الاتصال', 'error', 4000))
+          .then(() => {
+            const _lang = localStorage.getItem('upw-lang') || 'ar'
+            showToast(_lang === 'ar' ? 'تم الحفظ ✓' : 'Saved ✓', 'success', 2000)
+          })
+          .catch(() => {
+            const _lang = localStorage.getItem('upw-lang') || 'ar'
+            showToast(_lang === 'ar' ? 'خطأ في الحفظ — تحقق من الاتصال' : 'Save error — check connection', 'error', 4000)
+          })
       }, 3000)
       return next
     })
@@ -383,8 +414,12 @@ export function AppProvider({ children, userId, hasData }) {
     setState(prev => ({ ...prev, [key]: value }))
   }, [setState])
 
-  // Today's date string
-  const today = new Date().toISOString().split('T')[0]
+  // Today's date string (local time, not UTC)
+  function getLocalToday() {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  }
+  const today = getLocalToday()
 
   // Log emotional state
   const logState = useCallback((stateVal, label) => {

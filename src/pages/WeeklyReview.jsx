@@ -38,7 +38,7 @@ const DAY_NAMES = {
 
 export default function WeeklyReview() {
   const { lang } = useLang()
-  const { state, saveWeeklyReflection } = useApp()
+  const { state, saveWeeklyReflection, update } = useApp()
   const navigate = useNavigate()
   const isAr = lang === 'ar'
 

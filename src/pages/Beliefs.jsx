@@ -209,7 +209,19 @@ function DickensProcess({ belief, onClose, lang, t }) {
           />
         </div>
         <button
-          onClick={() => setCommitted(true)}
+          onClick={() => {
+            setCommitted(true)
+            // Save the Dickens session to state for future reference
+            const session = {
+              date: new Date().toISOString().split('T')[0],
+              belief: belief?.text || belief || '',
+              answers: { ...answers, joy: joyText },
+              newBelief: newBelief.trim(),
+              completedAt: new Date().toISOString(),
+            }
+            const existing = appState.dickensLog || []
+            update('dickensLog', [...existing, session])
+          }}
           disabled={!newBelief.trim()}
           className="w-full btn-gold py-4 text-base disabled:opacity-40"
         >

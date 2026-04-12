@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
@@ -139,6 +139,22 @@ export default function EveningRitual() {
   const [caniArea, setCaniArea] = useState('')
   const [caniMeter, setCaniMeter] = useState(5)
 
+  // Restore today's evening data if already completed
+  useEffect(() => {
+    const todayKey = getTodayStr()
+    const todayLog = state.eveningLog?.[todayKey]
+    if (todayLog) {
+      if (todayLog.gratitude?.length) setGratitude(todayLog.gratitude.concat(['','',''].slice(todayLog.gratitude.length)).slice(0,3))
+      if (todayLog.dayRating) setDayRating(todayLog.dayRating)
+      if (todayLog.tomorrow?.length) setTomorrow(todayLog.tomorrow.concat(['','',''].slice(todayLog.tomorrow.length)).slice(0,3))
+      if (todayLog.reflection) setReflection(todayLog.reflection)
+      if (todayLog.cani?.q1) setCaniQ1(todayLog.cani.q1)
+      if (todayLog.cani?.q2) setCaniQ2(todayLog.cani.q2)
+      if (todayLog.cani?.area) setCaniArea(todayLog.cani.area)
+      if (todayLog.cani?.meter) setCaniMeter(todayLog.cani.meter)
+    }
+  }, []) // Only on mount
+
   const QUESTIONS = EVENING_QUESTIONS[lang]
 
   // #7 — Morning answers reference
@@ -191,8 +207,23 @@ export default function EveningRitual() {
   }
 
   const finishEvening = () => {
+    const todayKey = getTodayStr()
     update('eveningDone', true)
     update('eveningAnswers', answers)
+    // Save ALL evening data to the log — previously this was lost on navigation
+    const existingLog = state.eveningLog || {}
+    update('eveningLog', {
+      ...existingLog,
+      [todayKey]: {
+        answers,
+        gratitude: gratitude.filter(g => g.trim()),
+        dayRating,
+        tomorrow: tomorrow.filter(t => t.trim()),
+        reflection: reflection.trim(),
+        cani: { q1: caniQ1, q2: caniQ2, area: caniArea, meter: caniMeter },
+        completedAt: new Date().toISOString(),
+      }
+    })
     setView('done')
   }
 
