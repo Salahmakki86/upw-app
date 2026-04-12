@@ -5,7 +5,8 @@ import {
   BarChart2, BookOpen, Briefcase, Compass, Calendar,
   TrendingUp, Shield, Clock,
   Trophy, Mail, Users, Heart, Activity, Shuffle, PieChart,
-  LogOut, Settings, NotebookPen,
+  LogOut, Settings, NotebookPen, CheckSquare, Eye, Smile,
+  MessageSquare, GraduationCap, Moon as MoonIcon,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
@@ -123,8 +124,16 @@ export default function Dashboard() {
     { path: '/protocol',      icon: Activity,  labelKey: 'dash_link_protocol',      color: '#1abc9c' },
     { path: '/challenge',     icon: Shuffle,   labelKey: 'dash_link_challenge',     color: '#e67e22' },
     { path: '/stats',         icon: PieChart,  labelKey: 'dash_link_stats',         color: '#9b59b6' },
-    { path: '/scaling',       icon: TrendingUp,   labelKey: 'dash_link_scaling',   color: '#27ae60',  adminOnly: true },
-    { path: '/lifebook',      icon: NotebookPen,  labelKey: 'dash_link_lifebook',  color: '#8e44ad',  adminOnly: true },
+    { path: '/scaling',       icon: TrendingUp,   labelKey: 'dash_link_scaling',    color: '#27ae60', adminOnly: true },
+    { path: '/lifebook',      icon: NotebookPen,  labelKey: 'dash_link_lifebook',   color: '#8e44ad', adminOnly: true },
+    { path: '/students',      icon: GraduationCap,labelKey: 'dash_link_students',   color: '#3498db', adminOnly: true },
+    { path: '/coach-messages',icon: MessageSquare,labelKey: 'dash_link_coach_msg',  color: '#e74c3c', adminOnly: true },
+    { path: '/gratitude',     icon: Smile,        labelKey: 'dash_link_gratitude',  color: '#f1c40f' },
+    { path: '/habits',        icon: CheckSquare,  labelKey: 'dash_link_habits',     color: '#2ecc71' },
+    { path: '/reading',       icon: BookOpen,     labelKey: 'dash_link_reading',    color: '#3498db' },
+    { path: '/vision',        icon: Eye,          labelKey: 'dash_link_vision',     color: '#e91e8c' },
+    { path: '/sleep',         icon: MoonIcon,     labelKey: 'dash_link_sleep',      color: '#9b59b6' },
+    { path: '/achievements',  icon: Trophy,       labelKey: 'dash_link_achievements',color: '#c9a84c' },
   ]
 
   return (

@@ -271,7 +271,15 @@ export const translations = {
     dash_link_challenge: 'تحدي اليوم',
     dash_link_stats: 'إحصائياتي',
     dash_link_scaling: 'Scaling Up',
-    dash_link_lifebook: 'كتابي الحياتي',
+    dash_link_lifebook:      'كتابي الحياتي',
+    dash_link_students:      'تقدم الطلاب',
+    dash_link_coach_msg:     'رسائل المدرب',
+    dash_link_gratitude:     'الامتنان',
+    dash_link_habits:        'العادات',
+    dash_link_reading:       'القراءة',
+    dash_link_vision:        'لوحة الرؤية',
+    dash_link_sleep:         'النوم',
+    dash_link_achievements:  'الإنجازات',
 
     // Page titles & subtitles
     wins_title: 'يوميات الانتصارات',
@@ -564,7 +572,15 @@ export const translations = {
     dash_link_challenge: 'Daily Challenge',
     dash_link_stats: 'My Stats',
     dash_link_scaling: 'Scaling Up',
-    dash_link_lifebook: 'My Lifebook',
+    dash_link_lifebook:      'My Lifebook',
+    dash_link_students:      'Student Progress',
+    dash_link_coach_msg:     'Coach Messages',
+    dash_link_gratitude:     'Gratitude',
+    dash_link_habits:        'Habits',
+    dash_link_reading:       'Reading',
+    dash_link_vision:        'Vision Board',
+    dash_link_sleep:         'Sleep',
+    dash_link_achievements:  'Achievements',
 
     // Page titles & subtitles
     wins_title: 'Daily Wins Journal',

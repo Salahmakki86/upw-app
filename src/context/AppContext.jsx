@@ -172,6 +172,27 @@ const INITIAL_STATE = {
   // Lifebook
   lifebook: {},
 
+  // Gratitude Journal: { 'YYYY-MM-DD': ['thing1','thing2','thing3'] }
+  gratitude: {},
+
+  // Habit Tracker
+  habitTracker: { list: [], log: {} },
+
+  // Reading Log
+  readingLog: { books: [], yearlyGoal: 12 },
+
+  // Vision Board
+  visionBoard: { cards: [] },
+
+  // Sleep Log: { 'YYYY-MM-DD': { hours, quality, notes, bedtime, waketime } }
+  sleepLog: {},
+
+  // Achievements
+  achievements: { unlocked: [], seen: [] },
+
+  // Coach messages received (for students)
+  coachMessages: [],
+
   // Scaling Up
   scalingUp: {
     bhag: '', corePurpose: '', brandPromise: '', coreCustomer: '',

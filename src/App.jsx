@@ -32,6 +32,14 @@ import DailyChallenge    from './pages/DailyChallenge'
 import Statistics        from './pages/Statistics'
 import ScalingUp        from './pages/ScalingUp'
 import Lifebook         from './pages/Lifebook'
+import GratitudeJournal from './pages/GratitudeJournal'
+import HabitTracker     from './pages/HabitTracker'
+import ReadingLog       from './pages/ReadingLog'
+import VisionBoard      from './pages/VisionBoard'
+import SleepTracker     from './pages/SleepTracker'
+import Achievements     from './pages/Achievements'
+import StudentProgress  from './pages/StudentProgress'
+import CoachMessages    from './pages/CoachMessages'
 
 function AppRoutes() {
   const { currentUser } = useAuth()
@@ -77,6 +85,20 @@ function AppRoutes() {
             <Route
               path="/lifebook"
               element={currentUser.role === 'admin' ? <Lifebook /> : <Navigate to="/" />}
+            />
+            <Route path="/gratitude"   element={<GratitudeJournal />} />
+            <Route path="/habits"      element={<HabitTracker />}     />
+            <Route path="/reading"     element={<ReadingLog />}        />
+            <Route path="/vision"      element={<VisionBoard />}       />
+            <Route path="/sleep"       element={<SleepTracker />}      />
+            <Route path="/achievements" element={<Achievements />}     />
+            <Route
+              path="/students"
+              element={currentUser.role === 'admin' ? <StudentProgress /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/coach-messages"
+              element={currentUser.role === 'admin' ? <CoachMessages /> : <Navigate to="/" />}
             />
             <Route
               path="/admin"

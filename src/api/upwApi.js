@@ -44,8 +44,14 @@ export const upwApi = {
   // Admin — progress dashboard
   getProgress: () => request('/admin/progress'),
 
-  // Admin — messages
-  sendMessage: (toUserId, body) => request('/admin/messages', { method: 'POST', body: { toUserId, body } }),
+  // Admin — students progress
+  getStudents:      ()         => request('/admin/students'),
+  getStudentState:  (userId)   => request(`/admin/students/${userId}/state`),
+
+  // Admin — messages (enhanced)
+  sendMessage:      (toUserId, body) => request('/admin/messages', { method: 'POST', body: { toUserId, body } }),
+  sendCoachMessage: (payload)        => request('/admin/messages', { method: 'POST', body: payload }),
+  getCoachMessages: ()               => request('/admin/messages'),
 
   // Push notifications
   getVapidKey:    ()    => request('/push/vapid'),
