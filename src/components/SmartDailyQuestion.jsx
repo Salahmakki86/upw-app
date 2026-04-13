@@ -1,12 +1,57 @@
 /**
  * Smart Daily Question — Batch 3
  * Adaptive question based on user's current state & data patterns
+ * NOW: Past reflections + pattern analysis → answers become valuable
  */
 import { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import { useToast } from '../context/ToastContext'
 import { calcMomentum, detectRootCause } from '../utils/transformationEngine'
+
+/* ── Analyze past answers for patterns ── */
+function analyzeQuestionPatterns(log, isAr) {
+  const entries = Object.entries(log || {})
+    .filter(([, v]) => v?.answer?.trim())
+    .sort(([a], [b]) => b.localeCompare(a))
+
+  if (entries.length < 2) return null
+
+  // Category frequency
+  const catCount = {}
+  entries.forEach(([, v]) => {
+    const cat = v.category || 'general'
+    catCount[cat] = (catCount[cat] || 0) + 1
+  })
+  const topCat = Object.entries(catCount).sort((a, b) => b[1] - a[1])[0]
+
+  // Average answer length trend (are they getting deeper?)
+  const recent5 = entries.slice(0, 5).map(([, v]) => v.answer.length)
+  const older5 = entries.slice(5, 10).map(([, v]) => v.answer.length)
+  const recentAvg = recent5.reduce((s, l) => s + l, 0) / recent5.length
+  const olderAvg = older5.length > 0 ? older5.reduce((s, l) => s + l, 0) / older5.length : recentAvg
+
+  const CAT_LABELS = {
+    energy:     { ar: 'الطاقة',   en: 'Energy' },
+    clarity:    { ar: 'الوضوح',   en: 'Clarity' },
+    restart:    { ar: 'الاستمرار', en: 'Restart' },
+    growth:     { ar: 'النمو',    en: 'Growth' },
+    goals:      { ar: 'الأهداف',  en: 'Goals' },
+    identity:   { ar: 'الهوية',   en: 'Identity' },
+    meaning:    { ar: 'المعنى',   en: 'Meaning' },
+    reflection: { ar: 'التأمل',   en: 'Reflection' },
+    morning:    { ar: 'الصباح',   en: 'Morning' },
+    gratitude:  { ar: 'الامتنان', en: 'Gratitude' },
+    courage:    { ar: 'الشجاعة',  en: 'Courage' },
+  }
+
+  return {
+    totalAnswers: entries.length,
+    topCategory: topCat ? { key: topCat[0], count: topCat[1], label: CAT_LABELS[topCat[0]] || { ar: topCat[0], en: topCat[0] } } : null,
+    gettingDeeper: recentAvg > olderAvg * 1.2,
+    recentEntries: entries.slice(0, 5),
+  }
+}
 
 function getSmartQuestion(state, isAr) {
   const today = new Date().toISOString().split('T')[0]
@@ -167,8 +212,10 @@ export default function SmartDailyQuestion() {
   const [answer, setAnswer] = useState(savedAnswer?.answer || '')
   const [showInput, setShowInput] = useState(false)
   const [saved, setSaved] = useState(!!savedAnswer)
+  const [showPast, setShowPast] = useState(false)
 
   const question = useMemo(() => getSmartQuestion(state, isAr), [state, isAr])
+  const patterns = useMemo(() => analyzeQuestionPatterns(state.smartQuestionLog, isAr), [state.smartQuestionLog, isAr])
 
   function save() {
     if (!answer.trim()) return
@@ -251,6 +298,55 @@ export default function SmartDailyQuestion() {
             ✍️ {isAr ? 'أجب الآن' : 'Answer Now'}
           </button>
         )}
+
+        {/* ── Pattern Insight (when enough data) ── */}
+        {patterns && patterns.topCategory && (
+          <div className="mt-3 rounded-xl p-3" style={{ background: 'rgba(147,112,219,0.06)', border: '1px solid rgba(147,112,219,0.15)' }}>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs">📊</span>
+              <span className="text-xs font-bold" style={{ color: '#9370db' }}>
+                {isAr ? 'نمط تأملاتك' : 'Your Reflection Pattern'}
+              </span>
+            </div>
+            <p className="text-xs leading-relaxed" style={{ color: '#999' }}>
+              {isAr
+                ? `أجبت ${patterns.totalAnswers} سؤال — غالبية تأملاتك تدور حول "${patterns.topCategory.label.ar}" (${patterns.topCategory.count} مرة)`
+                : `${patterns.totalAnswers} answers — most reflections focus on "${patterns.topCategory.label.en}" (${patterns.topCategory.count} times)`}
+              {patterns.gettingDeeper && (
+                <span style={{ color: '#2ecc71' }}>
+                  {isAr ? ' 🌱 وإجاباتك تزداد عمقاً!' : ' 🌱 Your answers are getting deeper!'}
+                </span>
+              )}
+            </p>
+          </div>
+        )}
+
+        {/* ── Past Reflections Toggle ── */}
+        {patterns && patterns.recentEntries.length > 0 && (
+          <button
+            onClick={() => setShowPast(v => !v)}
+            className="mt-2 w-full flex items-center justify-between py-2 text-xs"
+            style={{ color: '#666' }}
+          >
+            <span>{isAr ? `📖 تأملاتك السابقة (${patterns.recentEntries.length})` : `📖 Past Reflections (${patterns.recentEntries.length})`}</span>
+            <span>{showPast ? '▲' : '▼'}</span>
+          </button>
+        )}
+
+        {showPast && patterns?.recentEntries.map(([date, entry]) => (
+          <div key={date} className="rounded-xl p-3 mb-1.5" style={{ background: '#0a0a0a', border: '1px solid #1a1a1a' }}>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-bold" style={{ color: '#555' }}>
+                {new Date(date).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' })}
+              </span>
+              <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(147,112,219,0.1)', color: '#9370db', fontSize: 9 }}>
+                {entry.category}
+              </span>
+            </div>
+            <p className="text-xs italic mb-1" style={{ color: '#666' }}>"{(entry.question || '').slice(0, 60)}..."</p>
+            <p className="text-xs leading-relaxed" style={{ color: '#bbb' }}>{entry.answer}</p>
+          </div>
+        ))}
       </div>
     </div>
   )

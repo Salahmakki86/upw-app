@@ -171,12 +171,20 @@ export default function MorningRitual() {
     else setView('questions')
   }
 
+  const today = new Date().toISOString().split('T')[0]
+
   const saveAnswer = () => {
     if (!answer.trim()) return
     const newAnswers = { ...answers, [qIndex]: answer }
     setAnswers(newAnswers)
     // Auto-save partial answers immediately on every question
     update('morningAnswers', newAnswers)
+    // Also save to date-keyed log for growth tracking
+    const pqLog = state.powerQuestionsLog || {}
+    update('powerQuestionsLog', {
+      ...pqLog,
+      [today]: { ...(pqLog[today] || {}), morning: newAnswers }
+    })
     // Clear draft since this question is now saved
     update('morningAnswerDraft', null)
     setAnswer('')
@@ -308,6 +316,14 @@ export default function MorningRitual() {
     }
   }, [view, qIndex]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Find last answer to the current question (from powerQuestionsLog)
+  const pastAnswer = (() => {
+    const log = state.powerQuestionsLog || {}
+    const dates = Object.keys(log).filter(d => d !== today && log[d]?.morning?.[qIndex]?.trim()).sort().reverse()
+    if (dates.length === 0) return null
+    return { date: dates[0], text: log[dates[0]].morning[qIndex] }
+  })()
+
   if (view === 'questions') {
     return (
       <Layout title={t('morning_questions_title')} subtitle={`${lang === 'ar' ? 'السؤال' : 'Question'} ${qIndex + 1} / ${QUESTIONS.length}`}>
@@ -319,6 +335,24 @@ export default function MorningRitual() {
             style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
             <p className="text-base font-bold text-white leading-relaxed">{QUESTIONS[qIndex]}</p>
           </div>
+
+          {/* Show past answer for this question as growth context */}
+          {pastAnswer && (
+            <div className="rounded-xl p-3" style={{ background: 'rgba(147,112,219,0.06)', border: '1px solid rgba(147,112,219,0.15)' }}>
+              <p className="text-xs font-bold mb-1" style={{ color: '#9370db' }}>
+                📖 {isAr ? 'إجابتك السابقة:' : 'Your previous answer:'}
+              </p>
+              <p className="text-xs leading-relaxed" style={{ color: '#999', fontStyle: 'italic' }}>
+                "{pastAnswer.text.slice(0, 120)}{pastAnswer.text.length > 120 ? '...' : ''}"
+              </p>
+              <p className="text-xs mt-1" style={{ color: '#444' }}>
+                {new Date(pastAnswer.date).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' })}
+                {' — '}
+                {isAr ? 'هل تطوّرت إجابتك؟' : 'Has your answer evolved?'}
+              </p>
+            </div>
+          )}
+
           <textarea
             value={answer}
             onChange={e => {

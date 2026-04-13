@@ -246,6 +246,36 @@ export default function SleepTracker() {
     return sleepScore(h, q)
   }, [hours, quality, todayEntry])
 
+  // Sleep ↔ State Correlation — surface the hidden insight
+  const sleepStateCorrelation = useMemo(() => {
+    const checkin = state.stateCheckin || {}
+    const goodSleepDays = [] // 7h+
+    const poorSleepDays = [] // <7h
+
+    Object.entries(sleepLog).forEach(([date, entry]) => {
+      if (!entry?.hours || !checkin[date]) return
+      const stateAvg = (checkin[date].energy + checkin[date].mood + checkin[date].clarity) / 3
+      if (entry.hours >= 7) {
+        goodSleepDays.push({ date, hours: entry.hours, stateAvg })
+      } else {
+        poorSleepDays.push({ date, hours: entry.hours, stateAvg })
+      }
+    })
+
+    if (goodSleepDays.length + poorSleepDays.length < 3) return null
+
+    const avgStateGood = goodSleepDays.length > 0
+      ? Math.round(goodSleepDays.reduce((s, d) => s + d.stateAvg, 0) / goodSleepDays.length * 10) / 10
+      : null
+    const avgStatePoor = poorSleepDays.length > 0
+      ? Math.round(poorSleepDays.reduce((s, d) => s + d.stateAvg, 0) / poorSleepDays.length * 10) / 10
+      : null
+
+    const diff = avgStateGood && avgStatePoor ? Math.round((avgStateGood - avgStatePoor) * 10) / 10 : null
+
+    return { avgStateGood, avgStatePoor, diff, goodCount: goodSleepDays.length, poorCount: poorSleepDays.length }
+  }, [sleepLog, state.stateCheckin])
+
   // Last 14 days for history
   const history = useMemo(() => {
     const result = []
@@ -424,6 +454,43 @@ export default function SleepTracker() {
       )}
 
       <ScoreTips score={todayScore} t={t} isAr={isAr} />
+
+      {/* Sleep ↔ State Correlation Card */}
+      {sleepStateCorrelation && (
+        <div className="card p-4 mb-4" style={{ border: '1px solid rgba(147,112,219,0.3)' }}>
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#9370db' }}>
+            🧠 {t('تأثير النوم على حالتك', 'Sleep → State Connection')}
+          </h3>
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            {sleepStateCorrelation.avgStateGood !== null && (
+              <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(46,204,113,0.08)', border: '1px solid rgba(46,204,113,0.2)' }}>
+                <p className="text-xs mb-1" style={{ color: '#888' }}>{t('نوم ٧+ ساعات', '7+ Hours Sleep')}</p>
+                <p className="text-xl font-black" style={{ color: '#2ecc71' }}>{sleepStateCorrelation.avgStateGood}</p>
+                <p className="text-xs" style={{ color: '#555' }}>{t('متوسط الحالة', 'Avg State')}</p>
+                <p className="text-xs mt-1" style={{ color: '#444' }}>({sleepStateCorrelation.goodCount} {t('يوم', 'days')})</p>
+              </div>
+            )}
+            {sleepStateCorrelation.avgStatePoor !== null && (
+              <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(231,76,60,0.08)', border: '1px solid rgba(231,76,60,0.2)' }}>
+                <p className="text-xs mb-1" style={{ color: '#888' }}>{t('نوم أقل من ٧', '< 7 Hours Sleep')}</p>
+                <p className="text-xl font-black" style={{ color: '#e74c3c' }}>{sleepStateCorrelation.avgStatePoor}</p>
+                <p className="text-xs" style={{ color: '#555' }}>{t('متوسط الحالة', 'Avg State')}</p>
+                <p className="text-xs mt-1" style={{ color: '#444' }}>({sleepStateCorrelation.poorCount} {t('يوم', 'days')})</p>
+              </div>
+            )}
+          </div>
+          {sleepStateCorrelation.diff !== null && sleepStateCorrelation.diff > 0 && (
+            <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
+              <p className="text-xs font-bold" style={{ color: '#c9a84c' }}>
+                💡 {t(
+                  `النوم الجيد يرفع حالتك بمقدار +${sleepStateCorrelation.diff} نقطة — هذا دليل من بياناتك الشخصية!`,
+                  `Good sleep raises your state by +${sleepStateCorrelation.diff} points — this is proof from YOUR data!`
+                )}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* History */}
       {history.length > 0 && (

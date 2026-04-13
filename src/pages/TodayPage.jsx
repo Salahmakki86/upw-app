@@ -323,6 +323,14 @@ export default function TodayPage() {
   // ── Morning Briefing — smart intelligence sentence ────────────────────
   const briefing = useMemo(() => generateBriefing(state, isAr), [state, isAr])
 
+  // ── Yesterday's Evening Reflection (surface it back to the user) ──────
+  const yesterdayReflection = useMemo(() => {
+    const yDate = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+    const entry = state.eveningLog?.[yDate]
+    if (!entry?.reflection?.trim()) return null
+    return { date: yDate, text: entry.reflection.trim(), rating: entry.dayRating }
+  }, [state.eveningLog])
+
   // ── Personalized tip based on onboarding profile (Fix #8) ──────────
   const personalTip = useMemo(() => getDailyPersonalizedTip(state.onboardingProfile, isAr), [state.onboardingProfile, isAr])
 
@@ -481,6 +489,26 @@ export default function TodayPage() {
             <p style={{ fontSize: 12, color: '#ddd', fontStyle: 'italic', lineHeight: 1.4 }}>
               "{morningCommitment.slice(0, 100)}"
             </p>
+          </div>
+        )}
+
+        {/* ── Yesterday's Reflection — surface evening data back ──── */}
+        {yesterdayReflection && (
+          <div style={{
+            borderRadius: 16, padding: '10px 14px', marginBottom: 14,
+            background: 'rgba(147,112,219,0.05)', border: '1px solid rgba(147,112,219,0.15)',
+          }}>
+            <p style={{ fontSize: 10, fontWeight: 800, color: '#9370db', marginBottom: 3 }}>
+              🌙 {isAr ? 'تأمّلك البارحة:' : "Yesterday's Reflection:"}
+            </p>
+            <p style={{ fontSize: 12, color: '#bbb', fontStyle: 'italic', lineHeight: 1.5 }}>
+              "{yesterdayReflection.text.slice(0, 120)}{yesterdayReflection.text.length > 120 ? '...' : ''}"
+            </p>
+            {yesterdayReflection.rating && (
+              <p style={{ fontSize: 9, color: '#555', marginTop: 4 }}>
+                {isAr ? `تقييم يومك: ${yesterdayReflection.rating}/10` : `Day rating: ${yesterdayReflection.rating}/10`}
+              </p>
+            )}
           </div>
         )}
 

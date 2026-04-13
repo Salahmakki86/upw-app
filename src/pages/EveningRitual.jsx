@@ -212,6 +212,10 @@ export default function EveningRitual() {
     const todayKey = getTodayStr()
     update('eveningDone', true)
     update('eveningAnswers', answers)
+    // Also save to date-keyed log for growth tracking
+    const pqLog = state.powerQuestionsLog || {}
+    const todayPQ = pqLog[todayKey] || {}
+    update('powerQuestionsLog', { ...pqLog, [todayKey]: { ...todayPQ, evening: answers } })
     // Save ALL evening data to the log — previously this was lost on navigation
     const existingLog = state.eveningLog || {}
     update('eveningLog', {
@@ -314,6 +318,16 @@ export default function EveningRitual() {
     )
   }
 
+  // Past reflections for inspiration
+  const pastReflections = useMemo(() => {
+    const log = state.eveningLog || {}
+    const todayKey = getTodayStr()
+    return Object.entries(log)
+      .filter(([d, v]) => d !== todayKey && v?.reflection?.trim())
+      .sort(([a], [b]) => b.localeCompare(a))
+      .slice(0, 3)
+  }, [state.eveningLog])
+
   if (view === 'tomorrow') {
     return (
       <Layout title={t('evening_planning')} subtitle={lang === 'ar' ? 'خطط لغدك الليلة' : 'Plan your tomorrow tonight'}>
@@ -332,6 +346,23 @@ export default function EveningRitual() {
             <p className="text-xs mb-2" style={{ color: '#888' }}>{t('evening_reflection')}:</p>
             <textarea value={reflection} onChange={e => setReflection(e.target.value)}
               placeholder={t('evening_reflection_placeholder')} rows={3} className="input-dark resize-none text-sm" />
+
+            {/* Past reflections — your words back to you */}
+            {pastReflections.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <p className="text-xs font-bold mb-2" style={{ color: '#555' }}>
+                  📖 {isAr ? 'تأملاتك السابقة' : 'Your Past Reflections'}
+                </p>
+                {pastReflections.map(([date, entry]) => (
+                  <div key={date} className="rounded-xl p-2.5 mb-1.5" style={{ background: '#111', border: '1px solid #1e1e1e' }}>
+                    <span className="text-xs" style={{ color: '#444' }}>
+                      {new Date(date).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                    <p className="text-xs mt-1 leading-relaxed" style={{ color: '#999' }}>{entry.reflection}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <div>
             <p className="text-xs mb-2" style={{ color: '#888' }}>{t('evening_rating')}: {dayRating}/10</p>
@@ -622,6 +653,30 @@ export default function EveningRitual() {
           style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
           <p className="text-base font-bold text-white leading-relaxed">{QUESTIONS[qIndex]}</p>
         </div>
+
+        {/* Past answer for this evening question */}
+        {(() => {
+          const log = state.powerQuestionsLog || {}
+          const todayKey = getTodayStr()
+          const pastDates = Object.keys(log).filter(d => d !== todayKey && log[d]?.evening?.[qIndex]?.trim()).sort().reverse()
+          if (pastDates.length === 0) return null
+          const pastText = log[pastDates[0]].evening[qIndex]
+          return (
+            <div className="rounded-xl p-3" style={{ background: 'rgba(147,112,219,0.06)', border: '1px solid rgba(147,112,219,0.15)' }}>
+              <p className="text-xs font-bold mb-1" style={{ color: '#9370db' }}>
+                📖 {isAr ? 'إجابتك السابقة:' : 'Your previous answer:'}
+              </p>
+              <p className="text-xs leading-relaxed" style={{ color: '#999', fontStyle: 'italic' }}>
+                "{pastText.slice(0, 120)}{pastText.length > 120 ? '...' : ''}"
+              </p>
+              <p className="text-xs mt-1" style={{ color: '#444' }}>
+                {new Date(pastDates[0]).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' })}
+                {' — '}{isAr ? 'لاحظ كيف تتطور إجاباتك' : 'Notice how your answers evolve'}
+              </p>
+            </div>
+          )
+        })()}
+
         <textarea value={answer} onChange={e => setAnswer(e.target.value)}
           placeholder={t('morning_type_answer')} rows={4} className="input-dark resize-none text-sm" />
         <button onClick={saveAnswer} disabled={!answer.trim()}

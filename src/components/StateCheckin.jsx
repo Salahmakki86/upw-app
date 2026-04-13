@@ -86,28 +86,86 @@ export default function StateCheckin({ onDone, compact = false }) {
     if (onDone) onDone()
   }
 
+  // ── Compute state correlation insight (what raises your state?) ──
+  const stateInsight = useMemo(() => {
+    const checkin = state.stateCheckin || {}
+    const morningLog = state.morningLog || []
+    const sleepLog = state.sleepLog || {}
+    const dates = Object.keys(checkin).filter(d => checkin[d]?.energy)
+    if (dates.length < 5) return null
+
+    let withMorning = [], withoutMorning = []
+    let withGoodSleep = [], withPoorSleep = []
+
+    const morningDates = new Set(morningLog.map(m => m?.date || ''))
+
+    dates.forEach(d => {
+      const avg = (checkin[d].energy + checkin[d].mood + checkin[d].clarity) / 3
+      if (morningDates.has(d)) withMorning.push(avg)
+      else withoutMorning.push(avg)
+      if (sleepLog[d]?.hours >= 7) withGoodSleep.push(avg)
+      else if (sleepLog[d]?.hours && sleepLog[d].hours < 7) withPoorSleep.push(avg)
+    })
+
+    const avgWith = withMorning.length >= 2 ? Math.round(withMorning.reduce((s, v) => s + v, 0) / withMorning.length * 10) / 10 : null
+    const avgWithout = withoutMorning.length >= 2 ? Math.round(withoutMorning.reduce((s, v) => s + v, 0) / withoutMorning.length * 10) / 10 : null
+    const morningDiff = avgWith && avgWithout ? Math.round((avgWith - avgWithout) * 10) / 10 : null
+
+    const avgGoodSleep = withGoodSleep.length >= 2 ? Math.round(withGoodSleep.reduce((s, v) => s + v, 0) / withGoodSleep.length * 10) / 10 : null
+    const avgPoorSleep = withPoorSleep.length >= 2 ? Math.round(withPoorSleep.reduce((s, v) => s + v, 0) / withPoorSleep.length * 10) / 10 : null
+    const sleepDiff = avgGoodSleep && avgPoorSleep ? Math.round((avgGoodSleep - avgPoorSleep) * 10) / 10 : null
+
+    // Pick strongest driver
+    if (morningDiff && morningDiff > 0 && (!sleepDiff || morningDiff >= sleepDiff)) {
+      return { type: 'morning', diff: morningDiff, emoji: '☀️',
+        ar: `الروتين الصباحي يرفع حالتك +${morningDiff} نقطة`,
+        en: `Morning Ritual raises your state by +${morningDiff}` }
+    }
+    if (sleepDiff && sleepDiff > 0) {
+      return { type: 'sleep', diff: sleepDiff, emoji: '😴',
+        ar: `النوم الجيد يرفع حالتك +${sleepDiff} نقطة`,
+        en: `Good sleep raises your state by +${sleepDiff}` }
+    }
+    return null
+  }, [state.stateCheckin, state.morningLog, state.sleepLog])
+
   if (compact && saved) {
     return (
-      <div className="rounded-2xl p-3" style={{
-        background: `${avgColor}08`, border: `1px solid ${avgColor}25`,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 16 }}>
-            {avg >= 7 ? '🌟' : avg >= 5 ? '🌤' : '🌧'}
-          </span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#888' }}>
-            {isAr ? 'حالتك اليوم' : "Today's State"}
-          </span>
+      <div>
+        <div className="rounded-2xl p-3" style={{
+          background: `${avgColor}08`, border: `1px solid ${avgColor}25`,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16 }}>
+              {avg >= 7 ? '🌟' : avg >= 5 ? '🌤' : '🌧'}
+            </span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#888' }}>
+              {isAr ? 'حالتك اليوم' : "Today's State"}
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 10, color: '#666' }}>
+              ⚡{energy} 😊{mood} 🎯{clarity}
+            </span>
+            <span style={{ fontSize: 14, fontWeight: 900, color: avgColor }}>
+              {avg}
+            </span>
+          </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 10, color: '#666' }}>
-            ⚡{energy} 😊{mood} 🎯{clarity}
-          </span>
-          <span style={{ fontSize: 14, fontWeight: 900, color: avgColor }}>
-            {avg}
-          </span>
-        </div>
+        {/* ── State Driver Insight ── */}
+        {stateInsight && (
+          <div style={{
+            marginTop: 6, padding: '6px 12px', borderRadius: 12,
+            background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)',
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}>
+            <span style={{ fontSize: 12 }}>{stateInsight.emoji}</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: '#c9a84c' }}>
+              {isAr ? stateInsight.ar : stateInsight.en}
+            </span>
+          </div>
+        )}
       </div>
     )
   }

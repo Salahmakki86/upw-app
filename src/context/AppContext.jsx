@@ -56,6 +56,7 @@ const INITIAL_STATE = {
   // Power Questions answers log
   morningAnswers: {},
   eveningAnswers: {},
+  powerQuestionsLog: {}, // { 'YYYY-MM-DD': { morning: {...}, evening: {...} } }
 
   // Settings
   userName: '',
