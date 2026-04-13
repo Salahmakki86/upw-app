@@ -3,7 +3,7 @@
  * Energy (1-10) + Mood (1-10) + Clarity (1-10)
  * Quick 30-second check-in that replaces the binary beautiful/suffering
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import { useToast } from '../context/ToastContext'
