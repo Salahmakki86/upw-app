@@ -400,13 +400,18 @@ export function AppProvider({ children, userId, hasData }) {
             const base = userId === 'admin' ? INITIAL_STATE : STUDENT_INITIAL_STATE
             let merged = { ...base, ...remoteState }
             // Apply daily reset if date has changed (prevents backend overwriting in-memory reset)
-            if (merged.lastActiveDate && merged.lastActiveDate !== today) {
+            const isNewDay = merged.lastActiveDate && merged.lastActiveDate !== today
+            // todayState always reflects today's stateLog — independent of lastActiveDate
+            const correctTodayState = (merged.stateLog || []).find(e => e.date === today)?.state || null
+            if (isNewDay || merged.todayState !== correctTodayState) {
               merged = {
                 ...merged,
-                morningDone:       false,
-                eveningDone:       false,
-                primingPhasesDone: [],
-                todayState: (merged.stateLog || []).find(e => e.date === today)?.state || null,
+                todayState: correctTodayState,
+                ...(isNewDay ? {
+                  morningDone:       false,
+                  eveningDone:       false,
+                  primingPhasesDone: [],
+                } : {}),
               }
             }
             // Auto-repair streak in case UTC bug caused incorrect resets
@@ -431,20 +436,28 @@ export function AppProvider({ children, userId, hasData }) {
   // ── Daily reset: clear today-flags when a new day starts ──────────────────
   useEffect(() => {
     setStateRaw(prev => {
-      if (!prev.lastActiveDate) return prev          // brand new user
-      if (prev.lastActiveDate === today) return prev // same day, no reset
-      // New day — reset all daily completion flags
+      // todayState: always sync with today's stateLog entry (independent of lastActiveDate)
+      // This ensures emotional state resets even if morning was never completed
+      const correctTodayState = (prev.stateLog || []).find(e => e.date === today)?.state || null
+
+      // Morning/evening flags: only reset when lastActiveDate indicates a previous day
+      const isNewDay = !!prev.lastActiveDate && prev.lastActiveDate !== today
+      const needsUpdate = isNewDay || prev.todayState !== correctTodayState
+      if (!needsUpdate) return prev // nothing to change
+
       const next = {
         ...prev,
-        morningDone:       false,
-        eveningDone:       false,
-        primingPhasesDone: [],
-        todayState: (prev.stateLog || []).find(e => e.date === today)?.state || null,
+        todayState: correctTodayState,
+        ...(isNewDay ? {
+          morningDone:       false,
+          eveningDone:       false,
+          primingPhasesDone: [],
+        } : {}),
       }
-      saveState(next, userId)  // persist reset to localStorage immediately
+      saveState(next, userId)  // persist to localStorage immediately
       return next
     })
-  }, [today, userId]) // today is stable within a session; re-runs only if date changes
+  }, [today, userId]) // re-runs whenever the date changes
 
   const setState = useCallback((updater) => {
     setStateRaw(prev => {
