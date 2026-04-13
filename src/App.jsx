@@ -76,14 +76,15 @@ import { useApp } from './context/AppContext'
 
 /**
  * SmartHome — redirects to /today if morning not done (before 2 PM),
- * otherwise shows Dashboard. This makes TodayPage the natural entry point.
+ * otherwise shows Dashboard. Uses <Navigate> so URL changes properly
+ * and the user can still navigate back to Dashboard via BottomNav.
  */
 function SmartHome() {
   const { state } = useApp()
   const hour = new Date().getHours()
   // Redirect to /today before 2pm if morning ritual not yet completed
   if (!state.morningDone && hour < 14) {
-    return <TodayPage />
+    return <Navigate to="/today" replace />
   }
   return <Dashboard />
 }
@@ -104,6 +105,7 @@ function AppRoutes() {
         <BrowserRouter>
           <Routes>
             <Route path="/"        element={<SmartHome />}       />
+            <Route path="/dashboard" element={<Dashboard />}     />
             <Route path="/morning" element={<MorningRitual />}   />
             <Route path="/state"   element={<StateManagement />} />
             <Route path="/goals"   element={<Goals />}           />

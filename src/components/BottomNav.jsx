@@ -11,10 +11,10 @@ export default function BottomNav() {
   const isAdmin = currentUser?.role === 'admin'
 
   const TABS = [
-    { path: '/',         icon: Home,      labelKey: 'nav_home'     },
-    { path: '/morning',  icon: Sun,       labelKey: 'nav_morning'  },
-    { path: '/state',    icon: null,      labelKey: 'nav_sos',     center: true },
-    { path: '/goals',    icon: Target,    labelKey: 'nav_goals'    },
+    { path: '/dashboard', matchPaths: ['/', '/dashboard'], icon: Home, labelKey: 'nav_home' },
+    { path: '/morning',   icon: Sun,       labelKey: 'nav_morning'  },
+    { path: '/state',     icon: null,      labelKey: 'nav_sos',     center: true },
+    { path: '/goals',     icon: Target,    labelKey: 'nav_goals'    },
     { path: '/business',  icon: Briefcase, labelKey: 'nav_business',  adminOnly: true },
   ].filter(tab => !tab.adminOnly || isAdmin)
 
@@ -63,7 +63,9 @@ export default function BottomNav() {
           }
 
           const Icon = tab.icon
-          const active = location.pathname === tab.path
+          const active = tab.matchPaths
+            ? tab.matchPaths.includes(location.pathname)
+            : location.pathname === tab.path
           return (
             <button
               key={tab.path}
