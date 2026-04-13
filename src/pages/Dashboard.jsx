@@ -21,7 +21,9 @@ import GoalNudge from '../components/GoalNudge'
 import MilestoneModal from '../components/MilestoneModal'
 import { calcDailyScore, DAILY_TASKS_TOTAL } from '../utils/dailyScore'
 import { checkMilestones } from '../utils/milestones'
-import { getUnlockTier, isFeatureUnlocked, getNextUnlockMessage } from '../utils/featureUnlock'
+import { getUnlockTier, isFeatureUnlocked, getNextUnlockMessage, getStageProgress } from '../utils/featureUnlock'
+import JourneyStageMap from '../components/JourneyStageMap'
+import SmartReminder from '../components/SmartReminder'
 
 const QUOTES = {
   ar: [
@@ -254,8 +256,9 @@ export default function Dashboard() {
   const dashComplete = dashScore === DAILY_TASKS_TOTAL
 
   // #6 — Progressive unlocking
-  const unlockTier = useMemo(() => getUnlockTier(state), [state.streak, state.morningDone, state.eveningDone, state.goals, state.sleepLog])
-  const nextUnlockMsg = getNextUnlockMessage(unlockTier, lang)
+  const unlockTier = useMemo(() => getUnlockTier(state), [state.morningLog, state.streak])
+  const nextUnlockMsg = getNextUnlockMessage(unlockTier, lang, state)
+  const { remaining: stagesRemaining } = useMemo(() => getStageProgress(state), [state.morningLog, state.streak])
 
   return (
     <div className="flex flex-col" style={{ background: '#090909', minHeight: '100%' }}>
@@ -359,6 +362,9 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* ── Smart Reminder (time-based nudge + notification prompt) ── */}
+        <SmartReminder state={state} isAr={isAr} navigate={navigate} />
+
         {/* ── State Card ─────────────────────────────────────── */}
         <button onClick={() => setShowStateModal(true)}
           className="w-full rounded-2xl p-4 text-right transition-all duration-200 active:scale-[0.98]"
@@ -443,6 +449,9 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+
+        {/* ── Journey Stage Map ──────────────────────────────── */}
+        <JourneyStageMap state={state} isAr={isAr} />
 
         {/* ── 30-day State History ────────────────────────────── */}
         {hasStateHistory && (
@@ -675,21 +684,12 @@ export default function Dashboard() {
             })}
         </div>
 
-        {/* #6 — Unlock Progress */}
-        {unlockTier < 4 && (
-          <div className="rounded-2xl p-3 text-center" style={{ background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.15)' }}>
-            <p className="text-xs font-bold" style={{ color: '#c9a84c' }}>
+        {/* #6 — Unlock Progress (compact version after Journey Map) */}
+        {unlockTier < 4 && stagesRemaining > 0 && (
+          <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.12)' }}>
+            <p className="text-xs font-semibold" style={{ color: '#888' }}>
               🔓 {nextUnlockMsg}
             </p>
-            <div className="mt-2 flex justify-center gap-1">
-              {[1, 2, 3, 4].map(tier => (
-                <div key={tier} className="rounded-full" style={{
-                  width: 8, height: 8,
-                  background: tier <= unlockTier ? '#c9a84c' : '#333',
-                  transition: 'background 0.3s',
-                }} />
-              ))}
-            </div>
           </div>
         )}
 

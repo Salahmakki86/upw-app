@@ -72,6 +72,21 @@ import VideoLibrary from './pages/VideoLibrary'
 import WeeklyPulse from './pages/WeeklyPulse'
 import MonthlyReset from './pages/MonthlyReset'
 import ErrorBoundary from './components/ErrorBoundary'
+import { useApp } from './context/AppContext'
+
+/**
+ * SmartHome — redirects to /today if morning not done (before 2 PM),
+ * otherwise shows Dashboard. This makes TodayPage the natural entry point.
+ */
+function SmartHome() {
+  const { state } = useApp()
+  const hour = new Date().getHours()
+  // Redirect to /today before 2pm if morning ritual not yet completed
+  if (!state.morningDone && hour < 14) {
+    return <TodayPage />
+  }
+  return <Dashboard />
+}
 
 function AppRoutes() {
   const { currentUser } = useAuth()
@@ -88,7 +103,7 @@ function AppRoutes() {
         <MessageModal />
         <BrowserRouter>
           <Routes>
-            <Route path="/"        element={<Dashboard />}       />
+            <Route path="/"        element={<SmartHome />}       />
             <Route path="/morning" element={<MorningRitual />}   />
             <Route path="/state"   element={<StateManagement />} />
             <Route path="/goals"   element={<Goals />}           />
