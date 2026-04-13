@@ -28,6 +28,7 @@ import TransformationPulse from '../components/TransformationPulse'
 import StateCheckin from '../components/StateCheckin'
 import AdaptiveNudge from '../components/AdaptiveNudge'
 import ProfileAssessment from '../components/ProfileAssessment'
+import StaleGoalNudge from '../components/StaleGoalNudge'
 import { getCategoryOrder } from '../utils/adaptivePath'
 
 const QUOTES = {
@@ -399,6 +400,9 @@ export default function Dashboard() {
 
         {/* ── Adaptive Nudge (personalized recommendations) ──── */}
         <AdaptiveNudge />
+
+        {/* ── Stale Goal Nudge — Coaching dialogue for stuck goals ── */}
+        <StaleGoalNudge />
 
         {/* ── Enhanced State Check-in ─────────────────────────── */}
         {state.stateCheckin?.[today] ? (

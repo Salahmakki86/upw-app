@@ -258,6 +258,12 @@ const INITIAL_STATE = {
     focusPath: null,     // auto-computed: 'energy' | 'goals' | 'mindset' | 'business' | 'balance'
   },
 
+  // Ritual Reflections — quick 1-5 rating after morning/evening (Batch 1 — 20 Mistakes Fix)
+  ritualReflections: {},  // { 'YYYY-MM-DD': { morning: { rating, note, ts }, evening: { rating, note, ts } } }
+
+  // Stale Goal Nudge Log — tracks when user was nudged about stale goals (Batch 1)
+  staleGoalNudgeLog: {},  // { 'YYYY-MM-DD': { goalId, blocker, ts } }
+
   // Baseline assessment: { date, scores: { health, career, finances, relationships, family, fun, growth, spirituality, contribution, environment } }
   baseline: null,
 

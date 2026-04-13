@@ -12,6 +12,8 @@ import BottomNav from '../components/BottomNav'
 import TransformationPulse from '../components/TransformationPulse'
 import StateCheckin from '../components/StateCheckin'
 import SmartDailyQuestion from '../components/SmartDailyQuestion'
+import StaleGoalNudge from '../components/StaleGoalNudge'
+import { generateBriefing } from '../utils/morningBriefing'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -307,6 +309,13 @@ export default function TodayPage() {
 
   const isAdmin = currentUser?.role === 'admin'
 
+  // ── Morning Briefing — smart intelligence sentence ────────────────────
+  const briefing = useMemo(() => generateBriefing(state, isAr), [state, isAr])
+
+  // ── Yesterday's evening reflection (data value return) ────────────────
+  const yesterdayEvening = state.eveningLog?.[yesterdayKey]
+  const morningCommitment = state.morningAnswers?.[6] // "What step will I take today?"
+
   return (
     <div
       dir={isAr ? 'rtl' : 'ltr'}
@@ -397,6 +406,66 @@ export default function TodayPage() {
           </div>
           <ScoreRing score={score} total={7} isAr={isAr} />
         </div>
+
+        {/* ── Morning Briefing — Smart Intelligence Sentence ──────────── */}
+        {briefing && (
+          <div style={{
+            borderRadius: 16,
+            padding: '12px 14px',
+            marginBottom: 14,
+            background: briefing.type === 'sleep' && briefing.priority >= 9
+              ? 'rgba(231,76,60,0.06)'
+              : briefing.type === 'state' && briefing.priority >= 9
+                ? 'rgba(155,89,182,0.06)'
+                : 'rgba(201,168,76,0.06)',
+            border: `1px solid ${
+              briefing.type === 'sleep' && briefing.priority >= 9
+                ? 'rgba(231,76,60,0.2)'
+                : briefing.type === 'state' && briefing.priority >= 9
+                  ? 'rgba(155,89,182,0.2)'
+                  : 'rgba(201,168,76,0.15)'
+            }`,
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 10,
+          }}>
+            <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>{briefing.emoji}</span>
+            <div>
+              <p style={{
+                fontSize: 12, fontWeight: 700, lineHeight: 1.5,
+                color: briefing.priority >= 8 ? '#fff' : '#ccc',
+              }}>
+                {briefing.text}
+              </p>
+              {briefing.type !== 'generic' && (
+                <p style={{ fontSize: 9, fontWeight: 600, color: '#555', marginTop: 3 }}>
+                  {isAr ? '📊 بناءً على بياناتك' : '📊 Based on your data'}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Yesterday's Data Value Return ────────────────────────────── */}
+        {morningCommitment && (
+          <div style={{
+            borderRadius: 16,
+            padding: '10px 14px',
+            marginBottom: 14,
+            background: 'rgba(201,168,76,0.05)',
+            border: '1px solid rgba(201,168,76,0.12)',
+          }}>
+            <p style={{ fontSize: 10, fontWeight: 800, color: '#c9a84c', marginBottom: 3 }}>
+              ☀️ {isAr ? 'هذا الصباح التزمت بـ:' : 'This morning you committed to:'}
+            </p>
+            <p style={{ fontSize: 12, color: '#ddd', fontStyle: 'italic', lineHeight: 1.4 }}>
+              "{morningCommitment.slice(0, 100)}"
+            </p>
+          </div>
+        )}
+
+        {/* ── Stale Goal Nudge — Coaching Dialogue ─────────────────────── */}
+        <StaleGoalNudge />
 
         {/* ── State Check-in ──────────────────────────────────────────────── */}
         <div style={{ marginBottom: 14 }}>

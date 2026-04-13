@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
 import { getCompletionMessage } from '../utils/completionSignals'
+import OneTapReflection from '../components/OneTapReflection'
 
 const EVENING_QUESTIONS = {
   ar: [
@@ -224,11 +225,30 @@ export default function EveningRitual() {
         completedAt: new Date().toISOString(),
       }
     })
-    setView('done')
+    setView('reflection')
   }
 
   // CANI streak
   const caniStreak = computeCANIStreak(state.caniLog)
+
+  // One-Tap Reflection after evening
+  if (view === 'reflection') {
+    return (
+      <Layout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4 px-4">
+          <div className="text-5xl animate-scale-in">🌙</div>
+          <h2 className="text-2xl font-black text-white">{t('evening_completed')}</h2>
+          <p className="text-sm leading-relaxed" style={{ color: '#888' }}>
+            {lang === 'ar' ? 'نمت بوعٍ اليوم وستستيقظ غداً أقوى.' : 'You slept consciously today and will wake up stronger tomorrow.'}
+          </p>
+          {/* One-Tap Reflection */}
+          <div className="w-full">
+            <OneTapReflection type="evening" onDone={() => setView('done')} />
+          </div>
+        </div>
+      </Layout>
+    )
+  }
 
   if (view === 'done') {
     return (

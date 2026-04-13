@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
 import { getCompletionMessage } from '../utils/completionSignals'
+import OneTapReflection from '../components/OneTapReflection'
 
 const PHASES_DATA = {
   ar: [
@@ -180,7 +181,26 @@ export default function MorningRitual() {
     else setView('incantations')
   }
 
-  const finishMorning = () => { completeMorning(); setView('done') }
+  const finishMorning = () => { completeMorning(); setView('reflection') }
+
+  // One-Tap Reflection → then done screen
+  if (view === 'reflection') {
+    return (
+      <Layout title="">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+          <div className="text-6xl mb-4 animate-scale-in">🏆</div>
+          <h2 className="text-2xl font-black text-white mb-2">{t('morning_completed')}</h2>
+          <p className="text-sm mb-6" style={{ color: '#888' }}>
+            {lang === 'ar' ? 'أنت جاهز لتحقق العظمة اليوم' : 'You are ready to achieve greatness today'}
+          </p>
+          {/* One-Tap Reflection */}
+          <div className="w-full">
+            <OneTapReflection type="morning" onDone={() => setView('done')} />
+          </div>
+        </div>
+      </Layout>
+    )
+  }
 
   if (view === 'done') {
     return (
