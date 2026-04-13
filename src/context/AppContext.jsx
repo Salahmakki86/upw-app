@@ -365,7 +365,17 @@ export function AppProvider({ children, userId, hasData }) {
           const { state: remoteState } = await upwApi.getState()
           if (remoteState && isMounted.current) {
             const base = userId === 'admin' ? INITIAL_STATE : STUDENT_INITIAL_STATE
-            const merged = { ...base, ...remoteState }
+            let merged = { ...base, ...remoteState }
+            // Apply daily reset if date has changed (prevents backend overwriting in-memory reset)
+            if (merged.lastActiveDate && merged.lastActiveDate !== today) {
+              merged = {
+                ...merged,
+                morningDone:       false,
+                eveningDone:       false,
+                primingPhasesDone: [],
+                todayState: (merged.stateLog || []).find(e => e.date === today)?.state || null,
+              }
+            }
             setStateRaw(merged)
             saveState(merged, userId)
           }
@@ -386,15 +396,17 @@ export function AppProvider({ children, userId, hasData }) {
       if (!prev.lastActiveDate) return prev          // brand new user
       if (prev.lastActiveDate === today) return prev // same day, no reset
       // New day — reset all daily completion flags
-      return {
+      const next = {
         ...prev,
         morningDone:       false,
         eveningDone:       false,
         primingPhasesDone: [],
         todayState: (prev.stateLog || []).find(e => e.date === today)?.state || null,
       }
+      saveState(next, userId)  // persist reset to localStorage immediately
+      return next
     })
-  }, [today]) // today is stable within a session; re-runs only if date changes
+  }, [today, userId]) // today is stable within a session; re-runs only if date changes
 
   const setState = useCallback((updater) => {
     setStateRaw(prev => {
