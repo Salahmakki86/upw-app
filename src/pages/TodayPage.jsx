@@ -166,7 +166,7 @@ function SectionHeader({ labelAr, labelEn, color, isAr }) {
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function TodayPage() {
-  const { state } = useApp()
+  const { state, update } = useApp()
   const { lang } = useLang()
   const { currentUser } = useAuth()
   const navigate = useNavigate()
@@ -282,6 +282,26 @@ export default function TodayPage() {
     }
   }
 
+  // ── Yesterday's Evening Plan → Today's Tasks ──────────────────────────────
+  const yesterdayKey = useMemo(() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 1)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }, [])
+  const eveningPlan = (state.eveningLog?.[yesterdayKey]?.tomorrow || []).filter(t => t && t.trim())
+  // Also check today's evening log (in case user planned today for today)
+  const todayPlan = (state.eveningLog?.[today]?.tomorrow || []).filter(t => t && t.trim())
+  const planTasks = eveningPlan.length > 0 ? eveningPlan : todayPlan
+  const planChecked = state.todayPlanChecked?.[today] || {}
+
+  const togglePlanTask = (idx) => {
+    const existing = state.todayPlanChecked || {}
+    const todayChecks = { ...(existing[today] || {}), [idx]: !planChecked[idx] }
+    update('todayPlanChecked', { ...existing, [today]: todayChecks })
+  }
+
+  const planDoneCount = planTasks.filter((_, i) => planChecked[i]).length
+
   const isAdmin = currentUser?.role === 'admin'
 
   return (
@@ -374,6 +394,115 @@ export default function TodayPage() {
           </div>
           <ScoreRing score={score} total={7} isAr={isAr} />
         </div>
+
+        {/* ── Today's Plan (from yesterday evening) ─────────────────────────── */}
+        {planTasks.length > 0 && (
+          <div style={{
+            borderRadius: 20,
+            padding: 16,
+            marginBottom: 14,
+            background: '#0e0e0e',
+            border: planDoneCount === planTasks.length
+              ? '1px solid rgba(46,204,113,0.4)'
+              : '1px solid rgba(201,168,76,0.3)',
+          }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              marginBottom: 12,
+            }}>
+              <div style={{
+                borderRadius: 10,
+                padding: '6px 12px',
+                background: 'rgba(201,168,76,0.12)',
+                border: '1px solid rgba(201,168,76,0.3)',
+                display: 'inline-block',
+              }}>
+                <span style={{ fontSize: 11, fontWeight: 900, color: '#c9a84c', letterSpacing: '0.08em' }}>
+                  📋 {isAr ? 'خطة اليوم' : "Today's Plan"}
+                </span>
+              </div>
+              <span style={{
+                fontSize: 11, fontWeight: 800,
+                color: planDoneCount === planTasks.length ? '#2ecc71' : '#888',
+              }}>
+                {planDoneCount}/{planTasks.length}
+              </span>
+            </div>
+
+            <p style={{ color: '#555', fontSize: 10, marginBottom: 10 }}>
+              {isAr ? 'المهام التي خططت لها البارحة في الطقس المسائي' : 'Tasks you planned yesterday in the evening ritual'}
+            </p>
+
+            {planTasks.map((task, idx) => {
+              const checked = !!planChecked[idx]
+              return (
+                <button
+                  key={idx}
+                  onClick={() => togglePlanTask(idx)}
+                  className="active:scale-95 transition-all"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    borderRadius: 12,
+                    padding: '12px 14px',
+                    marginBottom: 8,
+                    background: checked ? 'rgba(46,204,113,0.06)' : '#111',
+                    border: `1px solid ${checked ? 'rgba(46,204,113,0.3)' : '#1e1e1e'}`,
+                    cursor: 'pointer',
+                    textAlign: isAr ? 'right' : 'left',
+                    flexDirection: isAr ? 'row-reverse' : 'row',
+                  }}
+                >
+                  {/* Checkbox */}
+                  <div style={{
+                    width: 24, height: 24,
+                    borderRadius: 8,
+                    border: `2px solid ${checked ? '#2ecc71' : '#333'}`,
+                    background: checked ? 'rgba(46,204,113,0.15)' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0,
+                    transition: 'all 0.2s',
+                  }}>
+                    {checked && <Check size={14} style={{ color: '#2ecc71' }} />}
+                  </div>
+                  {/* Task text */}
+                  <span style={{
+                    fontSize: 13, fontWeight: 600, flex: 1,
+                    color: checked ? '#666' : '#ddd',
+                    textDecoration: checked ? 'line-through' : 'none',
+                    transition: 'all 0.2s',
+                  }}>
+                    {task}
+                  </span>
+                  {/* Number */}
+                  <span style={{
+                    fontSize: 10, fontWeight: 800, flexShrink: 0,
+                    color: checked ? '#2ecc71' : '#c9a84c',
+                  }}>
+                    {idx + 1}
+                  </span>
+                </button>
+              )
+            })}
+
+            {planDoneCount === planTasks.length && planTasks.length > 0 && (
+              <div style={{
+                borderRadius: 10,
+                padding: '8px 12px',
+                marginTop: 4,
+                background: 'rgba(46,204,113,0.08)',
+                border: '1px solid rgba(46,204,113,0.25)',
+                textAlign: 'center',
+              }}>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#2ecc71' }}>
+                  ✅ {isAr ? 'أنجزت كل مهامك — ممتاز!' : 'All tasks done — excellent!'}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Time-smart task sections ──────────────────────────────────────── */}
         {sectionOrder.order.map(section => {

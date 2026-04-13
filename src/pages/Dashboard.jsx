@@ -412,6 +412,69 @@ export default function Dashboard() {
           </div>
         </button>
 
+        {/* ── Today's Plan (from yesterday's evening) ────────── */}
+        {(() => {
+          const yKey = (() => {
+            const d = new Date(); d.setDate(d.getDate() - 1)
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+          })()
+          const ePlan = (state.eveningLog?.[yKey]?.tomorrow || []).filter(t => t && t.trim())
+          const tPlan = (state.eveningLog?.[today]?.tomorrow || []).filter(t => t && t.trim())
+          const tasks = ePlan.length > 0 ? ePlan : tPlan
+          const checked = state.todayPlanChecked?.[today] || {}
+          const doneN = tasks.filter((_, i) => checked[i]).length
+          if (tasks.length === 0) return null
+          return (
+            <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid rgba(201,168,76,0.25)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-black" style={{ color: '#c9a84c' }}>
+                  📋 {isAr ? 'خطة اليوم' : "Today's Plan"}
+                </span>
+                <span className="text-xs font-bold" style={{ color: doneN === tasks.length ? '#2ecc71' : '#888' }}>
+                  {doneN}/{tasks.length}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {tasks.map((t, i) => {
+                  const done = !!checked[i]
+                  return (
+                    <button key={i}
+                      onClick={() => {
+                        const ex = state.todayPlanChecked || {}
+                        const tc = { ...(ex[today] || {}), [i]: !done }
+                        update('todayPlanChecked', { ...ex, [today]: tc })
+                      }}
+                      className="w-full flex items-center gap-3 rounded-xl p-3 transition-all active:scale-[0.98]"
+                      style={{
+                        background: done ? 'rgba(46,204,113,0.06)' : '#111',
+                        border: `1px solid ${done ? 'rgba(46,204,113,0.25)' : '#1e1e1e'}`,
+                        textAlign: isAr ? 'right' : 'left',
+                      }}>
+                      <div style={{
+                        width: 22, height: 22, borderRadius: 7, flexShrink: 0,
+                        border: `2px solid ${done ? '#2ecc71' : '#333'}`,
+                        background: done ? 'rgba(46,204,113,0.15)' : 'transparent',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        {done && <span style={{ color: '#2ecc71', fontSize: 12, fontWeight: 700 }}>✓</span>}
+                      </div>
+                      <span className="text-xs font-semibold flex-1" style={{
+                        color: done ? '#666' : '#ddd',
+                        textDecoration: done ? 'line-through' : 'none',
+                      }}>{t}</span>
+                    </button>
+                  )
+                })}
+              </div>
+              {doneN === tasks.length && (
+                <p className="text-xs font-bold text-center mt-2" style={{ color: '#2ecc71' }}>
+                  ✅ {isAr ? 'أنجزت كل المهام!' : 'All tasks done!'}
+                </p>
+              )}
+            </div>
+          )
+        })()}
+
         {/* #1 — Discovery of the Day */}
         <DiscoveryCard />
 
