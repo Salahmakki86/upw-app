@@ -29,6 +29,8 @@ import StateCheckin from '../components/StateCheckin'
 import AdaptiveNudge from '../components/AdaptiveNudge'
 import ProfileAssessment from '../components/ProfileAssessment'
 import StaleGoalNudge from '../components/StaleGoalNudge'
+import WeeklyAutoReport from '../components/WeeklyAutoReport'
+import GuidedJourney from '../components/GuidedJourney'
 import { getCategoryOrder } from '../utils/adaptivePath'
 
 const QUOTES = {
@@ -403,6 +405,12 @@ export default function Dashboard() {
 
         {/* ── Stale Goal Nudge — Coaching dialogue for stuck goals ── */}
         <StaleGoalNudge />
+
+        {/* ── Guided 30-Day Journey (Fix #15) ── */}
+        <GuidedJourney />
+
+        {/* ── Weekly Auto Report (Fix #18) ── */}
+        <WeeklyAutoReport />
 
         {/* ── Enhanced State Check-in ─────────────────────────── */}
         {state.stateCheckin?.[today] ? (

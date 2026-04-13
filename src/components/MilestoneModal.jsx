@@ -63,6 +63,20 @@ export default function MilestoneModal({ milestone, onClose, lang }) {
           {isAr ? milestone.msgAr : milestone.msgEn}
         </p>
 
+        {/* Impact statement — makes celebration meaningful (Fix #12) */}
+        <div className="rounded-xl p-3 mb-4" style={{
+          background: `${milestone.color}10`, border: `1px solid ${milestone.color}25`,
+        }}>
+          <p className="text-xs font-bold mb-1" style={{ color: milestone.color }}>
+            {isAr ? '💎 لماذا هذا مهم؟' : '💎 Why this matters:'}
+          </p>
+          <p className="text-xs leading-relaxed" style={{ color: '#aaa' }}>
+            {isAr
+              ? 'كل إنجاز يُعيد برمجة هويتك — أنت لم تعد "تحاول" بل "تعيش" هذه العادة'
+              : "Every milestone reprograms your identity — you're no longer 'trying', you're 'living' this habit"}
+          </p>
+        </div>
+
         {/* Continue button */}
         <button
           onClick={handleClose}

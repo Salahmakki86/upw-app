@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { CheckCircle, Play, Pause, RotateCcw } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
 import { getCompletionMessage } from '../utils/completionSignals'
 import OneTapReflection from '../components/OneTapReflection'
+import { getNextStep, getRitualVariation } from '../utils/smartFlow'
 
 const PHASES_DATA = {
   ar: [
@@ -149,6 +151,7 @@ const VIDEO_URL = 'https://www.youtube.com/watch?v=faTGTgid8Uc'
 export default function MorningRitual() {
   const { state, completeMorning, update } = useApp()
   const { lang, t } = useLang()
+  const navigate = useNavigate()
   const isAr = lang === 'ar'
   const [activePhase, setActivePhase] = useState(0)
   const [view, setView] = useState('phases')
@@ -203,6 +206,7 @@ export default function MorningRitual() {
   }
 
   if (view === 'done') {
+    const nextStep = getNextStep('morning', state, isAr)
     return (
       <Layout title="">
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
@@ -211,13 +215,31 @@ export default function MorningRitual() {
           <p className="text-sm mb-6" style={{ color: '#888' }}>
             {lang === 'ar' ? 'أنت جاهز لتحقق العظمة اليوم' : 'You are ready to achieve greatness today'}
           </p>
-          <div className="rounded-2xl p-4 text-center mb-6 w-full"
+          <div className="rounded-2xl p-4 text-center mb-4 w-full"
             style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)' }}>
             <p className="text-sm font-bold" style={{ color: '#c9a84c' }}>🔥 {state.streak} {lang === 'ar' ? 'يوم متواصل' : 'days in a row'}</p>
             <p className="text-xs mt-1" style={{ color: '#888' }}>
               {lang === 'ar' ? 'أنت تبني شخصاً جديداً كل يوم' : 'You are building a new version of yourself every day'}
             </p>
           </div>
+          {/* Smart Flow — What's Next (Fix #2) */}
+          <button
+            onClick={() => navigate(nextStep.path)}
+            className="w-full rounded-2xl p-4 flex items-center gap-3 transition-all active:scale-[0.98]"
+            style={{
+              background: 'rgba(52,152,219,0.08)', border: '1px solid rgba(52,152,219,0.25)',
+              textAlign: isAr ? 'right' : 'left', cursor: 'pointer',
+            }}>
+            <span style={{ fontSize: 24 }}>{nextStep.emoji}</span>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, color: '#3498db' }}>
+                {isAr ? 'الخطوة التالية ←' : 'What\'s Next →'}
+              </p>
+              <p style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>
+                {isAr ? nextStep.labelAr : nextStep.labelEn}
+              </p>
+            </div>
+          </button>
         </div>
       </Layout>
     )
@@ -374,6 +396,21 @@ export default function MorningRitual() {
             </p>
           </div>
         )}
+
+        {/* Ritual Variation Tip — keeps routine fresh (Fix #11) */}
+        {(() => {
+          const variation = getRitualVariation('morning', state, isAr)
+          return (
+            <div className="rounded-xl p-2.5" style={{ background: 'rgba(155,89,182,0.06)', border: '1px solid rgba(155,89,182,0.15)' }}>
+              <p className="text-xs" style={{ color: '#9b59b6', fontWeight: 600 }}>
+                💡 {variation.text}
+              </p>
+              {variation.bonus && (
+                <p className="text-xs mt-1" style={{ color: '#666' }}>{variation.bonus}</p>
+              )}
+            </div>
+          )
+        })()}
 
         {/* Mode toggle */}
         <div className="flex rounded-2xl overflow-hidden" style={{ background: '#111', border: '1px solid #222' }}>

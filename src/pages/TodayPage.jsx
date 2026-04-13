@@ -14,6 +14,7 @@ import StateCheckin from '../components/StateCheckin'
 import SmartDailyQuestion from '../components/SmartDailyQuestion'
 import StaleGoalNudge from '../components/StaleGoalNudge'
 import { generateBriefing } from '../utils/morningBriefing'
+import { calcWeightedScore, getScoreInsight } from '../utils/dailyScore'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -52,11 +53,12 @@ function getTimeBadge(period, isAr) {
 
 // ─── Score Ring ──────────────────────────────────────────────────────────────
 
-function ScoreRing({ score, total, isAr }) {
+function ScoreRing({ score, total, weighted, insight, isAr }) {
   const radius = 44
   const circumference = 2 * Math.PI * radius
-  const progress = score / total
+  const progress = weighted / 100
   const strokeDashoffset = circumference * (1 - progress)
+  const ringColor = weighted >= 80 ? '#2ecc71' : weighted >= 50 ? '#c9a84c' : weighted >= 25 ? '#f39c12' : '#e63946'
 
   return (
     <div style={{ position: 'relative', width: 120, height: 120 }}>
@@ -70,7 +72,7 @@ function ScoreRing({ score, total, isAr }) {
         <circle
           cx="60" cy="60" r={radius}
           fill="none"
-          stroke="#c9a84c"
+          stroke={ringColor}
           strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -83,11 +85,11 @@ function ScoreRing({ score, total, isAr }) {
         display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
       }}>
-        <span style={{ color: '#c9a84c', fontSize: 22, fontWeight: 900, lineHeight: 1 }}>
-          {score}/{total}
+        <span style={{ color: ringColor, fontSize: 22, fontWeight: 900, lineHeight: 1 }}>
+          {weighted}%
         </span>
-        <span style={{ color: '#888', fontSize: 10, marginTop: 3 }}>
-          {isAr ? 'نقاط اليوم' : "Today's Score"}
+        <span style={{ color: '#888', fontSize: 9, marginTop: 3 }}>
+          {score}/7 {isAr ? 'مهام' : 'tasks'}
         </span>
       </div>
     </div>
@@ -208,6 +210,10 @@ export default function TodayPage() {
     state.eveningDone,
     hasSleep,
   ].filter(Boolean).length
+
+  // Weighted score (0-100) — cornerstone habits weighted higher
+  const weightedScore = useMemo(() => calcWeightedScore(state), [state])
+  const scoreInsight = useMemo(() => getScoreInsight(state, isAr), [state, isAr])
 
   // ── Journey steps definition ──────────────────────────────────────────────
   const allSteps = useMemo(() => [
@@ -404,7 +410,7 @@ export default function TodayPage() {
               {formatTodayDate(isAr)}
             </p>
           </div>
-          <ScoreRing score={score} total={7} isAr={isAr} />
+          <ScoreRing score={score} total={7} weighted={weightedScore} insight={scoreInsight} isAr={isAr} />
         </div>
 
         {/* ── Morning Briefing — Smart Intelligence Sentence ──────────── */}

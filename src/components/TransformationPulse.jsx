@@ -157,39 +157,62 @@ export default function TransformationPulse() {
         </div>
       </div>
 
-      {/* ── Root Cause Card ───────────────────────────────── */}
+      {/* ── Root Cause Card + Actionable Next Steps (Fix #7) ── */}
       {rootCause.type !== 'thriving' && rootCause.type !== 'exploring' && (
-        <button
-          onClick={() => rootCause.action && navigate(rootCause.action)}
-          className="w-full rounded-2xl p-4 transition-all active:scale-[0.98]"
-          style={{
-            background: `${rootCause.color}08`,
-            border: `1px solid ${rootCause.color}25`,
-            textAlign: isAr ? 'right' : 'left',
-            cursor: rootCause.action ? 'pointer' : 'default',
-          }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-            <span style={{ fontSize: 22, flexShrink: 0 }}>{rootCause.emoji}</span>
-            <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 11, fontWeight: 900, color: rootCause.color, marginBottom: 3 }}>
-                {isAr ? rootCause.labelAr : rootCause.labelEn}
-              </p>
-              <p style={{ fontSize: 11, fontWeight: 500, color: '#999', lineHeight: 1.5 }}>
-                {isAr ? rootCause.descAr : rootCause.descEn}
-              </p>
-              {rootCause.action && (
-                <div style={{
-                  display: 'inline-block', marginTop: 8,
-                  fontSize: 10, fontWeight: 800, color: rootCause.color,
-                  background: `${rootCause.color}12`, border: `1px solid ${rootCause.color}30`,
-                  borderRadius: 8, padding: '4px 10px',
-                }}>
-                  {isAr ? rootCause.actionAr : rootCause.actionEn} {isAr ? '←' : '→'}
-                </div>
-              )}
+        <div className="rounded-2xl overflow-hidden" style={{
+          background: `${rootCause.color}08`,
+          border: `1px solid ${rootCause.color}25`,
+        }}>
+          <div style={{ padding: 16, textAlign: isAr ? 'right' : 'left' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <span style={{ fontSize: 22, flexShrink: 0 }}>{rootCause.emoji}</span>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 11, fontWeight: 900, color: rootCause.color, marginBottom: 3 }}>
+                  {isAr ? rootCause.labelAr : rootCause.labelEn}
+                </p>
+                <p style={{ fontSize: 11, fontWeight: 500, color: '#999', lineHeight: 1.5 }}>
+                  {isAr ? rootCause.descAr : rootCause.descEn}
+                </p>
+              </div>
             </div>
           </div>
-        </button>
+          {/* Actionable next steps — every insight leads to action */}
+          <div style={{
+            display: 'flex', gap: 6, padding: '0 12px 12px',
+            flexWrap: 'wrap',
+          }}>
+            {rootCause.action && (
+              <button
+                onClick={() => navigate(rootCause.action)}
+                className="transition-all active:scale-95"
+                style={{
+                  fontSize: 10, fontWeight: 800, color: '#0a0a0a',
+                  background: rootCause.color,
+                  borderRadius: 8, padding: '6px 12px', border: 'none', cursor: 'pointer',
+                }}>
+                {isAr ? rootCause.actionAr : rootCause.actionEn} {isAr ? '←' : '→'}
+              </button>
+            )}
+            {rootCause.type === 'energy' && (
+              <button onClick={() => navigate('/sleep')} className="transition-all active:scale-95"
+                style={{ fontSize: 10, fontWeight: 700, color: '#3498db', background: 'rgba(52,152,219,0.1)', border: '1px solid rgba(52,152,219,0.3)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}>
+                😴 {isAr ? 'سجّل نومك' : 'Log Sleep'}
+              </button>
+            )}
+            {rootCause.type === 'clarity' && (
+              <button onClick={() => navigate('/goals')} className="transition-all active:scale-95"
+                style={{ fontSize: 10, fontWeight: 700, color: '#9b59b6', background: 'rgba(155,89,182,0.1)', border: '1px solid rgba(155,89,182,0.3)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}>
+                🎯 {isAr ? 'راجع أهدافك' : 'Review Goals'}
+              </button>
+            )}
+            {(rootCause.type === 'fear' || rootCause.type === 'identity') && (
+              <button onClick={() => navigate('/beliefs')} className="transition-all active:scale-95"
+                style={{ fontSize: 10, fontWeight: 700, color: '#e67e22', background: 'rgba(230,126,34,0.1)', border: '1px solid rgba(230,126,34,0.3)', borderRadius: 8, padding: '5px 10px', cursor: 'pointer' }}>
+                🪞 {isAr ? 'المعتقدات' : 'Beliefs'}
+              </button>
+            )}
+          </div>
+        </div>
       )}
 
       {/* ── Thriving Banner ──────────────────────────────── */}

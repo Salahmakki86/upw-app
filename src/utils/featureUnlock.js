@@ -125,6 +125,37 @@ export function isFeatureUnlocked(path, tier) {
   return tier >= requiredTier
 }
 
+/**
+ * Smart Readiness Check — Fix #14
+ * Features can be unlocked early if user shows readiness signals,
+ * not just morning count. This gives a bonus tier when applicable.
+ */
+export function getSmartTier(state) {
+  const baseTier = getUnlockTier(state)
+
+  // Readiness signals that can bump tier by 1 (max tier 4)
+  const signals = [
+    // Has goals set → ready for deeper tools
+    (state.goals || []).length >= 2,
+    // Has done wheel of life → self-aware
+    Object.values(state.wheelScores || {}).some(v => v !== 5),
+    // Has beliefs work → introspective
+    (state.limitingBeliefs || []).length + (state.empoweringBeliefs || []).length >= 3,
+    // Consistent sleep logging → health-aware
+    Object.keys(state.sleepLog || {}).length >= 5,
+    // High state average → emotionally ready
+    Object.values(state.stateCheckin || {}).length >= 5,
+  ]
+
+  const readinessScore = signals.filter(Boolean).length
+
+  // 3+ readiness signals = bonus tier (up to max 4)
+  if (readinessScore >= 3 && baseTier < 4) {
+    return Math.min(baseTier + 1, 4)
+  }
+  return baseTier
+}
+
 export function getNextUnlockMessage(tier, lang, state) {
   const isAr = lang === 'ar'
   const { remaining, nextStage } = getStageProgress(state)

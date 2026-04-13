@@ -5,6 +5,7 @@ import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
 import { getCompletionMessage } from '../utils/completionSignals'
 import OneTapReflection from '../components/OneTapReflection'
+import { getNextStep } from '../utils/smartFlow'
 
 const EVENING_QUESTIONS = {
   ar: [
@@ -268,6 +269,29 @@ export default function EveningRitual() {
               <div className="progress-bar-fill" style={{ width: `${dayRating * 10}%` }} />
             </div>
           </div>
+          {/* Smart Flow — What's Next (Fix #2) */}
+          {(() => {
+            const nextStep = getNextStep('evening', state, isAr)
+            return (
+              <button
+                onClick={() => navigate(nextStep.path)}
+                className="rounded-2xl p-4 mt-2 w-full flex items-center gap-3 transition-all active:scale-[0.98]"
+                style={{
+                  background: 'rgba(52,152,219,0.08)', border: '1px solid rgba(52,152,219,0.25)',
+                  textAlign: isAr ? 'right' : 'left', cursor: 'pointer',
+                }}>
+                <span style={{ fontSize: 24 }}>{nextStep.emoji}</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: '#3498db' }}>
+                    {isAr ? 'الخطوة التالية ←' : "What's Next →"}
+                  </p>
+                  <p style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>
+                    {isAr ? nextStep.labelAr : nextStep.labelEn}
+                  </p>
+                </div>
+              </button>
+            )
+          })()}
           {/* Goals cross-link */}
           <div className="rounded-2xl p-4 mt-2 w-full" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
             <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
