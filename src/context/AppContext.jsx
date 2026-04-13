@@ -6,6 +6,7 @@ const INITIAL_STATE = {
   // Streak
   streak: 0,
   lastActiveDate: null,
+  morningLog: [], // ['YYYY-MM-DD', ...] — one entry per day morning was completed
 
   // Emotional state log: [{ date, state: 'beautiful'|'suffering', label }]
   stateLog: [],
@@ -354,6 +355,38 @@ export function AppProvider({ children, userId, hasData }) {
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
   }
   const today = getLocalToday()
+  // Yesterday in local time (NOT UTC) — used for streak calculation
+  const yesterday = (() => {
+    const d = new Date()
+    d.setDate(d.getDate() - 1)
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  })()
+
+  // Recalculate streak from morningLog (array of 'YYYY-MM-DD' strings) or stateLog
+  function recalcStreak(merged, todayStr, yesterdayStr) {
+    // Build a set of days the user was active (morningLog takes priority, fallback to stateLog)
+    const activeDays = new Set([
+      ...(merged.morningLog || []),
+      ...(merged.stateLog || []).map(e => e.date),
+    ])
+    if (merged.lastActiveDate) activeDays.add(merged.lastActiveDate)
+    if (merged.morningDone)    activeDays.add(todayStr)
+
+    // Count consecutive days going backwards from today (or yesterday if today not active)
+    const startFrom = activeDays.has(todayStr) ? todayStr : yesterdayStr
+    if (!activeDays.has(startFrom)) return merged.streak // nothing to repair
+
+    let count = 0
+    const d = new Date()
+    if (!activeDays.has(todayStr)) d.setDate(d.getDate() - 1) // start from yesterday
+    while (true) {
+      const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+      if (!activeDays.has(ds)) break
+      count++
+      d.setDate(d.getDate() - 1)
+    }
+    return count > (merged.streak || 0) ? count : (merged.streak || 0)
+  }
 
   // On mount: fetch state from backend (or upload localStorage if first time)
   useEffect(() => {
@@ -375,6 +408,11 @@ export function AppProvider({ children, userId, hasData }) {
                 primingPhasesDone: [],
                 todayState: (merged.stateLog || []).find(e => e.date === today)?.state || null,
               }
+            }
+            // Auto-repair streak in case UTC bug caused incorrect resets
+            const repairedStreak = recalcStreak(merged, today, yesterday)
+            if (repairedStreak !== merged.streak) {
+              merged = { ...merged, streak: repairedStreak }
             }
             setStateRaw(merged)
             saveState(merged, userId)
@@ -449,13 +487,15 @@ export function AppProvider({ children, userId, hasData }) {
   const completeMorning = useCallback(() => {
     setState(prev => {
       const newStreak = prev.lastActiveDate === today
-        ? prev.streak
-        : prev.lastActiveDate === new Date(Date.now() - 86400000).toISOString().split('T')[0]
-          ? prev.streak + 1
-          : 1
-      return { ...prev, morningDone: true, streak: newStreak, lastActiveDate: today }
+        ? prev.streak                      // already completed today — keep streak
+        : prev.lastActiveDate === yesterday
+          ? (prev.streak || 0) + 1         // completed yesterday — increment
+          : 1                              // missed a day — reset to 1
+      // morningLog: reliable day-by-day history for streak recalculation
+      const morningLog = [...new Set([...(prev.morningLog || []), today])]
+      return { ...prev, morningDone: true, streak: newStreak, lastActiveDate: today, morningLog }
     })
-  }, [setState, today])
+  }, [setState, today, yesterday])
 
   // Add goal
   const addGoal = useCallback((goal) => {
