@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
+import StateCheckinComponent from '../components/StateCheckin'
 
 const VOCAB_DATA = [
   {
@@ -783,7 +784,10 @@ export default function StateManagement() {
           <span className="text-xs text-white opacity-70">{t('state_sos_desc')}</span>
         </button>
 
-        {/* Current State */}
+        {/* Enhanced State Check-in (3 dimensions) */}
+        <StateCheckinComponent onDone={() => {}} />
+
+        {/* Quick State Toggle (backward compatible) */}
         <div className="card">
           <p className="text-xs mb-2" style={{ color: '#888' }}>{t('dash_how_feel')}</p>
           <div className="flex gap-3">

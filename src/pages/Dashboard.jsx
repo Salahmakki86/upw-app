@@ -24,6 +24,8 @@ import { checkMilestones } from '../utils/milestones'
 import { getUnlockTier, isFeatureUnlocked, getNextUnlockMessage, getStageProgress } from '../utils/featureUnlock'
 import JourneyStageMap from '../components/JourneyStageMap'
 import SmartReminder from '../components/SmartReminder'
+import TransformationPulse from '../components/TransformationPulse'
+import StateCheckin from '../components/StateCheckin'
 
 const QUOTES = {
   ar: [
@@ -380,37 +382,15 @@ export default function Dashboard() {
         {/* ── Smart Reminder (time-based nudge + notification prompt) ── */}
         <SmartReminder state={state} isAr={isAr} navigate={navigate} />
 
-        {/* ── State Card ─────────────────────────────────────── */}
-        <button onClick={() => setShowStateModal(true)}
-          className="w-full rounded-2xl p-4 text-right transition-all duration-200 active:scale-[0.98]"
-          style={{
-            background: state.todayState === 'beautiful' ? 'rgba(46,204,113,0.08)'
-              : state.todayState === 'suffering' ? 'rgba(230,57,70,0.08)'
-              : 'rgba(201,168,76,0.06)',
-            border: `1px solid ${
-              state.todayState === 'beautiful' ? 'rgba(46,204,113,0.3)'
-              : state.todayState === 'suffering' ? 'rgba(230,57,70,0.3)'
-              : 'rgba(201,168,76,0.2)'}`,
-          }}>
-          <div className="flex items-center justify-between">
-            <div style={{ textAlign: isAr ? 'right' : 'left' }}>
-              <p className="text-xs mb-1" style={{ color: '#888' }}>{t('dash_how_feel')}</p>
-              <p className="text-base font-bold text-white">
-                {state.todayState === 'beautiful' ? `✨ ${t('dash_beautiful')}`
-                  : state.todayState === 'suffering' ? `🌧 ${t('dash_suffering')}`
-                  : `👆 ${t('dash_choose_state')}`}
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: '#888' }}>
-                {state.todayState === 'beautiful' ? t('dash_beautiful_desc')
-                  : state.todayState === 'suffering' ? t('dash_suffering_desc')
-                  : t('dash_how_feel')}
-              </p>
-            </div>
-            <div className="text-3xl">
-              {state.todayState === 'beautiful' ? '🌟' : state.todayState === 'suffering' ? '⚡' : '❓'}
-            </div>
-          </div>
-        </button>
+        {/* ── Enhanced State Check-in ─────────────────────────── */}
+        {state.stateCheckin?.[today] ? (
+          <StateCheckin compact onDone={() => setShowStateModal(false)} />
+        ) : (
+          <StateCheckin onDone={() => {}} />
+        )}
+
+        {/* ── Transformation Intelligence ─────────────────────── */}
+        <TransformationPulse />
 
         {/* ── Today's Plan (from yesterday's evening) ────────── */}
         {(() => {

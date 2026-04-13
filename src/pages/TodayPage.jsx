@@ -9,6 +9,8 @@ import { useLang } from '../context/LangContext'
 import { useAuth } from '../context/AuthContext'
 import { upwApi } from '../api/upwApi'
 import BottomNav from '../components/BottomNav'
+import TransformationPulse from '../components/TransformationPulse'
+import StateCheckin from '../components/StateCheckin'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -393,6 +395,20 @@ export default function TodayPage() {
             </p>
           </div>
           <ScoreRing score={score} total={7} isAr={isAr} />
+        </div>
+
+        {/* ── State Check-in ──────────────────────────────────────────────── */}
+        <div style={{ marginBottom: 14 }}>
+          {state.stateCheckin?.[today] ? (
+            <StateCheckin compact />
+          ) : (
+            <StateCheckin />
+          )}
+        </div>
+
+        {/* ── Transformation Intelligence ─────────────────────────────────── */}
+        <div style={{ marginBottom: 14 }}>
+          <TransformationPulse />
         </div>
 
         {/* ── Today's Plan (from yesterday evening) ─────────────────────────── */}

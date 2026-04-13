@@ -5,6 +5,7 @@ import {
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
+import TransformationPulse from '../components/TransformationPulse'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -341,6 +342,11 @@ export default function InsightsPage() {
       </div>
 
       <div style={{ padding: '0 16px' }}>
+
+        {/* ── Transformation Intelligence ────────────────────────────────────── */}
+        <div style={{ marginBottom: 14 }}>
+          <TransformationPulse />
+        </div>
 
         {/* ── Summary 2×2 Grid ───────────────────────────────────────────────── */}
         <div style={{

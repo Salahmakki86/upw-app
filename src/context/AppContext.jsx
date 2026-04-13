@@ -163,6 +163,9 @@ const INITIAL_STATE = {
   // CANI log (keyed by date)
   caniLog: {},
 
+  // Enhanced State Check-in (3 dimensions: energy, mood, clarity)
+  stateCheckin: {},  // { 'YYYY-MM-DD': { energy: 1-10, mood: 1-10, clarity: 1-10, ts } }
+
   // Incantation practice streak
   incantationStreak: 0,
   lastIncantationDate: null,
@@ -408,7 +411,7 @@ export function AppProvider({ children, userId, hasData }) {
             const LOG_KEYS = [
               'eveningLog', 'caniLog', 'sleepLog', 'dailyWins',
               'gratitude', 'todayPlanChecked', 'eveningAnswers',
-              'challengeLog', 'energyProtocol',
+              'challengeLog', 'energyProtocol', 'stateCheckin',
             ]
             for (const k of LOG_KEYS) {
               const remote = remoteState?.[k]
