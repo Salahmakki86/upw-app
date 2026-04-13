@@ -60,7 +60,7 @@ export default function Dashboard() {
   const [showStateModal, setShowStateModal] = useState(false)
   const [showSearch, setShowSearch]       = useState(false)
   const [supportSent, setSupportSent]     = useState(false)
-  const [openCats, setOpenCats]           = useState({ daily: true, goals: false, programs: false, tools: false, admin: false })
+  const [openCats, setOpenCats]           = useState({ daily: true, learn: true, goals: false, programs: false, business: false, tools: false, admin: false })
   const [milestoneToShow, setMilestoneToShow] = useState(null)
   const isAr = lang === 'ar'
 
@@ -153,13 +153,24 @@ export default function Dashboard() {
         { path: '/morning',       icon: Sun,         labelKey: 'dash_link_morning',       color: '#f39c12' },
         { path: '/state',         icon: Zap,         labelKey: 'dash_link_state',         color: '#e63946' },
         { path: '/evening',       icon: Moon,        labelKey: 'dash_link_evening',       color: '#95a5a6' },
-        { path: '/wins',          icon: Trophy,      labelKey: 'dash_link_wins',          color: '#f1c40f' },
         { path: '/gratitude',     icon: Smile,       labelKey: 'dash_link_gratitude',     color: '#f1c40f' },
         { path: '/habits',        icon: CheckSquare, labelKey: 'dash_link_habits',        color: '#2ecc71' },
+        { path: '/wins',          icon: Trophy,      labelKey: 'dash_link_wins',          color: '#f1c40f' },
         { path: '/sleep',         icon: MoonIcon,    labelKey: 'dash_link_sleep',         color: '#9b59b6' },
-        { path: '/emergency',     icon: Zap,         labelKey: 'dash_link_emergency',     color: '#e63946' },
-        { path: '/weekly-pulse',   icon: BarChart2,   labelKey: 'dash_link_weekly_pulse',   color: '#3498db' },
-        { path: '/monthly-reset',  icon: Calendar,    labelKey: 'dash_link_monthly_reset',  color: '#c9a84c' },
+      ],
+    },
+    {
+      key: 'learn',
+      labelAr: '📖 تعلّم',
+      labelEn: '📖 Learn',
+      alwaysUnlocked: true,
+      links: [
+        { path: '/videos',        icon: Play,        labelKey: 'dash_link_videos',        color: '#e63946' },
+        { path: '/library',       icon: BookOpen,    labelKey: 'dash_link_library',       color: '#1abc9c' },
+        { path: '/upw-program',   icon: Flame,       labelKey: 'dash_link_upw_program',   color: '#e63946' },
+        { path: '/achievements',  icon: Trophy,      labelKey: 'dash_link_achievements',  color: '#c9a84c' },
+        { path: '/stats',         icon: PieChart,    labelKey: 'dash_link_stats',         color: '#9b59b6' },
+        { path: '/incantations',  icon: Sparkles,    labelKey: 'dash_link_incantations',  color: '#c9a84c' },
       ],
     },
     {
@@ -170,38 +181,46 @@ export default function Dashboard() {
         { path: '/goals',    icon: Target,     labelKey: 'dash_link_goals',     color: '#3498db' },
         { path: '/wheel',    icon: BarChart2,  labelKey: 'dash_link_wheel',     color: '#2ecc71' },
         { path: '/beliefs',  icon: Star,       labelKey: 'dash_link_beliefs',   color: '#9b59b6' },
-        { path: '/destiny',  icon: Compass,    labelKey: 'dash_link_destiny',   color: '#9b59b6' },
-        { path: '/freedom',  icon: TrendingUp, labelKey: 'dash_link_freedom',   color: '#f1c40f' },
-        { path: '/power30',  icon: Zap,        labelKey: 'dash_link_power30',   color: '#e67e22' },
-        { path: '/fear',     icon: Shield,     labelKey: 'dash_link_fear',      color: '#9b59b6' },
-        { path: '/time',     icon: Clock,      labelKey: 'dash_link_time',      color: '#1abc9c' },
-        { path: '/six-needs',         icon: Heart,       labelKey: 'dash_link_six_needs',         color: '#e91e8c' },
-        { path: '/values',            icon: Star,        labelKey: 'dash_link_values',             color: '#f1c40f' },
-        { path: '/compelling-future', icon: Eye,         labelKey: 'dash_link_compelling_future',  color: '#3498db' },
-        { path: '/transformation',    icon: BarChart2,   labelKey: 'dash_link_transformation',     color: '#2ecc71' },
+        { path: '/compelling-future', icon: Eye,  labelKey: 'dash_link_compelling_future', color: '#3498db' },
+        { path: '/values',   icon: Star,       labelKey: 'dash_link_values',    color: '#f1c40f' },
+        { path: '/six-needs',icon: Heart,      labelKey: 'dash_link_six_needs', color: '#e91e8c' },
+        { path: '/transformation', icon: BarChart2, labelKey: 'dash_link_transformation', color: '#2ecc71' },
       ],
     },
     {
       key: 'programs',
-      labelAr: '📚 البرامج',
-      labelEn: '📚 Programs',
+      labelAr: '🚀 البرامج والتحديات',
+      labelEn: '🚀 Programs & Challenges',
       links: [
-        { path: '/energy',       icon: Flame,       labelKey: 'dash_link_energy',       color: '#e67e22' },
-        { path: '/weekly',       icon: Calendar,    labelKey: 'dash_link_weekly',        color: '#3498db' },
-        { path: '/relationships',icon: Heart,       labelKey: 'dash_link_relationships', color: '#e91e8c' },
-        { path: '/modeling',     icon: Users,       labelKey: 'dash_link_modeling',      color: '#2ecc71' },
-        { path: '/protocol',     icon: Activity,    labelKey: 'dash_link_protocol',      color: '#1abc9c' },
+        { path: '/energy',       icon: Flame,       labelKey: 'dash_link_energy',        color: '#e67e22' },
         { path: '/challenge',    icon: Shuffle,     labelKey: 'dash_link_challenge',     color: '#e67e22' },
         { path: '/group-challenge',icon: Swords,    labelKey: 'dash_link_group_challenge',color: '#e67e22' },
-        { path: '/commitment',   icon: FileText,    labelKey: 'dash_link_commitment',    color: '#e91e8c' },
-        { path: '/letters',      icon: Mail,        labelKey: 'dash_link_letters',       color: '#3498db' },
-        { path: '/videos',       icon: Play,        labelKey: 'dash_link_videos',        color: '#e63946' },
-        { path: '/library',      icon: BookOpen,    labelKey: 'dash_link_library',       color: '#1abc9c' },
-        { path: '/nac',           icon: Zap,      labelKey: 'dash_link_nac',           color: '#e63946' },
-        { path: '/incantations',  icon: Sparkles, labelKey: 'dash_link_incantations',  color: '#c9a84c' },
-        { path: '/upw-program',   icon: Flame,    labelKey: 'dash_link_upw_program',   color: '#e63946' },
-        { path: '/celebration',   icon: Star,     labelKey: 'dash_link_celebration',   color: '#f1c40f' },
-        { path: '/life-story',    icon: BookOpen, labelKey: 'dash_link_life_story',    color: '#9b59b6' },
+        { path: '/power30',      icon: Zap,         labelKey: 'dash_link_power30',       color: '#e67e22' },
+        { path: '/destiny',      icon: Compass,     labelKey: 'dash_link_destiny',       color: '#9b59b6' },
+        { path: '/nac',          icon: Zap,         labelKey: 'dash_link_nac',           color: '#e63946' },
+        { path: '/fear',         icon: Shield,      labelKey: 'dash_link_fear',          color: '#9b59b6' },
+        { path: '/life-story',   icon: BookOpen,    labelKey: 'dash_link_life_story',    color: '#9b59b6' },
+        { path: '/modeling',     icon: Users,       labelKey: 'dash_link_modeling',      color: '#2ecc71' },
+        { path: '/relationships',icon: Heart,       labelKey: 'dash_link_relationships', color: '#e91e8c' },
+        { path: '/protocol',     icon: Activity,    labelKey: 'dash_link_protocol',      color: '#1abc9c' },
+        { path: '/emergency',    icon: Zap,         labelKey: 'dash_link_emergency',     color: '#e63946' },
+      ],
+    },
+    {
+      key: 'planning',
+      labelAr: '📋 التخطيط والتأمل',
+      labelEn: '📋 Planning & Reflection',
+      links: [
+        { path: '/weekly-pulse',  icon: BarChart2,   labelKey: 'dash_link_weekly_pulse',  color: '#3498db' },
+        { path: '/monthly-reset', icon: Calendar,    labelKey: 'dash_link_monthly_reset', color: '#c9a84c' },
+        { path: '/weekly',        icon: Calendar,    labelKey: 'dash_link_weekly',        color: '#3498db' },
+        { path: '/freedom',       icon: TrendingUp,  labelKey: 'dash_link_freedom',       color: '#f1c40f' },
+        { path: '/time',          icon: Clock,       labelKey: 'dash_link_time',          color: '#1abc9c' },
+        { path: '/commitment',    icon: FileText,    labelKey: 'dash_link_commitment',    color: '#e91e8c' },
+        { path: '/letters',       icon: Mail,        labelKey: 'dash_link_letters',       color: '#3498db' },
+        { path: '/celebration',   icon: Star,        labelKey: 'dash_link_celebration',   color: '#f1c40f' },
+        { path: '/vision',        icon: Eye,         labelKey: 'dash_link_vision',        color: '#e91e8c' },
+        { path: '/reading',       icon: BookOpen,    labelKey: 'dash_link_reading',       color: '#3498db' },
       ],
     },
     {
@@ -228,11 +247,7 @@ export default function Dashboard() {
       links: [
         { path: '/insights',    icon: Brain,      labelKey: 'dash_link_insights',    color: '#9b59b6' },
         { path: '/baseline',    icon: BarChart2,  labelKey: 'dash_link_baseline',    color: '#3498db' },
-        { path: '/reading',     icon: BookOpen,   labelKey: 'dash_link_reading',     color: '#3498db' },
-        { path: '/vision',      icon: Eye,        labelKey: 'dash_link_vision',      color: '#e91e8c' },
-        { path: '/achievements',icon: Trophy,     labelKey: 'dash_link_achievements',color: '#c9a84c' },
         { path: '/my-summary',  icon: BarChart2,  labelKey: 'dash_link_my_summary',  color: '#27ae60' },
-        { path: '/stats',       icon: PieChart,   labelKey: 'dash_link_stats',       color: '#9b59b6' },
       ],
     },
     {
@@ -656,7 +671,7 @@ export default function Dashboard() {
                     <div className="grid grid-cols-4 gap-2 px-3 pb-3">
                       {cat.links.map(link => {
                         const Icon = link.icon
-                        const locked = !isFeatureUnlocked(link.path, unlockTier)
+                        const locked = !cat.alwaysUnlocked && !isFeatureUnlocked(link.path, unlockTier)
                         return (
                           <button key={link.path}
                             onClick={() => !locked && navigate(link.path)}
