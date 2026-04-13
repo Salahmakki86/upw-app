@@ -38,10 +38,10 @@ export function getDashboardVisibility(state) {
 
     // Level 2 — After 3 mornings
     guidedJourney:    level >= 2,
-    goalNudge:        level >= 2,
-    goalsSnapshot:    level >= 2,
+    goalNudge:        true,
+    goalsSnapshot:    true,
     badges:           level >= 2,
-    goalsCategory:    level >= 2,
+    goalsCategory:    true,
     learnCategory:    true, // always visible (educational content)
     weeklyReport:     level >= 2,
 
