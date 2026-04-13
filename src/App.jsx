@@ -41,6 +41,8 @@ import SleepTracker     from './pages/SleepTracker'
 import Achievements     from './pages/Achievements'
 import StudentProgress  from './pages/StudentProgress'
 import CoachMessages    from './pages/CoachMessages'
+import CommandCenter    from './pages/CommandCenter'
+import CoachPrep        from './pages/CoachPrep'
 import TodayPage        from './pages/TodayPage'
 import BaselinePage     from './pages/BaselinePage'
 import InsightsPage     from './pages/InsightsPage'
@@ -182,6 +184,14 @@ function AppRoutes() {
             <Route
               path="/weekly-report"
               element={currentUser.role === 'admin' ? <WeeklyReportPage /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/command-center"
+              element={currentUser.role === 'admin' ? <CommandCenter /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/coach-prep"
+              element={currentUser.role === 'admin' ? <CoachPrep /> : <Navigate to="/" />}
             />
             <Route
               path="/admin"
