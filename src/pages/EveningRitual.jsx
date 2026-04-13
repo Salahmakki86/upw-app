@@ -110,7 +110,7 @@ function CANIMiniCalendar({ caniLog, isAr, lang }) {
           </div>
         ))}
       </div>
-      {isToday && !todayDone && (
+      {!todayDone && (
         <p className="text-xs text-center mt-2" style={{ color: '#c9a84c88' }}>
           {isAr ? 'أكمل CANI اليوم لتُضيء الدائرة!' : 'Complete CANI today to light up your circle!'}
         </p>
