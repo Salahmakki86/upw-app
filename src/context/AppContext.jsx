@@ -459,22 +459,48 @@ export function AppProvider({ children, userId, hasData }) {
     })
   }, [today, userId]) // re-runs whenever the date changes
 
+  // Track consecutive sync failures for smart toast behaviour
+  const syncFailCount = useRef(0)
+
   const setState = useCallback((updater) => {
     setStateRaw(prev => {
       const next = typeof updater === 'function' ? updater(prev) : { ...prev, ...updater }
-      saveState(next, userId)
-      // Debounced sync to backend (3 seconds)
+      saveState(next, userId)   // ← always persisted to localStorage first
+
+      // Debounced sync to backend (3 s) with retry
       if (syncTimer.current) clearTimeout(syncTimer.current)
       syncTimer.current = setTimeout(() => {
-        upwApi.saveState(next)
-          .then(() => {
-            const _lang = localStorage.getItem('upw-lang') || 'ar'
-            showToast(_lang === 'ar' ? 'تم الحفظ ✓' : 'Saved ✓', 'success', 2000)
-          })
-          .catch(() => {
-            const _lang = localStorage.getItem('upw-lang') || 'ar'
-            showToast(_lang === 'ar' ? 'خطأ في الحفظ — تحقق من الاتصال' : 'Save error — check connection', 'error', 4000)
-          })
+        const attempt = (retries) => {
+          upwApi.saveState(next)
+            .then(() => {
+              // Show success toast only after recovering from failures
+              if (syncFailCount.current > 0) {
+                const _lang = localStorage.getItem('upw-lang') || 'ar'
+                showToast(_lang === 'ar' ? 'تمت المزامنة ✓' : 'Synced ✓', 'success', 1500)
+              }
+              syncFailCount.current = 0
+            })
+            .catch(() => {
+              if (retries > 0) {
+                // Silent retry after 5 s
+                setTimeout(() => attempt(retries - 1), 5000)
+              } else {
+                syncFailCount.current++
+                // Only show a subtle warning after 3+ consecutive failures
+                if (syncFailCount.current >= 3) {
+                  const _lang = localStorage.getItem('upw-lang') || 'ar'
+                  showToast(
+                    _lang === 'ar'
+                      ? 'بياناتك محفوظة محلياً — المزامنة ستتم لاحقاً'
+                      : 'Data saved locally — sync will retry later',
+                    'info', 3000
+                  )
+                  syncFailCount.current = 0   // reset so we don't spam
+                }
+              }
+            })
+        }
+        attempt(2)   // up to 3 tries total
       }, 3000)
       return next
     })
