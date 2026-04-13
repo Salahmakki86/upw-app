@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
@@ -42,6 +43,7 @@ export default function GratitudeJournal() {
   const { state, update } = useApp()
   const { lang } = useLang()
   const isAr = lang === 'ar'
+  const navigate = useNavigate()
 
   const today = new Date().toISOString().split('T')[0]
   const gratitude = state.gratitude || {}
@@ -107,6 +109,11 @@ export default function GratitudeJournal() {
               </span>
             </div>
           )}
+          <p className="text-xs mt-3 px-2" style={{ color: '#666', lineHeight: 1.7 }}>
+            {isAr
+              ? '🧠 علم الأعصاب: ٣ أشياء يومياً تعيد برمجة دماغك نحو الإيجابية في ٢١ يوماً'
+              : '🧠 Neuroscience: 3 daily items rewire your brain toward positivity in 21 days'}
+          </p>
         </div>
 
         {/* Today's Entry */}
@@ -189,6 +196,14 @@ export default function GratitudeJournal() {
                   ? 'قلبك الممتنّ يجذب مزيداً من النعم'
                   : 'Your grateful heart attracts more blessings'}
               </p>
+              {!state.morningDone && (
+                <button
+                  onClick={() => navigate('/morning')}
+                  className="mt-3 w-full rounded-xl py-2.5 text-xs font-bold transition-all active:scale-[0.98]"
+                  style={{ background: 'rgba(201,168,76,0.1)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.3)' }}>
+                  {isAr ? '☀️ ابدأ الروتين الصباحي ←' : '☀️ Start Morning Ritual →'}
+                </button>
+              )}
             </div>
           )}
         </div>

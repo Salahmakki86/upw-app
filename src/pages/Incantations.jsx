@@ -96,6 +96,15 @@ function PracticeSession({ incantations, onClose, isAr }) {
         </h2>
 
         <div className="w-full max-w-sm space-y-5">
+          {/* RAS educational context */}
+          <div className="rounded-xl p-3"
+            style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.12)' }}>
+            <p className="text-xs text-center" style={{ color: '#c9a84c', lineHeight: 1.7 }}>
+              {isAr
+                ? '🧠 التأكيدات تبرمج جهازك الشبكي النشط (RAS) — قلها بصوت عالٍ مع حركة جسدية لأقوى تأثير'
+                : '🧠 Incantations program your Reticular Activating System (RAS) — say them out loud with body movement for maximum impact'}
+            </p>
+          </div>
           {/* Count selector */}
           <div>
             <p className="text-sm text-gray-400 mb-2">

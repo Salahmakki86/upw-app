@@ -610,6 +610,18 @@ export default function HabitTracker() {
           </div>
         </div>
 
+        {/* Morning Ritual connection */}
+        <div className="rounded-2xl p-4" style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.15)' }}>
+          <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
+            ☀️ {isAr ? 'ابنِ عاداتك في الروتين الصباحي' : 'Build habits into your Morning Ritual'}
+          </p>
+          <p className="text-xs leading-relaxed mb-2" style={{ color: '#666' }}>
+            {isAr
+              ? 'توني: "الأشخاص الناجحون لديهم طقوس يومية ثابتة — ادمج عاداتك في روتينك الصباحي لتثبّتها"'
+              : 'Tony: "Successful people have consistent daily rituals — integrate your habits into your Morning Ritual to solidify them"'}
+          </p>
+        </div>
+
       </div>
     </Layout>
   )

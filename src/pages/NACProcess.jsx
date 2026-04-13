@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import { useToast } from '../context/ToastContext'
@@ -98,6 +99,7 @@ export default function NACProcess() {
   const { lang, dir } = useLang()
   const { state, update } = useApp()
   const { showToast } = useToast()
+  const navigate = useNavigate()
   const isAr = lang === 'ar'
 
   const [step, setStep] = useState(1)
@@ -215,6 +217,23 @@ export default function NACProcess() {
           >
             {isAr ? 'جلسة جديدة' : 'New Session'}
           </button>
+          {/* Continue to Incantations */}
+          <div className="rounded-2xl p-4 mt-2 w-full max-w-xs" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
+            <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
+              ⚡ {isAr ? 'الخطوة التالية: التأكيدات' : 'Next Step: Incantations'}
+            </p>
+            <p className="text-xs mb-3" style={{ color: '#666' }}>
+              {isAr
+                ? 'أنجزت تكييف ٢١ يوماً — الآن حوّل نمطك الجديد إلى تأكيدات يومية قوية'
+                : 'You completed 21-day conditioning — now turn your new pattern into powerful daily incantations'}
+            </p>
+            <button
+              onClick={() => navigate('/incantations')}
+              className="w-full rounded-xl py-2.5 text-xs font-bold"
+              style={{ background: 'rgba(201,168,76,0.1)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.3)' }}>
+              {isAr ? '⚡ انتقل للتأكيدات ←' : '→ ⚡ Go to Incantations'}
+            </button>
+          </div>
         </div>
       </Layout>
     )

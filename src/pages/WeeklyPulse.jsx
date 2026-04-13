@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import { useToast } from '../context/ToastContext'
@@ -641,6 +642,7 @@ function StepIntention({ data, onChange, onNext, onBack, isAr }) {
 // Step 6 — Summary
 function StepSummary({ pulse, weekNumber, weekDates, onComplete, isAr, pastPulses, similarWeek }) {
   const [sharing, setSharing] = useState(false)
+  const navigate = useNavigate()
 
   async function handleShare() {
     setSharing(true)
@@ -718,6 +720,21 @@ function StepSummary({ pulse, weekNumber, weekDates, onComplete, isAr, pastPulse
       >
         {isAr ? '✓ اختتم الفحص' : '✓ Complete Check-in'}
       </button>
+
+      {/* Monthly Reset cross-link */}
+      <div style={{ background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.18)', borderRadius: 14, padding: '14px 16px', textAlign: 'center' }}>
+        <p style={{ fontSize: 11, color: '#555', marginBottom: 8, lineHeight: 1.5 }}>
+          {isAr
+            ? '📅 في نهاية كل شهر — أكمل طقس إعادة الضبط الشهري لمراجعة عميقة وتجديد طاقتك'
+            : '📅 At end of each month — complete your Monthly Reset ceremony for deep review & energy renewal'}
+        </p>
+        <button
+          onClick={() => navigate('/monthly-reset')}
+          style={{ fontSize: 13, color: '#c9a84c', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}
+        >
+          {isAr ? '🔄 إعادة الضبط الشهري ←' : '→ 🔄 Monthly Reset'}
+        </button>
+      </div>
     </div>
   )
 }

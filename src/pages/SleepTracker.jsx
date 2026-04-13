@@ -35,7 +35,7 @@ function getDateKey(offset = 0) {
 
 function formatDateDisplay(dateStr, isAr) {
   const d = new Date(dateStr + 'T00:00:00')
-  return d.toLocaleDateString(isAr ? 'ar-SA' : 'en-US', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' })
 }
 
 /* ─── WEEKLY BAR CHART ──────────────────────────────────────────────── */
@@ -489,6 +489,19 @@ export default function SleepTracker() {
           )}
         </div>
       )}
+
+      {/* Morning Ritual Connection */}
+      <div className="card p-4 mb-4" style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.15)' }}>
+        <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
+          ☀️ {t('العلاقة بالروتين الصباحي', 'Connection to Morning Ritual')}
+        </p>
+        <p className="text-xs leading-relaxed" style={{ color: '#666' }}>
+          {t(
+            'جودة نومك تؤثر مباشرة على طاقة روتينك الصباحي. النوم ٧-٨ ساعات = صباح أقوى وتركيز أعمق.',
+            'Your sleep quality directly impacts your morning ritual energy. 7-8 hours = stronger morning & deeper focus.'
+          )}
+        </p>
+      </div>
     </Layout>
   )
 }

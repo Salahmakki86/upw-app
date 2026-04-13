@@ -248,6 +248,23 @@ export default function EveningRitual() {
               <div className="progress-bar-fill" style={{ width: `${dayRating * 10}%` }} />
             </div>
           </div>
+          {/* Goals cross-link */}
+          <div className="rounded-2xl p-4 mt-2 w-full" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
+            <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
+              🎯 {isAr ? 'راجع أهدافك لليوم التالي' : 'Review your goals for tomorrow'}
+            </p>
+            <p className="text-xs mb-3" style={{ color: '#666' }}>
+              {isAr
+                ? 'مراجعة أهدافك قبل النوم تجعل عقلك الباطن يعمل عليها طوال الليل'
+                : 'Reviewing your goals before sleep makes your subconscious work on them all night'}
+            </p>
+            <button
+              onClick={() => navigate('/goals')}
+              className="w-full rounded-xl py-2.5 text-xs font-bold"
+              style={{ background: 'rgba(201,168,76,0.1)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.3)' }}>
+              {isAr ? '🎯 مراجعة الأهداف ←' : '→ 🎯 Review Goals'}
+            </button>
+          </div>
         </div>
       </Layout>
     )
