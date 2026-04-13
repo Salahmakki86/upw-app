@@ -264,6 +264,12 @@ const INITIAL_STATE = {
   // Stale Goal Nudge Log — tracks when user was nudged about stale goals (Batch 1)
   staleGoalNudgeLog: {},  // { 'YYYY-MM-DD': { goalId, blocker, ts } }
 
+  // Fix #4 — Accountability System: weekly commitments + daily check-ins
+  accountability: {},  // { 'YYYY-WNN': { commitment, setAt, checkins: { 'YYYY-MM-DD': true|false } } }
+
+  // Fix #20 — Welcome Experience: first-time wow moment (shown once after onboarding)
+  welcomeExperienceSeen: false,
+
   // Baseline assessment: { date, scores: { health, career, finances, relationships, family, fun, growth, spirituality, contribution, environment } }
   baseline: null,
 

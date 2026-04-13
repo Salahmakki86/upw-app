@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
+import { analyzeScorecardTrends, generateBizRecommendations, getPipelineHealth } from '../utils/bizIntelligence'
 
 const SKILL_DEFS = [
   { key: 'sales',       emoji: '💰', en: 'Sales',       ar: 'المبيعات',   color: '#c9a84c' },
@@ -192,6 +193,11 @@ export default function BizDashboard() {
     [decisions, today]
   )
 
+  // ── Fix #9 — Business Intelligence Engine ──────────────────────
+  const scorecardTrends = useMemo(() => analyzeScorecardTrends(scorecard, isAr), [scorecard, isAr])
+  const bizRecommendations = useMemo(() => generateBizRecommendations(state, isAr), [state, isAr])
+  const pipelineHealthData = useMemo(() => getPipelineHealth(pipeline), [pipeline])
+
   // ── Helpers ───────────────────────────────────────────────────
   const cardStyle = {
     background: '#0e0e0e',
@@ -241,6 +247,83 @@ export default function BizDashboard() {
                 ? `${dueDecisions.length} قرار يحتاج مراجعة`
                 : `${dueDecisions.length} decision${dueDecisions.length > 1 ? 's' : ''} due for review`}
             </p>
+          </div>
+        )}
+
+        {/* ── Smart Recommendations (Fix #9 — Intelligence) ──── */}
+        {bizRecommendations.length > 0 && (
+          <div style={cardStyle} className="space-y-2">
+            {sectionTitle('🧠', isAr ? 'توصيات ذكية' : 'Smart Recommendations')}
+            {bizRecommendations.slice(0, 3).map((rec, i) => {
+              const bgColor = rec.type === 'warning' ? 'rgba(231,76,60,0.06)'
+                : rec.type === 'bottleneck' ? 'rgba(243,156,18,0.06)'
+                : rec.type === 'success' ? 'rgba(46,204,113,0.06)'
+                : 'rgba(201,168,76,0.06)'
+              const borderColor = rec.type === 'warning' ? 'rgba(231,76,60,0.2)'
+                : rec.type === 'bottleneck' ? 'rgba(243,156,18,0.2)'
+                : rec.type === 'success' ? 'rgba(46,204,113,0.2)'
+                : 'rgba(201,168,76,0.15)'
+              const titleColor = rec.type === 'warning' ? '#e63946'
+                : rec.type === 'bottleneck' ? '#f39c12'
+                : rec.type === 'success' ? '#2ecc71'
+                : '#c9a84c'
+              return (
+                <div key={i}
+                  className="rounded-xl p-3"
+                  style={{ background: bgColor, border: `1px solid ${borderColor}` }}
+                  onClick={() => rec.actionRoute && navigate(rec.actionRoute)}
+                >
+                  <div className="flex items-start gap-2">
+                    <span className="text-lg flex-shrink-0">{rec.emoji}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold" style={{ color: titleColor }}>
+                        {isAr ? rec.titleAr : rec.titleEn}
+                      </p>
+                      <p className="text-xs mt-0.5" style={{ color: '#888' }}>
+                        {isAr ? rec.textAr : rec.textEn}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* ── Scorecard Trends (Fix #9) ─────────────────────── */}
+        {scorecardTrends && (
+          <div style={cardStyle}>
+            {sectionTitle('📊', isAr ? 'اتجاهات البيانات' : 'Data Trends')}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-lg p-2.5" style={{ background: '#111' }}>
+                <p className="text-xs" style={{ color: '#666' }}>{isAr ? 'اتجاه الإيرادات' : 'Revenue Trend'}</p>
+                <p className="text-sm font-black" style={{ color: scorecardTrends.revenueTrend >= 0 ? '#2ecc71' : '#e63946' }}>
+                  {scorecardTrends.revenueTrend >= 0 ? '▲' : '▼'} {Math.abs(scorecardTrends.revenueTrend)}%
+                </p>
+              </div>
+              <div className="rounded-lg p-2.5" style={{ background: '#111' }}>
+                <p className="text-xs" style={{ color: '#666' }}>{isAr ? 'نسبة التحويل' : 'Conversion Rate'}</p>
+                <p className="text-sm font-black" style={{ color: '#c9a84c' }}>
+                  {scorecardTrends.conversionRate}%
+                </p>
+              </div>
+              {scorecardTrends.bestSource && (
+                <div className="rounded-lg p-2.5" style={{ background: '#111' }}>
+                  <p className="text-xs" style={{ color: '#666' }}>{isAr ? 'أفضل مصدر' : 'Top Source'}</p>
+                  <p className="text-sm font-bold" style={{ color: '#3498db' }}>
+                    {scorecardTrends.bestSource}
+                  </p>
+                </div>
+              )}
+              {scorecardTrends.bestDay && (
+                <div className="rounded-lg p-2.5" style={{ background: '#111' }}>
+                  <p className="text-xs" style={{ color: '#666' }}>{isAr ? 'أفضل يوم' : 'Best Day'}</p>
+                  <p className="text-sm font-bold" style={{ color: '#9b59b6' }}>
+                    {scorecardTrends.bestDay}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

@@ -14,6 +14,7 @@ import { useLang } from '../context/LangContext'
 import { useToast } from '../context/ToastContext'
 import { upwApi } from '../api/upwApi'
 import { detectInterventions, severityColor } from '../utils/interventions'
+import { analyzeStudentPatterns, getStudentSummary } from '../utils/studentPatterns'
 import Layout from '../components/Layout'
 
 function MetricCard({ emoji, value, label, color }) {
@@ -160,6 +161,17 @@ export default function CoachPrep() {
     return detectInterventions(studentState, isAr)
   }, [studentState, isAr])
 
+  // Fix #13 — Deep student pattern analysis
+  const studentPatterns = useMemo(() => {
+    if (!studentState) return []
+    return analyzeStudentPatterns(studentState, isAr)
+  }, [studentState, isAr])
+
+  const studentSummaryText = useMemo(() => {
+    if (!studentState) return ''
+    return getStudentSummary(studentState, isAr)
+  }, [studentState, isAr])
+
   const student = students.find(s => s.id === selectedId)
 
   async function sendMessage() {
@@ -210,8 +222,52 @@ export default function CoachPrep() {
               <MetricCard emoji="😟" value={(studentState.stateLog || []).filter(s => s.state === 'suffering').length} label={isAr ? 'معاناة' : 'Suffering'} color="#e63946" />
             </div>
 
+            {/* Student Summary (Fix #13) */}
+            {studentSummaryText && (
+              <div className="rounded-xl p-3" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
+                <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
+                  📋 {isAr ? 'ملخص سريع' : 'Quick Summary'}
+                </p>
+                <p className="text-xs" style={{ color: '#bbb' }}>{studentSummaryText}</p>
+              </div>
+            )}
+
             {/* Heatmap */}
             <HeatmapGrid studentState={studentState} isAr={isAr} />
+
+            {/* Student Patterns (Fix #13 — Coach sees patterns) */}
+            {studentPatterns.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-black uppercase tracking-wider" style={{ color: '#9b59b6' }}>
+                  🔍 {isAr ? 'أنماط مكتشفة' : 'Detected Patterns'} ({studentPatterns.length})
+                </p>
+                {studentPatterns.map((pattern, i) => {
+                  const typeColors = { critical: '#e63946', warning: '#f39c12', info: '#3498db', strength: '#2ecc71' }
+                  const color = typeColors[pattern.type] || '#888'
+                  return (
+                    <div key={i} className="rounded-xl p-3" style={{ background: '#111', border: `1px solid ${color}22` }}>
+                      <div className="flex items-start gap-2">
+                        <span className="text-lg flex-shrink-0">{pattern.emoji}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold" style={{ color }}>
+                            {isAr ? pattern.titleAr : pattern.titleEn}
+                          </p>
+                          <p className="text-xs mt-0.5" style={{ color: '#888' }}>
+                            {isAr ? pattern.detailAr : pattern.detailEn}
+                          </p>
+                          <div className="rounded-lg p-2 mt-2" style={{ background: `${color}08`, border: `1px solid ${color}15` }}>
+                            <p className="text-xs" style={{ color: '#666' }}>
+                              <span style={{ fontWeight: 700, color }}>💡 {isAr ? 'نصيحة:' : 'Coach tip:'}</span>{' '}
+                              {isAr ? pattern.coachTipAr : pattern.coachTipEn}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
 
             {/* Deep Metrics */}
             <div className="grid grid-cols-2 gap-2">

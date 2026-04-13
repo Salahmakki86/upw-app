@@ -13,8 +13,12 @@ import TransformationPulse from '../components/TransformationPulse'
 import StateCheckin from '../components/StateCheckin'
 import SmartDailyQuestion from '../components/SmartDailyQuestion'
 import StaleGoalNudge from '../components/StaleGoalNudge'
+import AccountabilityCard from '../components/AccountabilityCard'
+import ProgressSnapshot from '../components/ProgressSnapshot'
+import WelcomeExperience from '../components/WelcomeExperience'
 import { generateBriefing } from '../utils/morningBriefing'
 import { calcWeightedScore, getScoreInsight } from '../utils/dailyScore'
+import { getDailyPersonalizedTip } from '../utils/personalization'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -318,6 +322,9 @@ export default function TodayPage() {
   // ── Morning Briefing — smart intelligence sentence ────────────────────
   const briefing = useMemo(() => generateBriefing(state, isAr), [state, isAr])
 
+  // ── Personalized tip based on onboarding profile (Fix #8) ──────────
+  const personalTip = useMemo(() => getDailyPersonalizedTip(state.onboardingProfile, isAr), [state.onboardingProfile, isAr])
+
   // ── Yesterday's evening reflection (data value return) ────────────────
   const yesterdayEvening = state.eveningLog?.[yesterdayKey]
   const morningCommitment = state.morningAnswers?.[6] // "What step will I take today?"
@@ -331,6 +338,9 @@ export default function TodayPage() {
         paddingBottom: 100,
       }}
     >
+      {/* Fix #20 — First-time wow moment */}
+      <WelcomeExperience />
+
       {/* ── Top Bar ──────────────────────────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -470,8 +480,32 @@ export default function TodayPage() {
           </div>
         )}
 
+        {/* ── Personalized Tip — based on onboarding profile (Fix #8) ──── */}
+        {personalTip && (
+          <div style={{
+            borderRadius: 16,
+            padding: '10px 14px',
+            marginBottom: 14,
+            background: 'rgba(155,89,182,0.05)',
+            border: '1px solid rgba(155,89,182,0.15)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 10,
+          }}>
+            <span style={{ fontSize: 16, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>{personalTip.emoji}</span>
+            <p style={{ fontSize: 11, fontWeight: 600, color: '#bbb', lineHeight: 1.5 }}>
+              {personalTip.text}
+            </p>
+          </div>
+        )}
+
         {/* ── Stale Goal Nudge — Coaching Dialogue ─────────────────────── */}
         <StaleGoalNudge />
+
+        {/* ── Accountability Card — weekly commitment (Fix #4) ─────────── */}
+        <div style={{ marginBottom: 14 }}>
+          <AccountabilityCard />
+        </div>
 
         {/* ── State Check-in ──────────────────────────────────────────────── */}
         <div style={{ marginBottom: 14 }}>
@@ -634,6 +668,11 @@ export default function TodayPage() {
             </div>
           )
         })}
+
+        {/* ── Progress Snapshot — before/after outcome measurement (Fix #10) ── */}
+        <div style={{ marginBottom: 14 }}>
+          <ProgressSnapshot />
+        </div>
 
         {/* ── All-done banner ─────────────────────────────────────────────────── */}
         {score === 7 && (
