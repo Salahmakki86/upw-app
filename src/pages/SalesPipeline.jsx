@@ -43,6 +43,8 @@ export default function SalesPipeline() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [editId, setEditId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
+  const [confirmLostId, setConfirmLostId] = useState(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
 
   function savePipeline(newDeals, newLost) {
     update('salesPipeline', {
@@ -462,20 +464,54 @@ export default function SalesPipeline() {
                               >
                                 ✏️ {isAr ? 'تعديل' : 'Edit'}
                               </button>
-                              <button
-                                onClick={() => closeLost(deal)}
-                                className="flex-1 rounded-lg py-1.5 text-xs font-bold"
-                                style={{ background: 'rgba(231,76,60,0.1)', color: '#e74c3c', border: '1px solid rgba(231,76,60,0.3)' }}
-                              >
-                                ❌ {isAr ? 'أغلق خاسرة' : 'Close Lost'}
-                              </button>
-                              <button
-                                onClick={() => deleteDeal(deal.id)}
-                                className="rounded-lg px-2 py-1.5 text-xs"
-                                style={{ background: '#1a1a1a', color: '#555', border: '1px solid #2a2a2a' }}
-                              >
-                                🗑
-                              </button>
+                              {confirmLostId === deal.id ? (
+                                <div className="flex-1 flex gap-1">
+                                  <button
+                                    onClick={() => { closeLost(deal); setConfirmLostId(null) }}
+                                    className="flex-1 rounded-lg py-1.5 text-xs font-bold"
+                                    style={{ background: 'rgba(231,76,60,0.15)', color: '#e74c3c', border: '1px solid rgba(231,76,60,0.3)' }}>
+                                    {isAr ? 'نعم' : 'Yes'}
+                                  </button>
+                                  <button
+                                    onClick={() => setConfirmLostId(null)}
+                                    className="flex-1 rounded-lg py-1.5 text-xs font-bold"
+                                    style={{ background: '#2a2a2a', color: '#888' }}>
+                                    {isAr ? 'لا' : 'No'}
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setConfirmLostId(deal.id)}
+                                  className="flex-1 rounded-lg py-1.5 text-xs font-bold"
+                                  style={{ background: 'rgba(231,76,60,0.1)', color: '#e74c3c', border: '1px solid rgba(231,76,60,0.3)' }}
+                                >
+                                  ❌ {isAr ? 'أغلق خاسرة' : 'Close Lost'}
+                                </button>
+                              )}
+                              {confirmDeleteId === deal.id ? (
+                                <div className="flex flex-col gap-1">
+                                  <button
+                                    onClick={() => { deleteDeal(deal.id); setConfirmDeleteId(null) }}
+                                    className="rounded-lg px-2 py-1.5 text-xs"
+                                    style={{ background: 'rgba(231,76,60,0.12)', color: '#e74c3c' }}>
+                                    ✕
+                                  </button>
+                                  <button
+                                    onClick={() => setConfirmDeleteId(null)}
+                                    className="rounded-lg px-2 py-1.5 text-xs"
+                                    style={{ background: '#2a2a2a', color: '#888' }}>
+                                    ○
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setConfirmDeleteId(deal.id)}
+                                  className="rounded-lg px-2 py-1.5 text-xs"
+                                  style={{ background: '#1a1a1a', color: '#555', border: '1px solid #2a2a2a' }}
+                                >
+                                  🗑
+                                </button>
+                              )}
                             </div>
                           </div>
                         )}

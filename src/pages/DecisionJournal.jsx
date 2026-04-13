@@ -17,6 +17,7 @@ export default function DecisionJournal() {
   const [form, setForm] = useState({ decision: '', reason: '', alternatives: '', expectedResult: '', emotion: '' })
   const [expandedId, setExpandedId] = useState(null)
   const [reviewText, setReviewText] = useState('')
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
 
   const EMOTIONS = [
     { emoji: '😤', ar: 'غضب', en: 'Angry' },
@@ -246,10 +247,27 @@ export default function DecisionJournal() {
                     </p>
                   )}
 
-                  <button onClick={() => deleteDecision(d.id)}
-                    className="text-xs w-full py-1.5 rounded-lg" style={{ background: '#e74c3c10', color: '#e74c3c' }}>
-                    🗑 {isAr ? 'حذف' : 'Delete'}
-                  </button>
+                  {confirmDeleteId === d.id ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { deleteDecision(d.id); setConfirmDeleteId(null) }}
+                        className="flex-1 text-xs py-1.5 rounded-lg"
+                        style={{ background: 'rgba(231,76,60,0.12)', color: '#e74c3c', border: '1px solid rgba(231,76,60,0.25)' }}>
+                        {isAr ? 'نعم، احذف' : 'Yes, delete'}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="flex-1 text-xs py-1.5 rounded-lg"
+                        style={{ background: '#2a2a2a', color: '#888' }}>
+                        {isAr ? 'إلغاء' : 'Cancel'}
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setConfirmDeleteId(d.id)}
+                      className="text-xs w-full py-1.5 rounded-lg" style={{ background: '#e74c3c10', color: '#e74c3c' }}>
+                      🗑 {isAr ? 'حذف' : 'Delete'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>

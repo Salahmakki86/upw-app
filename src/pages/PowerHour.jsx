@@ -29,6 +29,13 @@ export default function PowerHour() {
   const [result, setResult] = useState(todayEntry?.result || '')
   const intervalRef = useRef(null)
 
+  // Restore started state if session began today but not completed
+  useEffect(() => {
+    if (todayEntry?.startedAt && !todayEntry?.completedAt) {
+      setStarted(true)
+    }
+  }, []) // eslint-disable-line
+
   useEffect(() => {
     if (running && timeLeft > 0) {
       intervalRef.current = setInterval(() => {
@@ -149,7 +156,7 @@ export default function PowerHour() {
 
   if (started) {
     return (
-      <Layout title="" subtitle="">
+      <Layout title={isAr ? 'ساعة القوة' : 'Power Hour'} subtitle={isAr ? `🎯 ${task}` : `🎯 ${task}`}>
         <div className="flex flex-col items-center justify-center min-h-[65vh] text-center px-4">
           {/* Task */}
           <p className="text-xs font-bold mb-6" style={{ color: '#c9a84c' }}>

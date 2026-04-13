@@ -157,7 +157,22 @@ export default function Statistics() {
         )}
 
         {/* 3. Wheel of Life */}
-        {firstWheel && latestWheel && (
+        {!firstWheel ? (
+          <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
+            <p className="text-xs font-black uppercase tracking-widest mb-3" style={{ color: '#c9a84c' }}>
+              🔄 {isAr ? 'عجلة الحياة' : 'Wheel of Life'}
+            </p>
+            <div className="text-center py-4">
+              <p className="text-3xl mb-2">🔄</p>
+              <p className="text-sm font-bold text-white mb-1">
+                {isAr ? 'لم تقيّم عجلة حياتك بعد' : 'No wheel snapshots yet'}
+              </p>
+              <p className="text-xs mb-3" style={{ color: '#666' }}>
+                {isAr ? 'سجّل أول قياس لعجلة حياتك لترى تطورك هنا' : 'Record your first wheel snapshot to track progress here'}
+              </p>
+            </div>
+          </div>
+        ) : (firstWheel && latestWheel && (
           <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
             <p className="text-xs font-black uppercase tracking-widest mb-3" style={{ color: '#c9a84c' }}>
               🔄 {isAr ? 'عجلة الحياة' : 'Wheel of Life'}
@@ -193,7 +208,7 @@ export default function Statistics() {
               })}
             </div>
           </div>
-        )}
+        ))}
 
         {/* 4. Goals */}
         {goals.length > 0 && (

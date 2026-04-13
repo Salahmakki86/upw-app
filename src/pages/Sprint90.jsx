@@ -115,6 +115,11 @@ export default function Sprint90() {
               className="w-full btn-gold py-3 text-sm disabled:opacity-40">
               🚀 {isAr ? 'ابدأ السبرنت' : 'Start Sprint'}
             </button>
+            {!goalText.trim() && (
+              <p className="text-xs text-center mt-1" style={{ color: '#666' }}>
+                {isAr ? '↑ أدخل هدفك الكبير أولاً لتبدأ' : '↑ Enter your big goal above to start'}
+              </p>
+            )}
           </div>
         </div>
       </Layout>

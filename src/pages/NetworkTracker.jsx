@@ -41,6 +41,7 @@ export default function NetworkTracker() {
   const [editId, setEditId] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
   const [filter, setFilter] = useState('all') // all, overdue, recent, dream100
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -496,11 +497,28 @@ export default function NetworkTracker() {
                           style={{ background: '#1a1a1a', color: '#888', border: '1px solid #2a2a2a' }}>
                           ✏️ {isAr ? 'تعديل' : 'Edit'}
                         </button>
-                        <button onClick={() => deleteContact(contact.id)}
-                          className="rounded-xl px-3 py-2 text-xs font-bold"
-                          style={{ background: 'rgba(231,76,60,0.1)', color: '#e74c3c', border: '1px solid rgba(231,76,60,0.3)' }}>
-                          🗑
-                        </button>
+                        {confirmDeleteId === contact.id ? (
+                          <div className="flex flex-col gap-1">
+                            <button
+                              onClick={() => { deleteContact(contact.id); setConfirmDeleteId(null) }}
+                              className="rounded-xl px-3 py-2 text-xs font-bold"
+                              style={{ background: 'rgba(231,76,60,0.15)', color: '#e74c3c' }}>
+                              ✕
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="rounded-xl px-3 py-2 text-xs font-bold"
+                              style={{ background: '#2a2a2a', color: '#888' }}>
+                              ○
+                            </button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setConfirmDeleteId(contact.id)}
+                            className="rounded-xl px-3 py-2 text-xs font-bold"
+                            style={{ background: 'rgba(231,76,60,0.1)', color: '#e74c3c', border: '1px solid rgba(231,76,60,0.3)' }}>
+                            🗑
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}

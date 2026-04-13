@@ -19,6 +19,7 @@ function GoalCard({ goal, onUpdate, onDelete, t }) {
   const [editingDaily, setEditingDaily] = useState(false)
   const [newAction, setNewAction] = useState('')
   const [showActionInput, setShowActionInput] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const today = new Date().toISOString().split('T')[0]
   const dailyLog = goal.dailyLog || {}       // { 'YYYY-MM-DD': { task, done } }
@@ -158,9 +159,26 @@ function GoalCard({ goal, onUpdate, onDelete, t }) {
             <button onClick={() => setExpanded(!expanded)} className="p-1.5" style={{ color: '#666' }}>
               {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
             </button>
-            <button onClick={() => onDelete(goal.id)} className="p-1.5" style={{ color: '#555' }}>
-              <Trash2 size={14} />
-            </button>
+            {confirmDelete ? (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => onDelete(goal.id)}
+                  className="text-xs px-1.5 py-1 rounded-lg"
+                  style={{ background: 'rgba(231,76,60,0.12)', color: '#e74c3c', border: '1px solid rgba(231,76,60,0.25)' }}>
+                  ✕
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="text-xs px-1.5 py-1 rounded-lg"
+                  style={{ background: '#2a2a2a', color: '#888' }}>
+                  ○
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => setConfirmDelete(true)} className="p-1.5" style={{ color: '#555' }}>
+                <Trash2 size={14} />
+              </button>
+            )}
           </div>
         </div>
 

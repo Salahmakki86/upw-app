@@ -40,6 +40,7 @@ export default function VisionBoard() {
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
   const [expandedId, setExpandedId] = useState(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
 
   const t = (ar, en) => isAr ? ar : en
 
@@ -208,13 +209,30 @@ export default function VisionBoard() {
                           <Check size={12} />
                           {card.done ? t('إلغاء', 'Undo') : t('أنجزت', 'Done')}
                         </button>
-                        <button
-                          className="px-2 py-1 rounded text-xs"
-                          style={{ background: '#2a1a1a', color: '#e74c3c' }}
-                          onClick={() => deleteCard(card.id)}
-                        >
-                          <Trash2 size={12} />
-                        </button>
+                        {confirmDeleteId === card.id ? (
+                          <div className="flex gap-1">
+                            <button
+                              className="flex-1 text-xs py-1 rounded font-bold"
+                              style={{ background: 'rgba(231,76,60,0.15)', color: '#e74c3c' }}
+                              onClick={() => { deleteCard(card.id); setConfirmDeleteId(null) }}>
+                              {t('احذف', 'Del')}
+                            </button>
+                            <button
+                              className="flex-1 text-xs py-1 rounded"
+                              style={{ background: '#2a2a2a', color: '#888' }}
+                              onClick={() => setConfirmDeleteId(null)}>
+                              {t('لا', 'No')}
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            className="px-2 py-1 rounded text-xs"
+                            style={{ background: '#2a1a1a', color: '#e74c3c' }}
+                            onClick={() => setConfirmDeleteId(card.id)}
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}

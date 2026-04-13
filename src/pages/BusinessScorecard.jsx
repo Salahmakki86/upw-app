@@ -2,7 +2,7 @@
  * #1 — Daily Business Scorecard
  * Quick daily logging of key business metrics with trend analysis
  */
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
@@ -42,6 +42,13 @@ export default function BusinessScorecard() {
     return init
   })
   const [saved, setSaved] = useState(false)
+
+  // Re-sync form when today changes (after midnight) or when returning to page
+  useEffect(() => {
+    const init = {}
+    METRICS.forEach(m => { init[m.key] = todayData[m.key] || '' })
+    setForm(init)
+  }, [today]) // eslint-disable-line
 
   const handleSave = () => {
     const newScorecard = { ...scorecard, [today]: { ...form, savedAt: Date.now() } }
