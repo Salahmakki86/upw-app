@@ -371,11 +371,67 @@ function GoalCard({ goal, onUpdate, onDelete, t }) {
             )}
           </div>
 
-          {/* ── Purpose ── */}
+          {/* ── Purpose + Strength Indicator ── */}
           {goal.purpose && (
             <div>
-              <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>⚡ لماذا هذا ضرورة مطلقة:</p>
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs font-bold" style={{ color: '#c9a84c' }}>⚡ لماذا هذا ضرورة مطلقة:</p>
+                {(() => {
+                  const filled = [goal.purpose, goal.pain, goal.pleasure].filter(v => v && v.trim()).length
+                  const strengthColor = filled === 3 ? '#2ecc71' : filled === 2 ? '#f39c12' : '#e74c3c'
+                  const strengthLabel = filled === 3
+                    ? (t('lang') === 'ar' ? 'قوي جداً' : 'Very Strong')
+                    : filled === 2
+                    ? (t('lang') === 'ar' ? 'جيد' : 'Good')
+                    : (t('lang') === 'ar' ? 'ضعيف' : 'Weak')
+                  return (
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full"
+                      style={{ background: strengthColor + '18', color: strengthColor, border: `1px solid ${strengthColor}44` }}>
+                      🔋 {strengthLabel} ({filled}/3)
+                    </span>
+                  )
+                })()}
+              </div>
               <p className="text-xs leading-relaxed" style={{ color: '#bbb' }}>{goal.purpose}</p>
+            </div>
+          )}
+
+          {/* ── Pain / Pleasure Mapper ── */}
+          {(goal.pain || goal.pleasure) && (
+            <div className="space-y-2">
+              <p className="text-xs font-bold" style={{ color: '#c9a84c' }}>⚖️ خارطة الألم والمتعة:</p>
+              <div className="grid grid-cols-2 gap-2">
+                {goal.pain && (
+                  <div className="rounded-xl p-3" style={{ background: 'rgba(230,57,70,0.06)', border: '1px solid rgba(230,57,70,0.2)' }}>
+                    <p className="text-xs font-bold mb-1" style={{ color: '#e63946' }}>😰 الألم إذا لم أتحرك</p>
+                    <p className="text-xs leading-relaxed" style={{ color: '#aaa' }}>{goal.pain}</p>
+                  </div>
+                )}
+                {goal.pleasure && (
+                  <div className="rounded-xl p-3" style={{ background: 'rgba(46,204,113,0.06)', border: '1px solid rgba(46,204,113,0.2)' }}>
+                    <p className="text-xs font-bold mb-1" style={{ color: '#2ecc71' }}>🌟 المتعة عند التحقيق</p>
+                    <p className="text-xs leading-relaxed" style={{ color: '#aaa' }}>{goal.pleasure}</p>
+                  </div>
+                )}
+              </div>
+              {/* Balance indicator */}
+              {goal.pain && goal.pleasure && (
+                <div className="rounded-lg p-2 flex items-center gap-2" style={{ background: '#111' }}>
+                  <div className="flex-1 h-2 rounded-full overflow-hidden flex" style={{ background: '#222' }}>
+                    <div className="h-full rounded-r-full" style={{
+                      width: `${Math.round(goal.pain.length / (goal.pain.length + goal.pleasure.length) * 100)}%`,
+                      background: 'linear-gradient(90deg, #e63946, #e6394666)',
+                    }} />
+                    <div className="h-full rounded-l-full" style={{
+                      width: `${Math.round(goal.pleasure.length / (goal.pain.length + goal.pleasure.length) * 100)}%`,
+                      background: 'linear-gradient(90deg, #2ecc7166, #2ecc71)',
+                    }} />
+                  </div>
+                  <span className="text-xs flex-shrink-0" style={{ color: '#666' }}>
+                    {goal.pain.length > goal.pleasure.length ? '😰' : '🌟'} أقوى
+                  </span>
+                </div>
+              )}
             </div>
           )}
 

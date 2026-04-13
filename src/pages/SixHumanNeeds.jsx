@@ -6,7 +6,8 @@ import { useToast } from '../context/ToastContext'
 import Layout from '../components/Layout'
 import {
   Heart, TrendingUp, Star, Shield, Zap, Users,
-  CheckCircle, ChevronRight, BarChart2, Lightbulb, Link
+  CheckCircle, ChevronRight, BarChart2, Lightbulb, Link,
+  Calendar, Clock
 } from 'lucide-react'
 
 const NEED_META = [
@@ -140,6 +141,7 @@ const NEED_META = [
 
 const TABS = [
   { id: 'diagnostic', ar: 'التشخيص', en: 'Diagnostic' },
+  { id: 'tracking', ar: 'التتبع', en: 'Tracking' },
   { id: 'sources', ar: 'المصادر', en: 'Sources' },
   { id: 'transform', ar: 'التحول', en: 'Transform' },
 ]
@@ -190,6 +192,9 @@ export default function SixHumanNeeds() {
   )
   const [sources, setSources] = useState(state.sixNeedsSources || {})
   const [vehicle, setVehicle] = useState(state.sixNeedsVehicle || '')
+  const history = state.sixNeedsHistory || {}
+  const today = new Date().toISOString().split('T')[0]
+  const savedToday = !!history[today]
 
   const sortedNeeds = [...NEED_META].map((n, index) => ({ ...n, index }))
     .sort((a, b) => (scores[b.key] || 0) - (scores[a.key] || 0) || a.index - b.index)
@@ -206,6 +211,19 @@ export default function SixHumanNeeds() {
     update('sixNeedsScores', scores)
     showToast(isAr ? 'تم حفظ نتائج الاحتياجات' : 'Needs scores saved', 'success')
   }
+
+  function saveWeeklySnapshot() {
+    const snapshot = { ...scores, ts: Date.now() }
+    const updated = { ...history, [today]: snapshot }
+    update('sixNeedsHistory', updated)
+    update('sixNeedsScores', scores)
+    showToast(isAr ? 'تم حفظ تقييم الأسبوع!' : 'Weekly check-in saved!', 'success')
+  }
+
+  // Get sorted history entries for chart
+  const historyEntries = Object.entries(history)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-8)  // last 8 entries
 
   function toggleSource(needKey, type, item) {
     const prev = sources[needKey]?.[type] || []
@@ -395,7 +413,154 @@ export default function SixHumanNeeds() {
             </div>
           )}
 
-          {/* ── TAB 2: SOURCES ── */}
+          {/* ── TAB 2: TRACKING ── */}
+          {activeTab === 'tracking' && (
+            <div className="space-y-6">
+              <p className="text-gray-400 text-sm text-center">
+                {isAr
+                  ? 'تتبع تطور احتياجاتك أسبوعياً — لاحظ كيف تتغير أولوياتك مع الوقت'
+                  : 'Track your needs evolution weekly — notice how your priorities shift over time'}
+              </p>
+
+              {/* Weekly Check-in */}
+              <div className="bg-[#111] rounded-2xl p-5 border border-[#c9a84c]/20 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Calendar size={18} className="text-[#c9a84c]" />
+                  <span className="font-bold text-[#c9a84c]">
+                    {isAr ? 'تقييم هذا الأسبوع' : "This Week's Check-in"}
+                  </span>
+                  {savedToday && (
+                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(46,204,113,0.15)', color: '#2ecc71' }}>
+                      ✓ {isAr ? 'تم اليوم' : 'Done today'}
+                    </span>
+                  )}
+                </div>
+
+                {NEED_META.map(need => {
+                  const Icon = need.icon
+                  const val = scores[need.key] || 5
+                  return (
+                    <div key={need.key} className="flex items-center gap-3">
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: need.color + '22' }}>
+                        <Icon size={14} style={{ color: need.color }} />
+                      </div>
+                      <span className="text-xs font-bold w-16 flex-shrink-0" style={{ color: need.color }}>
+                        {isAr ? need.ar : need.en}
+                      </span>
+                      <input
+                        type="range" min={1} max={10} value={val}
+                        onChange={e => handleScoreChange(need.key, e.target.value)}
+                        className="flex-1 h-1.5 rounded-full appearance-none cursor-pointer"
+                        style={{
+                          background: `linear-gradient(to ${isAr ? 'left' : 'right'}, ${need.color} ${(val - 1) / 9 * 100}%, #333 ${(val - 1) / 9 * 100}%)`,
+                          accentColor: need.color,
+                        }}
+                      />
+                      <span className="text-sm font-black w-6 text-center" style={{ color: need.color }}>{val}</span>
+                    </div>
+                  )
+                })}
+
+                <button
+                  onClick={saveWeeklySnapshot}
+                  className="w-full py-3 rounded-xl font-bold text-black"
+                  style={{ background: 'linear-gradient(135deg, #c9a84c, #f0c96e)' }}
+                >
+                  {savedToday
+                    ? (isAr ? 'تحديث تقييم اليوم' : 'Update Today\'s Check-in')
+                    : (isAr ? 'حفظ تقييم الأسبوع' : 'Save Weekly Check-in')
+                  }
+                </button>
+              </div>
+
+              {/* History Chart */}
+              {historyEntries.length > 0 && (
+                <div className="bg-[#111] rounded-2xl p-5 border border-[#222] space-y-4">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp size={18} className="text-[#c9a84c]" />
+                    <span className="font-bold text-[#c9a84c]">
+                      {isAr ? 'تطور الاحتياجات' : 'Needs Evolution'}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      ({historyEntries.length} {isAr ? 'تقييم' : 'entries'})
+                    </span>
+                  </div>
+
+                  {/* Mini sparkline per need */}
+                  {NEED_META.map(need => {
+                    const vals = historyEntries.map(([, e]) => e[need.key] || 5)
+                    const maxV = Math.max(...vals)
+                    const minV = Math.min(...vals)
+                    const latest = vals[vals.length - 1]
+                    const prev = vals.length > 1 ? vals[vals.length - 2] : latest
+                    const trend = latest - prev
+                    return (
+                      <div key={need.key} className="space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold" style={{ color: need.color }}>
+                            {isAr ? need.ar : need.en}
+                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold" style={{ color: need.color }}>{latest}</span>
+                            {trend !== 0 && (
+                              <span className="text-xs" style={{ color: trend > 0 ? '#2ecc71' : '#e63946' }}>
+                                {trend > 0 ? '↑' : '↓'}{Math.abs(trend)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-end gap-1 h-6">
+                          {vals.map((v, i) => (
+                            <div key={i} className="flex-1 rounded-t-sm transition-all"
+                              style={{
+                                height: `${((v - 1) / 9) * 100}%`,
+                                minHeight: '2px',
+                                backgroundColor: i === vals.length - 1 ? need.color : need.color + '55',
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+
+                  {/* History list */}
+                  <div className="pt-2 border-t border-[#222]">
+                    <p className="text-xs font-bold text-gray-500 mb-2 flex items-center gap-1">
+                      <Clock size={12} /> {isAr ? 'السجل' : 'History'}
+                    </p>
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                      {[...historyEntries].reverse().map(([date, entry]) => {
+                        const topNeed = NEED_META.reduce((a, b) => (entry[b.key] || 0) > (entry[a.key] || 0) ? b : a)
+                        return (
+                          <div key={date} className="flex items-center gap-2 text-xs py-1 px-2 rounded-lg"
+                            style={{ background: '#1a1a1a' }}>
+                            <span className="text-gray-500 w-20 flex-shrink-0">{date}</span>
+                            <span style={{ color: topNeed.color }} className="font-bold flex-shrink-0">
+                              {isAr ? topNeed.ar : topNeed.en}
+                            </span>
+                            <span className="text-gray-600">= {entry[topNeed.key]}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {historyEntries.length === 0 && (
+                <div className="bg-[#111] rounded-2xl p-6 text-center border border-[#222]">
+                  <p className="text-3xl mb-2">📊</p>
+                  <p className="text-sm text-gray-400">
+                    {isAr ? 'ابدأ بأول تقييم أسبوعي لتتبع تطورك' : 'Start your first weekly check-in to track your evolution'}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── TAB 3: SOURCES ── */}
           {activeTab === 'sources' && (
             <div className="space-y-6">
               <p className="text-gray-400 text-sm text-center">
@@ -478,7 +643,7 @@ export default function SixHumanNeeds() {
             </div>
           )}
 
-          {/* ── TAB 3: TRANSFORM ── */}
+          {/* ── TAB 4: TRANSFORM ── */}
           {activeTab === 'transform' && (
             <div className="space-y-6">
               <p className="text-gray-400 text-sm text-center">

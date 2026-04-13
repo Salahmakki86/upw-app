@@ -166,6 +166,12 @@ const INITIAL_STATE = {
   // Enhanced State Check-in (3 dimensions: energy, mood, clarity)
   stateCheckin: {},  // { 'YYYY-MM-DD': { energy: 1-10, mood: 1-10, clarity: 1-10, ts } }
 
+  // Identity Profile (Batch 2 — Identity Gap Tracker)
+  identityProfile: { current: '', target: '', values: [], alignmentScore: 0, lastUpdated: null },
+
+  // Six Needs History (Batch 2 — weekly tracking)
+  sixNeedsHistory: {},  // { 'YYYY-MM-DD': { certainty, variety, significance, love, growth, contribution } }
+
   // Incantation practice streak
   incantationStreak: 0,
   lastIncantationDate: null,
@@ -411,7 +417,7 @@ export function AppProvider({ children, userId, hasData }) {
             const LOG_KEYS = [
               'eveningLog', 'caniLog', 'sleepLog', 'dailyWins',
               'gratitude', 'todayPlanChecked', 'eveningAnswers',
-              'challengeLog', 'energyProtocol', 'stateCheckin',
+              'challengeLog', 'energyProtocol', 'stateCheckin', 'sixNeedsHistory',
             ]
             for (const k of LOG_KEYS) {
               const remote = remoteState?.[k]

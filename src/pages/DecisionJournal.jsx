@@ -14,10 +14,11 @@ export default function DecisionJournal() {
 
   const decisions = state.decisionJournal || []
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ decision: '', reason: '', alternatives: '', expectedResult: '', emotion: '' })
+  const [form, setForm] = useState({ decision: '', reason: '', alternatives: '', expectedResult: '', emotion: '', category: '', framework: '' })
   const [expandedId, setExpandedId] = useState(null)
   const [reviewText, setReviewText] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [filterCat, setFilterCat] = useState('all')
 
   const EMOTIONS = [
     { emoji: '😤', ar: 'غضب', en: 'Angry' },
@@ -27,6 +28,42 @@ export default function DecisionJournal() {
     { emoji: '🔥', ar: 'حماس', en: 'Excited' },
     { emoji: '😐', ar: 'محايد', en: 'Neutral' },
   ]
+
+  const CATEGORIES = [
+    { id: 'career', emoji: '💼', ar: 'مهنة', en: 'Career' },
+    { id: 'finance', emoji: '💰', ar: 'مال', en: 'Finance' },
+    { id: 'health', emoji: '💪', ar: 'صحة', en: 'Health' },
+    { id: 'relationships', emoji: '❤️', ar: 'علاقات', en: 'Relationships' },
+    { id: 'growth', emoji: '📚', ar: 'نمو', en: 'Growth' },
+    { id: 'lifestyle', emoji: '🏠', ar: 'حياة', en: 'Lifestyle' },
+  ]
+
+  const FRAMEWORKS = [
+    { id: 'oca', ar: 'OCA — لن أتحمل', en: 'OCA — Outcome/Consequences/Action', desc_ar: 'ماذا أريد؟ ما العواقب؟ ما الفعل؟', desc_en: 'What do I want? What are consequences? What action?' },
+    { id: 'fear', ar: 'مخاوف ← حقائق', en: 'Fear → Facts', desc_ar: 'حوّل مخاوفك إلى حقائق محسوبة', desc_en: 'Convert fears to calculated facts' },
+    { id: 'values', ar: 'موازنة القيم', en: 'Values Alignment', desc_ar: 'هل يتوافق مع قيمي الأساسية؟', desc_en: 'Does it align with my core values?' },
+    { id: '10-10-10', ar: 'قاعدة 10-10-10', en: '10-10-10 Rule', desc_ar: 'كيف سأشعر بعد 10 دقائق، 10 أشهر، 10 سنوات؟', desc_en: 'How will I feel in 10 min, 10 months, 10 years?' },
+  ]
+
+  // Pattern detection
+  const patterns = (() => {
+    if (decisions.length < 3) return null
+    const emotionCounts = {}
+    const categoryCounts = {}
+    let reviewedCount = 0
+    decisions.forEach(d => {
+      if (d.emotion) emotionCounts[d.emotion] = (emotionCounts[d.emotion] || 0) + 1
+      if (d.category) categoryCounts[d.category] = (categoryCounts[d.category] || 0) + 1
+      if (d.review) reviewedCount++
+    })
+    const topEmotion = Object.entries(emotionCounts).sort(([,a],[,b]) => b - a)[0]
+    const topCategory = Object.entries(categoryCounts).sort(([,a],[,b]) => b - a)[0]
+    const reviewRate = decisions.length > 0 ? Math.round((reviewedCount / decisions.length) * 100) : 0
+    return { topEmotion, topCategory, reviewRate, total: decisions.length }
+  })()
+
+  // Filtered decisions
+  const filteredDecisions = filterCat === 'all' ? decisions : decisions.filter(d => d.category === filterCat)
 
   const saveDecision = () => {
     if (!form.decision.trim()) return
@@ -38,7 +75,7 @@ export default function DecisionJournal() {
       review: null,
     }
     update('decisionJournal', [newDecision, ...decisions])
-    setForm({ decision: '', reason: '', alternatives: '', expectedResult: '', emotion: '' })
+    setForm({ decision: '', reason: '', alternatives: '', expectedResult: '', emotion: '', category: '', framework: '' })
     setShowForm(false)
   }
 
@@ -91,6 +128,82 @@ export default function DecisionJournal() {
             <div className="text-xs" style={{ color: '#888' }}>{isAr ? 'ينتظر مراجعة' : 'Pending'}</div>
           </div>
         </div>
+
+        {/* Pattern Detection */}
+        {patterns && (
+          <div className="rounded-2xl p-4 space-y-2" style={{ background: 'rgba(26,188,156,0.06)', border: '1px solid rgba(26,188,156,0.2)' }}>
+            <p className="text-xs font-bold" style={{ color: '#1abc9c' }}>
+              🧠 {isAr ? 'أنماط قراراتك' : 'Your Decision Patterns'}
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {patterns.topEmotion && (
+                <div className="rounded-lg p-2 text-center" style={{ background: '#111' }}>
+                  <div className="text-lg">{patterns.topEmotion[0]}</div>
+                  <div className="text-xs" style={{ color: '#888' }}>
+                    {isAr ? 'المشاعر الأكثر' : 'Top Emotion'}
+                  </div>
+                </div>
+              )}
+              {patterns.topCategory && (
+                <div className="rounded-lg p-2 text-center" style={{ background: '#111' }}>
+                  <div className="text-lg">{CATEGORIES.find(c => c.id === patterns.topCategory[0])?.emoji || '📂'}</div>
+                  <div className="text-xs" style={{ color: '#888' }}>
+                    {isAr
+                      ? CATEGORIES.find(c => c.id === patterns.topCategory[0])?.ar || patterns.topCategory[0]
+                      : CATEGORIES.find(c => c.id === patterns.topCategory[0])?.en || patterns.topCategory[0]}
+                  </div>
+                </div>
+              )}
+              <div className="rounded-lg p-2 text-center" style={{ background: '#111' }}>
+                <div className="text-lg font-black" style={{ color: patterns.reviewRate >= 50 ? '#2ecc71' : '#e74c3c' }}>
+                  {patterns.reviewRate}%
+                </div>
+                <div className="text-xs" style={{ color: '#888' }}>
+                  {isAr ? 'نسبة المراجعة' : 'Review Rate'}
+                </div>
+              </div>
+            </div>
+            {patterns.topEmotion && patterns.topEmotion[1] > 2 && (
+              <p className="text-xs" style={{ color: '#1abc9c' }}>
+                💡 {isAr
+                  ? `معظم قراراتك تُتخذ وأنت بحالة ${EMOTIONS.find(e => e.emoji === patterns.topEmotion[0])?.[isAr ? 'ar' : 'en'] || ''} — هل هذا يخدمك؟`
+                  : `Most of your decisions are made while ${EMOTIONS.find(e => e.emoji === patterns.topEmotion[0])?.en || ''} — is this serving you?`}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Category Filter */}
+        {decisions.length > 0 && (
+          <div className="flex gap-1.5 overflow-x-auto pb-1">
+            <button
+              onClick={() => setFilterCat('all')}
+              className="rounded-lg px-2.5 py-1.5 text-xs font-bold flex-shrink-0 transition-all"
+              style={{
+                background: filterCat === 'all' ? '#c9a84c25' : '#111',
+                border: `1px solid ${filterCat === 'all' ? '#c9a84c' : '#222'}`,
+                color: filterCat === 'all' ? '#c9a84c' : '#555',
+              }}>
+              {isAr ? 'الكل' : 'All'} ({decisions.length})
+            </button>
+            {CATEGORIES.map(cat => {
+              const count = decisions.filter(d => d.category === cat.id).length
+              if (count === 0) return null
+              return (
+                <button key={cat.id}
+                  onClick={() => setFilterCat(filterCat === cat.id ? 'all' : cat.id)}
+                  className="rounded-lg px-2.5 py-1.5 text-xs font-bold flex-shrink-0 transition-all"
+                  style={{
+                    background: filterCat === cat.id ? '#c9a84c25' : '#111',
+                    border: `1px solid ${filterCat === cat.id ? '#c9a84c' : '#222'}`,
+                    color: filterCat === cat.id ? '#c9a84c' : '#555',
+                  }}>
+                  {cat.emoji} {count}
+                </button>
+              )
+            })}
+          </div>
+        )}
 
         {/* Add Decision */}
         {!showForm ? (
@@ -164,6 +277,49 @@ export default function DecisionJournal() {
               </div>
             </div>
 
+            {/* Category */}
+            <div>
+              <label className="text-xs font-bold mb-1 block" style={{ color: '#9b59b6' }}>
+                📂 {isAr ? 'تصنيف القرار' : 'Decision Category'}
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {CATEGORIES.map(cat => (
+                  <button key={cat.id} onClick={() => setForm(f => ({ ...f, category: f.category === cat.id ? '' : cat.id }))}
+                    className="rounded-lg px-2.5 py-1.5 text-xs font-bold transition-all"
+                    style={{
+                      background: form.category === cat.id ? '#9b59b625' : '#111',
+                      border: `1px solid ${form.category === cat.id ? '#9b59b6' : '#333'}`,
+                      color: form.category === cat.id ? '#9b59b6' : '#666',
+                    }}>
+                    {cat.emoji} {isAr ? cat.ar : cat.en}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Decision Framework */}
+            <div>
+              <label className="text-xs font-bold mb-1 block" style={{ color: '#1abc9c' }}>
+                🧭 {isAr ? 'إطار القرار (اختياري)' : 'Decision Framework (optional)'}
+              </label>
+              <div className="space-y-1.5">
+                {FRAMEWORKS.map(fw => (
+                  <button key={fw.id} onClick={() => setForm(f => ({ ...f, framework: f.framework === fw.id ? '' : fw.id }))}
+                    className="w-full rounded-lg px-3 py-2 flex items-start gap-2 transition-all"
+                    style={{
+                      background: form.framework === fw.id ? '#1abc9c15' : '#111',
+                      border: `1px solid ${form.framework === fw.id ? '#1abc9c55' : '#222'}`,
+                      textAlign: isAr ? 'right' : 'left',
+                    }}>
+                    <span className="text-xs font-bold flex-shrink-0" style={{ color: form.framework === fw.id ? '#1abc9c' : '#666' }}>
+                      {isAr ? fw.ar : fw.en}
+                    </span>
+                    <span className="text-xs" style={{ color: '#555' }}>— {isAr ? fw.desc_ar : fw.desc_en}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="flex gap-2">
               <button onClick={saveDecision} disabled={!form.decision.trim()} className="btn-gold flex-1 text-sm py-2.5 disabled:opacity-40">
                 💾 {isAr ? 'احفظ' : 'Save'}
@@ -183,9 +339,11 @@ export default function DecisionJournal() {
           </div>
         )}
 
-        {decisions.map(d => {
+        {filteredDecisions.map(d => {
           const isExpanded = expandedId === d.id
           const needsRev = !d.review && d.reviewDate <= today
+          const cat = CATEGORIES.find(c => c.id === d.category)
+          const fw = FRAMEWORKS.find(f => f.id === d.framework)
           return (
             <div key={d.id} className="rounded-2xl overflow-hidden"
               style={{ background: '#0e0e0e', border: `1px solid ${needsRev ? '#e74c3c30' : '#1e1e1e'}` }}>
@@ -193,8 +351,22 @@ export default function DecisionJournal() {
                 className="w-full p-3 flex items-start gap-3" style={{ textAlign: isAr ? 'right' : 'left' }}>
                 <span className="text-xl flex-shrink-0">{d.emotion || '⚡'}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-white">{d.decision}</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#888' }}>{formatDate(d.date)}</p>
+                  <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                    <p className="text-sm font-bold text-white">{d.decision}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs" style={{ color: '#888' }}>{formatDate(d.date)}</span>
+                    {cat && (
+                      <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: '#1a1a1a', color: '#888' }}>
+                        {cat.emoji} {isAr ? cat.ar : cat.en}
+                      </span>
+                    )}
+                    {fw && (
+                      <span className="text-xs px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(26,188,156,0.1)', color: '#1abc9c' }}>
+                        🧭 {isAr ? fw.ar.split('—')[0] : fw.en.split('—')[0]}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {d.review && <span className="text-xs" style={{ color: '#2ecc71' }}>✓</span>}
                 {needsRev && <span className="text-xs" style={{ color: '#e74c3c' }}>⏰</span>}

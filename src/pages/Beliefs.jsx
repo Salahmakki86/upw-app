@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, Target, ArrowRight } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import { useToast } from '../context/ToastContext'
@@ -335,6 +335,202 @@ function DickensProcess({ belief, onClose, lang, t }) {
   )
 }
 
+function IdentityGapTracker({ lang }) {
+  const { state, update } = useApp()
+  const { showToast } = useToast()
+  const isAr = lang === 'ar'
+  const profile = state.identityProfile || { current: '', target: '', values: [], alignmentScore: 0 }
+  const [current, setCurrent] = useState(profile.current || '')
+  const [target, setTarget] = useState(profile.target || '')
+  const [newValue, setNewValue] = useState('')
+  const [values, setValues] = useState(profile.values || [])
+  const [alignment, setAlignment] = useState(profile.alignmentScore || 0)
+  const [expanded, setExpanded] = useState(!profile.current && !profile.target)
+
+  const gapScore = alignment
+  const gapColor = gapScore >= 7 ? '#2ecc71' : gapScore >= 4 ? '#f39c12' : '#e63946'
+  const gapLabel = isAr
+    ? (gapScore >= 7 ? 'متماسك' : gapScore >= 4 ? 'فجوة متوسطة' : 'فجوة كبيرة')
+    : (gapScore >= 7 ? 'Aligned' : gapScore >= 4 ? 'Moderate Gap' : 'Large Gap')
+
+  function save() {
+    update('identityProfile', {
+      current: current.trim(),
+      target: target.trim(),
+      values,
+      alignmentScore: alignment,
+      lastUpdated: new Date().toISOString().split('T')[0],
+    })
+    showToast(isAr ? 'تم حفظ ملف الهوية' : 'Identity profile saved', 'success')
+  }
+
+  function addValue() {
+    if (!newValue.trim() || values.length >= 5) return
+    setValues(prev => [...prev, newValue.trim()])
+    setNewValue('')
+  }
+
+  function removeValue(i) {
+    setValues(prev => prev.filter((_, idx) => idx !== i))
+  }
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ background: '#111', border: '1px solid rgba(147,112,219,0.25)' }}>
+      <button
+        onClick={() => setExpanded(v => !v)}
+        className="w-full p-4 flex items-center gap-3"
+        style={{ textAlign: isAr ? 'right' : 'left' }}
+      >
+        <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ background: 'rgba(147,112,219,0.15)', border: '1.5px solid rgba(147,112,219,0.4)' }}>
+          <Target size={20} style={{ color: '#9370db' }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-white text-sm">
+            {isAr ? 'متتبع فجوة الهوية' : 'Identity Gap Tracker'}
+          </p>
+          <p className="text-xs" style={{ color: '#888' }}>
+            {isAr ? 'من أنت الآن ← من تريد أن تكون' : 'Who you are now → Who you want to be'}
+          </p>
+        </div>
+        {profile.current && (
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center font-black text-sm"
+              style={{ background: gapColor + '22', color: gapColor, border: `1.5px solid ${gapColor}` }}>
+              {gapScore}
+            </div>
+          </div>
+        )}
+      </button>
+
+      {expanded && (
+        <div className="px-4 pb-4 space-y-3 border-t animate-fade-in" style={{ borderColor: '#222' }}>
+          {/* Current Identity */}
+          <div className="pt-3">
+            <p className="text-xs font-bold mb-1.5" style={{ color: '#e63946' }}>
+              🔴 {isAr ? 'من أنا الآن؟ (هويتي الحالية)' : 'Who am I now? (Current Identity)'}
+            </p>
+            <textarea
+              value={current}
+              onChange={e => setCurrent(e.target.value)}
+              placeholder={isAr ? 'صف نفسك كما أنت اليوم بصدق — "أنا شخص..."' : 'Describe yourself honestly as you are today — "I am a person who..."'}
+              rows={2}
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white resize-none"
+              style={{ background: '#0e0e0e', border: '1px solid #333', outline: 'none' }}
+            />
+          </div>
+
+          {/* Arrow */}
+          <div className="flex justify-center">
+            <ArrowRight size={20} className="text-[#c9a84c] rotate-90" />
+          </div>
+
+          {/* Target Identity */}
+          <div>
+            <p className="text-xs font-bold mb-1.5" style={{ color: '#2ecc71' }}>
+              🟢 {isAr ? 'من أريد أن أكون؟ (هويتي المستهدفة)' : 'Who do I want to be? (Target Identity)'}
+            </p>
+            <textarea
+              value={target}
+              onChange={e => setTarget(e.target.value)}
+              placeholder={isAr ? 'صف الشخص الذي تريد أن تصبحه — "أنا..."' : 'Describe the person you want to become — "I am..."'}
+              rows={2}
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white resize-none"
+              style={{ background: '#0e0e0e', border: '1px solid #333', outline: 'none' }}
+            />
+          </div>
+
+          {/* Core Values */}
+          <div>
+            <p className="text-xs font-bold mb-1.5" style={{ color: '#c9a84c' }}>
+              ⭐ {isAr ? 'القيم الأساسية (حتى 5)' : 'Core Values (up to 5)'}
+            </p>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {values.map((v, i) => (
+                <span key={i} className="text-xs px-2.5 py-1 rounded-full flex items-center gap-1"
+                  style={{ background: 'rgba(201,168,76,0.12)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.3)' }}>
+                  {v}
+                  <button onClick={() => removeValue(i)} className="hover:text-red-400">×</button>
+                </span>
+              ))}
+            </div>
+            {values.length < 5 && (
+              <div className="flex gap-2">
+                <input
+                  value={newValue}
+                  onChange={e => setNewValue(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && addValue()}
+                  placeholder={isAr ? 'أضف قيمة...' : 'Add a value...'}
+                  className="flex-1 rounded-lg px-3 py-1.5 text-xs text-white"
+                  style={{ background: '#0e0e0e', border: '1px solid #333', outline: 'none' }}
+                />
+                <button onClick={addValue} className="px-2 rounded-lg" style={{ background: 'rgba(201,168,76,0.15)', color: '#c9a84c' }}>
+                  <Plus size={14} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Alignment Score */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-xs font-bold" style={{ color: '#9370db' }}>
+                📐 {isAr ? 'مستوى التماسك مع هويتك المستهدفة' : 'Alignment with Target Identity'}
+              </p>
+              <span className="text-sm font-black px-2 py-0.5 rounded-full"
+                style={{ background: gapColor + '18', color: gapColor }}>
+                {alignment}/10 — {gapLabel}
+              </span>
+            </div>
+            <input
+              type="range" min={0} max={10} value={alignment}
+              onChange={e => setAlignment(Number(e.target.value))}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer"
+              style={{
+                background: `linear-gradient(to ${isAr ? 'left' : 'right'}, ${gapColor} ${alignment * 10}%, #333 ${alignment * 10}%)`,
+                accentColor: gapColor,
+              }}
+            />
+            <div className="flex justify-between text-xs text-gray-600 mt-0.5">
+              <span>{isAr ? 'فجوة كبيرة' : 'Large Gap'}</span>
+              <span>{isAr ? 'متماسك تماماً' : 'Fully Aligned'}</span>
+            </div>
+          </div>
+
+          {/* Visual Gap Bar */}
+          {current && target && (
+            <div className="rounded-xl p-3" style={{ background: '#0e0e0e', border: '1px solid #222' }}>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex-1">
+                  <div className="text-xs" style={{ color: '#e63946' }}>{isAr ? 'الآن' : 'Now'}</div>
+                  <div className="h-2 rounded-full mt-1" style={{ background: '#e6394633', width: '100%' }}>
+                    <div className="h-full rounded-full" style={{ width: `${alignment * 10}%`, background: '#e63946' }} />
+                  </div>
+                </div>
+                <ArrowRight size={14} style={{ color: '#666', flexShrink: 0 }} />
+                <div className="flex-1">
+                  <div className="text-xs" style={{ color: '#2ecc71' }}>{isAr ? 'الهدف' : 'Target'}</div>
+                  <div className="h-2 rounded-full mt-1" style={{ background: '#2ecc7133', width: '100%' }}>
+                    <div className="h-full rounded-full" style={{ width: '100%', background: '#2ecc71' }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={save}
+            className="w-full py-2.5 rounded-xl font-bold text-sm text-black"
+            style={{ background: 'linear-gradient(135deg, #9370db, #b48cef)' }}
+          >
+            {isAr ? '💾 حفظ ملف الهوية' : '💾 Save Identity Profile'}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Beliefs() {
   const { state, addBelief, removeBelief } = useApp()
   const { lang, t } = useLang()
@@ -368,6 +564,9 @@ export default function Beliefs() {
               : <>Beliefs are direct commands to your nervous system. Use the <span style={{ color: '#c9a84c' }}>Dickens Process</span> to change your deepest beliefs forever.</>}
           </p>
         </div>
+
+        {/* Identity Gap Tracker */}
+        <IdentityGapTracker lang={lang} />
 
         {/* Limiting Beliefs */}
         <div>
