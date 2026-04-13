@@ -2,29 +2,32 @@ import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import { ChevronRight, ChevronLeft } from 'lucide-react'
+import { computeFocusPath } from '../utils/adaptivePath'
 
-const STEPS = [
-  {
-    emoji: '⚡',
-    titleAr: 'مرحباً بك في رحلة التحول',
-    titleEn: 'Welcome to Your Transformation',
-    descAr: 'هذا التطبيق مبني على منهج توني روبنز لمساعدتك على بناء حياة استثنائية خطوة بخطوة',
-    descEn: 'This app is built on Tony Robbins\' methodology to help you build an extraordinary life step by step',
-  },
-  {
-    emoji: null,
-    titleAr: 'أخبرنا عن نفسك',
-    titleEn: 'Tell us about you',
-    descAr: '',
-    descEn: '',
-  },
-  {
-    emoji: null,
-    titleAr: 'كيف يعمل التطبيق',
-    titleEn: 'How the app works',
-    descAr: '',
-    descEn: '',
-  },
+const TOTAL_STEPS = 5
+
+const GOAL_AREAS = [
+  { key: 'health',        emoji: '💪', labelAr: 'الصحة والطاقة',     labelEn: 'Health & Energy' },
+  { key: 'career',        emoji: '🚀', labelAr: 'المسار المهني',     labelEn: 'Career Growth' },
+  { key: 'finances',      emoji: '💰', labelAr: 'الحرية المالية',    labelEn: 'Financial Freedom' },
+  { key: 'relationships', emoji: '❤️', labelAr: 'العلاقات',          labelEn: 'Relationships' },
+  { key: 'mindset',       emoji: '🧠', labelAr: 'العقلية والمعتقدات', labelEn: 'Mindset & Beliefs' },
+  { key: 'energy',        emoji: '⚡', labelAr: 'الطاقة والحيوية',   labelEn: 'Energy & Vitality' },
+]
+
+const CHALLENGES = [
+  { key: 'consistency', emoji: '🔄', labelAr: 'الاستمرارية',            labelEn: 'Staying Consistent',   descAr: 'أبدأ بحماس ثم أتوقف', descEn: 'I start strong then lose momentum' },
+  { key: 'clarity',     emoji: '🎯', labelAr: 'الوضوح',                labelEn: 'Finding Clarity',      descAr: 'لا أعرف ماذا أريد بالضبط', descEn: "I don't know exactly what I want" },
+  { key: 'motivation',  emoji: '🔥', labelAr: 'التحفيز',               labelEn: 'Staying Motivated',    descAr: 'أفقد الحماس بسرعة', descEn: 'I lose motivation quickly' },
+  { key: 'overwhelm',   emoji: '🌊', labelAr: 'الضغط والتشتت',         labelEn: 'Feeling Overwhelmed',  descAr: 'كثرة المهام تشتتني', descEn: 'Too many things pulling my attention' },
+  { key: 'time',        emoji: '⏰', labelAr: 'ضيق الوقت',             labelEn: 'Not Enough Time',      descAr: 'يومي مزدحم جداً', descEn: 'My days are packed' },
+]
+
+const TIME_OPTIONS = [
+  { key: '5',  emoji: '⚡', labelAr: '٥ دقائق',  labelEn: '5 minutes',  descAr: 'سريع ومؤثر', descEn: 'Quick & impactful' },
+  { key: '15', emoji: '🎯', labelAr: '١٥ دقيقة', labelEn: '15 minutes', descAr: 'مثالي للروتين', descEn: 'Perfect for routines' },
+  { key: '30', emoji: '🔥', labelAr: '٣٠ دقيقة', labelEn: '30 minutes', descAr: 'تحوّل حقيقي', descEn: 'Real transformation' },
+  { key: '60', emoji: '💎', labelAr: 'ساعة+',    labelEn: '1 hour+',    descAr: 'أنا ملتزم بالكامل', descEn: 'I\'m fully committed' },
 ]
 
 const FEATURES = [
@@ -75,13 +78,30 @@ export default function OnboardingModal({ onDone }) {
   const [name, setName]   = useState('')
   const [nameErr, setNameErr] = useState(false)
 
+  // Profile state
+  const [goalArea, setGoalArea]       = useState(null)
+  const [challenge, setChallenge]     = useState(null)
+  const [timePerDay, setTimePerDay]   = useState(null)
+
+  const canProceed = () => {
+    if (step === 1) return !!goalArea
+    if (step === 2) return !!challenge
+    if (step === 3) return name.trim().length > 0 && !!timePerDay
+    return true
+  }
+
   const next = () => {
-    if (step === 1) {
+    if (step === 3) {
       if (!name.trim()) { setNameErr(true); return }
+      if (!timePerDay) return
+      // Save profile + name
+      const focusPath = computeFocusPath({ goalArea })
+      const profile = { goalArea, challenge, timePerDay, focusPath }
       update('userName', name.trim())
+      update('onboardingProfile', profile)
       update('onboardingDone', true)
     }
-    if (step < 2) { setStep(s => s + 1) }
+    if (step < TOTAL_STEPS - 1) { setStep(s => s + 1) }
     else { onDone() }
   }
 
@@ -104,11 +124,13 @@ export default function OnboardingModal({ onDone }) {
           border: '1px solid #222',
           padding: '28px 24px 40px',
           direction: isAr ? 'rtl' : 'ltr',
+          maxHeight: '90vh',
+          overflowY: 'auto',
         }}
       >
         {/* Progress dots */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 24 }}>
-          {STEPS.map((_, i) => (
+          {Array.from({ length: TOTAL_STEPS }, (_, i) => (
             <div key={i} style={{
               width: i === step ? 20 : 6, height: 6,
               borderRadius: 3,
@@ -123,10 +145,12 @@ export default function OnboardingModal({ onDone }) {
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 64, marginBottom: 16 }}>⚡</div>
             <h2 style={{ fontSize: 22, fontWeight: 900, color: '#fff', marginBottom: 10 }}>
-              {isAr ? STEPS[0].titleAr : STEPS[0].titleEn}
+              {isAr ? 'مرحباً بك في رحلة التحول' : 'Welcome to Your Transformation'}
             </h2>
             <p style={{ fontSize: 14, color: '#888', lineHeight: 1.7, marginBottom: 24 }}>
-              {isAr ? STEPS[0].descAr : STEPS[0].descEn}
+              {isAr
+                ? 'هذا التطبيق مبني على منهج توني روبنز لمساعدتك على بناء حياة استثنائية خطوة بخطوة'
+                : 'This app is built on Tony Robbins\' methodology to help you build an extraordinary life step by step'}
             </p>
             {/* Lang toggle */}
             <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 8 }}>
@@ -148,8 +172,85 @@ export default function OnboardingModal({ onDone }) {
           </div>
         )}
 
-        {/* ── Step 1: Name ── */}
+        {/* ── Step 1: Goal Area ── */}
         {step === 1 && (
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 900, color: '#fff', marginBottom: 6 }}>
+              {isAr ? '🎯 ما أهم مجال تريد تطويره؟' : '🎯 What area matters most to you?'}
+            </h2>
+            <p style={{ fontSize: 13, color: '#888', marginBottom: 20 }}>
+              {isAr ? 'سنخصص تجربتك بناءً على اختيارك' : 'We\'ll personalize your experience based on this'}
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              {GOAL_AREAS.map(area => (
+                <button key={area.key}
+                  onClick={() => setGoalArea(area.key)}
+                  style={{
+                    padding: '16px 12px', borderRadius: 14,
+                    background: goalArea === area.key ? 'rgba(201,168,76,0.12)' : '#1a1a1a',
+                    border: `2px solid ${goalArea === area.key ? '#c9a84c' : '#2a2a2a'}`,
+                    cursor: 'pointer', textAlign: 'center',
+                    transition: 'all 0.2s ease',
+                  }}>
+                  <div style={{ fontSize: 28, marginBottom: 6 }}>{area.emoji}</div>
+                  <p style={{
+                    fontSize: 13, fontWeight: 700,
+                    color: goalArea === area.key ? '#c9a84c' : '#aaa',
+                  }}>
+                    {isAr ? area.labelAr : area.labelEn}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 2: Biggest Challenge ── */}
+        {step === 2 && (
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 900, color: '#fff', marginBottom: 6 }}>
+              {isAr ? '🔥 ما أكبر تحدٍ يواجهك؟' : '🔥 What\'s your biggest challenge?'}
+            </h2>
+            <p style={{ fontSize: 13, color: '#888', marginBottom: 20 }}>
+              {isAr ? 'هذا يساعدنا نرشدك للأدوات المناسبة' : 'This helps us guide you to the right tools'}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {CHALLENGES.map(ch => (
+                <button key={ch.key}
+                  onClick={() => setChallenge(ch.key)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '14px 16px', borderRadius: 14,
+                    background: challenge === ch.key ? 'rgba(201,168,76,0.12)' : '#1a1a1a',
+                    border: `2px solid ${challenge === ch.key ? '#c9a84c' : '#2a2a2a'}`,
+                    cursor: 'pointer',
+                    textAlign: isAr ? 'right' : 'left',
+                    transition: 'all 0.2s ease',
+                  }}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+                    background: challenge === ch.key ? 'rgba(201,168,76,0.15)' : 'rgba(255,255,255,0.04)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 20,
+                  }}>
+                    {ch.emoji}
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 14, fontWeight: 700, color: challenge === ch.key ? '#c9a84c' : '#ddd' }}>
+                      {isAr ? ch.labelAr : ch.labelEn}
+                    </p>
+                    <p style={{ fontSize: 11, color: '#666', marginTop: 2 }}>
+                      {isAr ? ch.descAr : ch.descEn}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Step 3: Name + Time ── */}
+        {step === 3 && (
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 900, color: '#fff', marginBottom: 6 }}>
               {isAr ? '👤 أخبرنا عن نفسك' : '👤 Tell Us About You'}
@@ -157,6 +258,8 @@ export default function OnboardingModal({ onDone }) {
             <p style={{ fontSize: 13, color: '#888', marginBottom: 20 }}>
               {isAr ? 'سيُستخدم اسمك في تجربتك الشخصية' : 'Your name personalizes your experience'}
             </p>
+
+            {/* Name input */}
             <label style={{ display: 'block', fontSize: 12, color: '#888', marginBottom: 6, fontWeight: 600 }}>
               {isAr ? 'اسمك' : 'Your Name'}
             </label>
@@ -180,11 +283,37 @@ export default function OnboardingModal({ onDone }) {
                 {isAr ? 'الاسم مطلوب' : 'Name is required'}
               </p>
             )}
+
+            {/* Time per day */}
+            <label style={{ display: 'block', fontSize: 12, color: '#888', marginBottom: 8, marginTop: 20, fontWeight: 600 }}>
+              {isAr ? '⏱ كم وقت يمكنك تخصيصه يومياً؟' : '⏱ How much time can you dedicate daily?'}
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {TIME_OPTIONS.map(t => (
+                <button key={t.key}
+                  onClick={() => setTimePerDay(t.key)}
+                  style={{
+                    padding: '12px 10px', borderRadius: 12, textAlign: 'center',
+                    background: timePerDay === t.key ? 'rgba(201,168,76,0.12)' : '#1a1a1a',
+                    border: `2px solid ${timePerDay === t.key ? '#c9a84c' : '#2a2a2a'}`,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}>
+                  <div style={{ fontSize: 20, marginBottom: 4 }}>{t.emoji}</div>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: timePerDay === t.key ? '#c9a84c' : '#ddd' }}>
+                    {isAr ? t.labelAr : t.labelEn}
+                  </p>
+                  <p style={{ fontSize: 10, color: '#666', marginTop: 2 }}>
+                    {isAr ? t.descAr : t.descEn}
+                  </p>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* ── Step 2: Features overview ── */}
-        {step === 2 && (
+        {/* ── Step 4: Features overview ── */}
+        {step === 4 && (
           <div>
             <h2 style={{ fontSize: 20, fontWeight: 900, color: '#fff', marginBottom: 6 }}>
               {isAr ? '🗺 كيف يعمل التطبيق' : '🗺 How It Works'}
@@ -238,17 +367,27 @@ export default function OnboardingModal({ onDone }) {
               {isAr ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
             </button>
           )}
-          <button onClick={next} style={{
-            flex: 1, padding: '14px 20px', borderRadius: 14, fontSize: 15, fontWeight: 900,
-            background: 'linear-gradient(135deg, #c9a84c 0%, #e8c96a 50%, #a88930 100%)',
-            color: '#0a0a0a', border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          }}>
-            {step === 2
+          <button
+            onClick={next}
+            disabled={!canProceed()}
+            style={{
+              flex: 1, padding: '14px 20px', borderRadius: 14, fontSize: 15, fontWeight: 900,
+              background: canProceed()
+                ? 'linear-gradient(135deg, #c9a84c 0%, #e8c96a 50%, #a88930 100%)'
+                : '#2a2a2a',
+              color: canProceed() ? '#0a0a0a' : '#555',
+              border: 'none', cursor: canProceed() ? 'pointer' : 'default',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              transition: 'all 0.3s ease',
+              opacity: canProceed() ? 1 : 0.6,
+            }}>
+            {step === 4
               ? (isAr ? 'ابدأ رحلتك ⚡' : 'Start Your Journey ⚡')
-              : step === 1
+              : step === 3
                 ? (isAr ? 'التالي ←' : 'Next →')
-                : (isAr ? 'هيّا نبدأ ←' : 'Let\'s Go →')}
+                : step === 0
+                  ? (isAr ? 'هيّا نبدأ ←' : 'Let\'s Go →')
+                  : (isAr ? 'التالي ←' : 'Next →')}
           </button>
         </div>
       </div>

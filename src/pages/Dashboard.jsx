@@ -26,6 +26,8 @@ import JourneyStageMap from '../components/JourneyStageMap'
 import SmartReminder from '../components/SmartReminder'
 import TransformationPulse from '../components/TransformationPulse'
 import StateCheckin from '../components/StateCheckin'
+import AdaptiveNudge from '../components/AdaptiveNudge'
+import { getCategoryOrder } from '../utils/adaptivePath'
 
 const QUOTES = {
   ar: [
@@ -62,7 +64,17 @@ export default function Dashboard() {
   const [showStateModal, setShowStateModal] = useState(false)
   const [showSearch, setShowSearch]       = useState(false)
   const [supportSent, setSupportSent]     = useState(false)
-  const [openCats, setOpenCats]           = useState({ daily: true, learn: true, goals: false, programs: false, business: false, tools: false, admin: false })
+  const [openCats, setOpenCats]           = useState(() => {
+    const base = { daily: true, learn: true, goals: false, programs: false, planning: false, business: false, tools: false, admin: false }
+    // Auto-open the user's focus category from onboarding profile
+    const profile = state.onboardingProfile
+    if (profile?.focusPath) {
+      const focusMap = { energy: 'daily', goals: 'goals', mindset: 'goals', business: 'business', balance: 'daily' }
+      const key = focusMap[profile.focusPath]
+      if (key) base[key] = true
+    }
+    return base
+  })
   const [milestoneToShow, setMilestoneToShow] = useState(null)
   const isAr = lang === 'ar'
 
@@ -384,6 +396,9 @@ export default function Dashboard() {
         {/* ── Smart Reminder (time-based nudge + notification prompt) ── */}
         <SmartReminder state={state} isAr={isAr} navigate={navigate} />
 
+        {/* ── Adaptive Nudge (personalized recommendations) ──── */}
+        <AdaptiveNudge />
+
         {/* ── Enhanced State Check-in ─────────────────────────── */}
         {state.stateCheckin?.[today] ? (
           <StateCheckin compact onDone={() => setShowStateModal(false)} />
@@ -690,7 +705,15 @@ export default function Dashboard() {
         <div className="space-y-3">
           <p className="section-title">{t('dash_quick_links')}</p>
 
-          {LINK_CATEGORIES
+          {(() => {
+            const catOrder = getCategoryOrder(state.onboardingProfile)
+            const sorted = [...LINK_CATEGORIES].sort((a, b) => {
+              const iA = catOrder.indexOf(a.key)
+              const iB = catOrder.indexOf(b.key)
+              return (iA === -1 ? 99 : iA) - (iB === -1 ? 99 : iB)
+            })
+            return sorted
+          })()
             .filter(cat => !cat.adminOnly || currentUser?.role === 'admin')
             .map(cat => {
               const isOpen = openCats[cat.key]

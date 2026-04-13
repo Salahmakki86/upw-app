@@ -250,6 +250,14 @@ const INITIAL_STATE = {
   onboardingDone: false,
   startHereDismissed: false,
 
+  // Onboarding Profile (Batch 5 — Personalization)
+  onboardingProfile: {
+    goalArea: null,      // 'health' | 'career' | 'relationships' | 'mindset' | 'finances' | 'energy'
+    challenge: null,     // 'consistency' | 'clarity' | 'motivation' | 'overwhelm' | 'time'
+    timePerDay: null,    // '5' | '15' | '30' | '60'
+    focusPath: null,     // auto-computed: 'energy' | 'goals' | 'mindset' | 'business' | 'balance'
+  },
+
   // Baseline assessment: { date, scores: { health, career, finances, relationships, family, fun, growth, spirituality, contribution, environment } }
   baseline: null,
 
