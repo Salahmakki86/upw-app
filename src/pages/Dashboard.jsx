@@ -27,6 +27,7 @@ import SmartReminder from '../components/SmartReminder'
 import TransformationPulse from '../components/TransformationPulse'
 import StateCheckin from '../components/StateCheckin'
 import AdaptiveNudge from '../components/AdaptiveNudge'
+import ProfileAssessment from '../components/ProfileAssessment'
 import { getCategoryOrder } from '../utils/adaptivePath'
 
 const QUOTES = {
@@ -798,6 +799,11 @@ export default function Dashboard() {
       {/* ── Onboarding (first login) ───────────────────────── */}
       {!state.onboardingDone && (
         <OnboardingModal onDone={() => {}} />
+      )}
+
+      {/* ── Profile Assessment (existing users without profile) ── */}
+      {state.onboardingDone && !state.onboardingProfile?.goalArea && (
+        <ProfileAssessment />
       )}
 
       {/* ── Support Button (students only) ─────────────────── */}
