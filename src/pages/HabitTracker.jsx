@@ -140,6 +140,10 @@ export default function HabitTracker() {
   const totalCount = list.length
   const progressPct = totalCount > 0 ? (doneCount / totalCount) * 100 : 0
 
+  // Progressive: hide advanced features for new users
+  const habitHistoryDays = Object.keys(log).length
+  const isNewHabitUser = habitHistoryDays < 3
+
   // Celebration: when all habits are done for today
   useEffect(() => {
     if (progressPct === 100 && totalCount > 0 && celebrationShownFor !== today) {
@@ -255,8 +259,8 @@ export default function HabitTracker() {
           )}
         </div>
 
-        {/* #10 — Habit Stacking Tip */}
-        {stackingTip && doneCount > 0 && doneCount < totalCount && (
+        {/* #10 — Habit Stacking Tip (hidden for new users) */}
+        {!isNewHabitUser && stackingTip && doneCount > 0 && doneCount < totalCount && (
           <div className="rounded-2xl p-3" style={{ background: 'rgba(52,152,219,0.06)', border: '1px solid rgba(52,152,219,0.2)' }}>
             <p className="text-xs font-bold" style={{ color: '#3498db' }}>
               🔗 {isAr ? 'نصيحة التراكم' : 'Stacking Tip'}
@@ -278,18 +282,20 @@ export default function HabitTracker() {
             <p className="text-xs font-black uppercase tracking-widest" style={{ color: '#c9a84c' }}>
               ✦ {isAr ? 'عادات اليوم' : "Today's Habits"}
             </p>
-            {/* Edit mode toggle */}
-            <button
-              onClick={() => setEditMode(v => !v)}
-              className="text-xs px-3 py-1 rounded-lg font-bold transition-all"
-              style={{
-                background: editMode ? 'rgba(201,168,76,0.15)' : '#1a1a1a',
-                color: editMode ? '#c9a84c' : '#666',
-                border: `1px solid ${editMode ? 'rgba(201,168,76,0.4)' : '#2a2a2a'}`,
-              }}
-            >
-              {isAr ? (editMode ? '✓ تم' : '✎ ترتيب') : (editMode ? '✓ Done' : '✎ Reorder')}
-            </button>
+            {/* Edit mode toggle — hidden for new users */}
+            {!isNewHabitUser && (
+              <button
+                onClick={() => setEditMode(v => !v)}
+                className="text-xs px-3 py-1 rounded-lg font-bold transition-all"
+                style={{
+                  background: editMode ? 'rgba(201,168,76,0.15)' : '#1a1a1a',
+                  color: editMode ? '#c9a84c' : '#666',
+                  border: `1px solid ${editMode ? 'rgba(201,168,76,0.4)' : '#2a2a2a'}`,
+                }}
+              >
+                {isAr ? (editMode ? '✓ تم' : '✎ ترتيب') : (editMode ? '✓ Done' : '✎ Reorder')}
+              </button>
+            )}
           </div>
           <div className="space-y-2">
             {list.map((habit, index) => {
@@ -491,8 +497,8 @@ export default function HabitTracker() {
           )}
         </div>
 
-        {/* Habit Suggestions */}
-        <div className="rounded-2xl overflow-hidden" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
+        {/* Habit Suggestions — hidden for new users to reduce overwhelm */}
+        {!isNewHabitUser && <div className="rounded-2xl overflow-hidden" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
           <button
             onClick={() => setShowSuggestions(v => !v)}
             className="w-full flex items-center justify-between p-4"
@@ -546,9 +552,10 @@ export default function HabitTracker() {
               })}
             </div>
           )}
-        </div>
+        </div>}
 
-        {/* 7-Day Grid */}
+        {/* 7-Day Grid — hidden for new users */}
+        {!isNewHabitUser &&
         <div
           className="rounded-2xl p-4"
           style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}
@@ -608,7 +615,7 @@ export default function HabitTracker() {
               </div>
             ))}
           </div>
-        </div>
+        </div>}
 
         {/* Morning Ritual connection */}
         <div className="rounded-2xl p-4" style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.15)' }}>

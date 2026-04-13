@@ -417,7 +417,7 @@ export default function Dashboard() {
         )}
 
         {/* ── Smart Reminder (time-based nudge + notification prompt) ── */}
-        <SmartReminder state={state} isAr={isAr} navigate={navigate} />
+        {vis.smartReminder && <SmartReminder state={state} isAr={isAr} navigate={navigate} />}
 
         {/* ── Adaptive Nudge (personalized recommendations) ──── */}
         {vis.adaptiveNudge && <AdaptiveNudge />}

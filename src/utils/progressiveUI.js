@@ -29,7 +29,7 @@ export function getDashboardVisibility(state) {
   return {
     // Level 1 — Always visible (core essentials)
     startHere:        true,
-    smartReminder:    true,
+    smartReminder:    level >= 2,
     stateCheckin:     true,
     todaysJourney:    true,
     quote:            true,
