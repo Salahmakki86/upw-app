@@ -6,6 +6,8 @@ import {
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import TransformationPulse from '../components/TransformationPulse'
+import WeeklyTruthReview from '../components/WeeklyTruthReview'
+import JourneyTimeline from '../components/JourneyTimeline'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -379,6 +381,11 @@ export default function InsightsPage() {
           />
         </div>
 
+        {/* ── Weekly Truth Review ─────────────────────────────────────────── */}
+        <div style={{ marginBottom: 14 }}>
+          <WeeklyTruthReview />
+        </div>
+
         {/* ── Habit Chart ────────────────────────────────────────────────────── */}
         <div style={{
           borderRadius: 20, padding: 16, marginBottom: 14,
@@ -501,6 +508,11 @@ export default function InsightsPage() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* ── Journey Timeline ──────────────────────────────────────────────── */}
+        <div style={{ marginBottom: 14 }}>
+          <JourneyTimeline />
         </div>
 
         {/* ── Smart Observations ────────────────────────────────────────────── */}

@@ -172,6 +172,9 @@ const INITIAL_STATE = {
   // Six Needs History (Batch 2 — weekly tracking)
   sixNeedsHistory: {},  // { 'YYYY-MM-DD': { certainty, variety, significance, love, growth, contribution } }
 
+  // Smart Daily Question Log (Batch 3)
+  smartQuestionLog: {},  // { 'YYYY-MM-DD': { question, answer, category, ts } }
+
   // Incantation practice streak
   incantationStreak: 0,
   lastIncantationDate: null,
@@ -417,7 +420,7 @@ export function AppProvider({ children, userId, hasData }) {
             const LOG_KEYS = [
               'eveningLog', 'caniLog', 'sleepLog', 'dailyWins',
               'gratitude', 'todayPlanChecked', 'eveningAnswers',
-              'challengeLog', 'energyProtocol', 'stateCheckin', 'sixNeedsHistory',
+              'challengeLog', 'energyProtocol', 'stateCheckin', 'sixNeedsHistory', 'smartQuestionLog',
             ]
             for (const k of LOG_KEYS) {
               const remote = remoteState?.[k]

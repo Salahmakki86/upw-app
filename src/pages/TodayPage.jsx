@@ -11,6 +11,7 @@ import { upwApi } from '../api/upwApi'
 import BottomNav from '../components/BottomNav'
 import TransformationPulse from '../components/TransformationPulse'
 import StateCheckin from '../components/StateCheckin'
+import SmartDailyQuestion from '../components/SmartDailyQuestion'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -404,6 +405,11 @@ export default function TodayPage() {
           ) : (
             <StateCheckin />
           )}
+        </div>
+
+        {/* ── Smart Daily Question ─────────────────────────────────────────── */}
+        <div style={{ marginBottom: 14 }}>
+          <SmartDailyQuestion />
         </div>
 
         {/* ── Transformation Intelligence ─────────────────────────────────── */}
