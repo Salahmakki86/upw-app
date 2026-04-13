@@ -93,14 +93,19 @@ function DickensProcess({ belief, onClose, lang, t }) {
   const isAr = lang === 'ar'
   const { state: appState, update } = useApp()
   const { showToast } = useToast()
-  const [phase, setPhase] = useState('pain')   // pain | joy | decision
-  const [tfIndex, setTfIndex] = useState(0)
-  const [answers, setAnswers] = useState({})
+
+  // Auto-restore progress if user left mid-process
+  const savedDraft = appState.dickensDraft || null
+  const isResume = savedDraft && savedDraft.belief === (belief?.text || belief || '') && !savedDraft.completed
+
+  const [phase, setPhase] = useState(isResume ? savedDraft.phase : 'pain')
+  const [tfIndex, setTfIndex] = useState(isResume ? savedDraft.tfIndex : 0)
+  const [answers, setAnswers] = useState(isResume ? savedDraft.answers : {})
   const [currentAnswer, setCurrentAnswer] = useState('')
-  const [qIndex, setQIndex] = useState(0)
-  const [newBelief, setNewBelief] = useState('')
+  const [qIndex, setQIndex] = useState(isResume ? savedDraft.qIndex : 0)
+  const [newBelief, setNewBelief] = useState(isResume ? (savedDraft.newBelief || '') : '')
   const [committed, setCommitted] = useState(false)
-  const [joyText, setJoyText] = useState('')
+  const [joyText, setJoyText] = useState(isResume ? (savedDraft.joyText || '') : '')
   const [incantationAdded, setIncantationAdded] = useState(false)
 
   const TIMEFRAMES = DICKENS_TIMEFRAMES[lang]
@@ -109,19 +114,38 @@ function DickensProcess({ belief, onClose, lang, t }) {
   const totalQs   = TIMEFRAMES.reduce((s, tf) => s + tf.questions.length, 0)
   const doneQs    = TIMEFRAMES.slice(0, tfIndex).reduce((s, tf) => s + tf.questions.length, 0) + qIndex
 
+  // Auto-save progress after each answer (survives page navigation)
+  const autoSaveDraft = (newAnswers, newPhase, newTfIndex, newQIndex, newJoyText) => {
+    update('dickensDraft', {
+      belief: belief?.text || belief || '',
+      phase: newPhase || phase,
+      tfIndex: newTfIndex ?? tfIndex,
+      qIndex: newQIndex ?? qIndex,
+      answers: newAnswers || answers,
+      joyText: newJoyText ?? joyText,
+      newBelief,
+      savedAt: new Date().toISOString(),
+      completed: false,
+    })
+  }
+
   const saveAnswer = () => {
     if (!currentAnswer.trim()) return
     const key = `${tfIndex}-${qIndex}`
-    setAnswers(a => ({ ...a, [key]: currentAnswer }))
+    const newAnswers = { ...answers, [key]: currentAnswer }
+    setAnswers(newAnswers)
     setCurrentAnswer('')
 
     if (qIndex < currentTF.questions.length - 1) {
       setQIndex(qIndex + 1)
+      autoSaveDraft(newAnswers, 'pain', tfIndex, qIndex + 1)
     } else if (tfIndex < TIMEFRAMES.length - 1) {
       setTfIndex(tfIndex + 1)
       setQIndex(0)
+      autoSaveDraft(newAnswers, 'pain', tfIndex + 1, 0)
     } else {
       setPhase('joy')
+      autoSaveDraft(newAnswers, 'joy', tfIndex, qIndex)
     }
   }
 
@@ -221,6 +245,8 @@ function DickensProcess({ belief, onClose, lang, t }) {
             }
             const existing = appState.dickensLog || []
             update('dickensLog', [...existing, session])
+            // Clear the auto-save draft since process is complete
+            update('dickensDraft', null)
           }}
           disabled={!newBelief.trim()}
           className="w-full btn-gold py-4 text-base disabled:opacity-40"

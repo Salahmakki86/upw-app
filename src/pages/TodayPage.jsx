@@ -19,6 +19,7 @@ import WelcomeExperience from '../components/WelcomeExperience'
 import { generateBriefing } from '../utils/morningBriefing'
 import { calcWeightedScore, getScoreInsight } from '../utils/dailyScore'
 import { getDailyPersonalizedTip } from '../utils/personalization'
+import { getTodayVisibility } from '../utils/progressiveUI'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -325,6 +326,9 @@ export default function TodayPage() {
   // ── Personalized tip based on onboarding profile (Fix #8) ──────────
   const personalTip = useMemo(() => getDailyPersonalizedTip(state.onboardingProfile, isAr), [state.onboardingProfile, isAr])
 
+  // ── Progressive UI — hide advanced elements for new users ──────────
+  const todayVis = useMemo(() => getTodayVisibility(state), [state.morningLog])
+
   // ── Yesterday's evening reflection (data value return) ────────────────
   const yesterdayEvening = state.eveningLog?.[yesterdayKey]
   const morningCommitment = state.morningAnswers?.[6] // "What step will I take today?"
@@ -481,7 +485,7 @@ export default function TodayPage() {
         )}
 
         {/* ── Personalized Tip — based on onboarding profile (Fix #8) ──── */}
-        {personalTip && (
+        {todayVis.personalTip && personalTip && (
           <div style={{
             borderRadius: 16,
             padding: '10px 14px',
@@ -500,12 +504,14 @@ export default function TodayPage() {
         )}
 
         {/* ── Stale Goal Nudge — Coaching Dialogue ─────────────────────── */}
-        <StaleGoalNudge />
+        {todayVis.staleGoalNudge && <StaleGoalNudge />}
 
         {/* ── Accountability Card — weekly commitment (Fix #4) ─────────── */}
-        <div style={{ marginBottom: 14 }}>
-          <AccountabilityCard />
-        </div>
+        {todayVis.accountability && (
+          <div style={{ marginBottom: 14 }}>
+            <AccountabilityCard />
+          </div>
+        )}
 
         {/* ── State Check-in ──────────────────────────────────────────────── */}
         <div style={{ marginBottom: 14 }}>
@@ -517,14 +523,18 @@ export default function TodayPage() {
         </div>
 
         {/* ── Smart Daily Question ─────────────────────────────────────────── */}
-        <div style={{ marginBottom: 14 }}>
-          <SmartDailyQuestion />
-        </div>
+        {todayVis.smartQuestion && (
+          <div style={{ marginBottom: 14 }}>
+            <SmartDailyQuestion />
+          </div>
+        )}
 
         {/* ── Transformation Intelligence ─────────────────────────────────── */}
-        <div style={{ marginBottom: 14 }}>
-          <TransformationPulse />
-        </div>
+        {todayVis.transformPulse && (
+          <div style={{ marginBottom: 14 }}>
+            <TransformationPulse />
+          </div>
+        )}
 
         {/* ── Today's Plan (from yesterday evening) ─────────────────────────── */}
         {planTasks.length > 0 && (
@@ -670,9 +680,11 @@ export default function TodayPage() {
         })}
 
         {/* ── Progress Snapshot — before/after outcome measurement (Fix #10) ── */}
-        <div style={{ marginBottom: 14 }}>
-          <ProgressSnapshot />
-        </div>
+        {todayVis.progressSnapshot && (
+          <div style={{ marginBottom: 14 }}>
+            <ProgressSnapshot />
+          </div>
+        )}
 
         {/* ── All-done banner ─────────────────────────────────────────────────── */}
         {score === 7 && (

@@ -32,6 +32,7 @@ import StaleGoalNudge from '../components/StaleGoalNudge'
 import WeeklyAutoReport from '../components/WeeklyAutoReport'
 import GuidedJourney from '../components/GuidedJourney'
 import { getCategoryOrder } from '../utils/adaptivePath'
+import { getDashboardVisibility, getUIComplexity } from '../utils/progressiveUI'
 
 const QUOTES = {
   ar: [
@@ -295,6 +296,24 @@ export default function Dashboard() {
   const nextUnlockMsg = getNextUnlockMessage(unlockTier, lang, state)
   const { remaining: stagesRemaining } = useMemo(() => getStageProgress(state), [state.morningLog, state.streak])
 
+  // Progressive UI — show fewer elements for new users
+  const vis = useMemo(() => getDashboardVisibility(state), [state.morningLog])
+  const uiLevel = useMemo(() => getUIComplexity(state), [state.morningLog])
+
+  // Filter categories by visibility level
+  const visibleCategoryKeys = useMemo(() => {
+    const keys = new Set()
+    keys.add('daily')   // always visible
+    keys.add('learn')   // always visible
+    if (vis.goalsCategory)    keys.add('goals')
+    if (vis.programsCategory) keys.add('programs')
+    if (vis.planningCategory) keys.add('planning')
+    if (vis.businessCategory) keys.add('business')
+    if (vis.toolsCategory)    keys.add('tools')
+    keys.add('admin')  // handled by adminOnly filter
+    return keys
+  }, [vis])
+
   return (
     <div className="flex flex-col" style={{ background: '#090909', minHeight: '100%' }}>
 
@@ -401,16 +420,16 @@ export default function Dashboard() {
         <SmartReminder state={state} isAr={isAr} navigate={navigate} />
 
         {/* ── Adaptive Nudge (personalized recommendations) ──── */}
-        <AdaptiveNudge />
+        {vis.adaptiveNudge && <AdaptiveNudge />}
 
         {/* ── Stale Goal Nudge — Coaching dialogue for stuck goals ── */}
-        <StaleGoalNudge />
+        {vis.staleGoalNudge && <StaleGoalNudge />}
 
         {/* ── Guided 30-Day Journey (Fix #15) ── */}
-        <GuidedJourney />
+        {vis.guidedJourney && <GuidedJourney />}
 
         {/* ── Weekly Auto Report (Fix #18) ── */}
-        <WeeklyAutoReport />
+        {vis.weeklyReport && <WeeklyAutoReport />}
 
         {/* ── Enhanced State Check-in ─────────────────────────── */}
         {state.stateCheckin?.[today] ? (
@@ -420,10 +439,10 @@ export default function Dashboard() {
         )}
 
         {/* ── Transformation Intelligence ─────────────────────── */}
-        <TransformationPulse />
+        {vis.transformPulse && <TransformationPulse />}
 
         {/* ── Today's Plan (from yesterday's evening) ────────── */}
-        {(() => {
+        {vis.todaysPlan && (() => {
           const yKey = (() => {
             const d = new Date(); d.setDate(d.getDate() - 1)
             return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
@@ -486,10 +505,10 @@ export default function Dashboard() {
         })()}
 
         {/* #1 — Discovery of the Day */}
-        <DiscoveryCard />
+        {vis.discoveryCard && <DiscoveryCard />}
 
         {/* #4 — Goal Nudge */}
-        <GoalNudge />
+        {vis.goalNudge && <GoalNudge />}
 
         {/* ── يوم متكامل ─────────────────────────────────────── */}
         <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: `1px solid ${allDone ? '#c9a84c40' : '#1e1e1e'}` }}>
@@ -539,10 +558,10 @@ export default function Dashboard() {
         </div>
 
         {/* ── Journey Stage Map ──────────────────────────────── */}
-        <JourneyStageMap state={state} isAr={isAr} />
+        {vis.journeyStageMap && <JourneyStageMap state={state} isAr={isAr} />}
 
         {/* ── 30-day State History ────────────────────────────── */}
-        {hasStateHistory && (
+        {vis.stateHistory && hasStateHistory && (
           <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-black uppercase tracking-widest" style={{ color: '#c9a84c' }}>
@@ -602,7 +621,7 @@ export default function Dashboard() {
         </div>
 
         {/* ── Goals Snapshot ─────────────────────────────────── */}
-        {state.goals.length > 0 && (
+        {vis.goalsSnapshot && state.goals.length > 0 && (
           <button onClick={() => navigate('/goals')}
             className="card w-full text-right active:scale-[0.98] transition-all">
             <div className="flex items-center justify-between mb-3">
@@ -626,7 +645,7 @@ export default function Dashboard() {
         )}
 
         {/* ── Badges ─────────────────────────────────────────── */}
-        {(() => {
+        {vis.badges && (() => {
           const badges = [
             {
               emoji: '🔥',
@@ -727,6 +746,7 @@ export default function Dashboard() {
             })
             return sorted
           })()
+            .filter(cat => visibleCategoryKeys.has(cat.key))
             .filter(cat => !cat.adminOnly || currentUser?.role === 'admin')
             .map(cat => {
               const isOpen = openCats[cat.key]
@@ -781,7 +801,7 @@ export default function Dashboard() {
         </div>
 
         {/* #6 — Unlock Progress (compact version after Journey Map) */}
-        {unlockTier < 4 && stagesRemaining > 0 && (
+        {vis.unlockProgress && unlockTier < 4 && stagesRemaining > 0 && (
           <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.12)' }}>
             <p className="text-xs font-semibold" style={{ color: '#888' }}>
               🔓 {nextUnlockMsg}
@@ -790,18 +810,20 @@ export default function Dashboard() {
         )}
 
         {/* ── Affirmation Banner ──────────────────────────────── */}
-        <div className="rounded-2xl p-4 flex items-center gap-3"
-          style={{ background: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.15)' }}>
-          <span className="text-2xl">🔥</span>
-          <div>
-            <p className="text-sm font-bold" style={{ color: '#c9a84c' }}>
-              {isAr ? 'تذكّر قانونك الذهبي' : 'Your Golden Rule'}
-            </p>
-            <p className="text-xs mt-0.5" style={{ color: '#888' }}>
-              {state.incantations[new Date().getHours() % state.incantations.length]}
-            </p>
+        {vis.affirmation && (
+          <div className="rounded-2xl p-4 flex items-center gap-3"
+            style={{ background: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.15)' }}>
+            <span className="text-2xl">🔥</span>
+            <div>
+              <p className="text-sm font-bold" style={{ color: '#c9a84c' }}>
+                {isAr ? 'تذكّر قانونك الذهبي' : 'Your Golden Rule'}
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: '#888' }}>
+                {state.incantations[new Date().getHours() % state.incantations.length]}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
       </div>
 

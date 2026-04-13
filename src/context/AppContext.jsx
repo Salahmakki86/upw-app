@@ -270,6 +270,9 @@ const INITIAL_STATE = {
   // Fix #20 — Welcome Experience: first-time wow moment (shown once after onboarding)
   welcomeExperienceSeen: false,
 
+  // Dickens Process auto-save draft (survives navigation)
+  dickensDraft: null,
+
   // Baseline assessment: { date, scores: { health, career, finances, relationships, family, fun, growth, spirituality, contribution, environment } }
   baseline: null,
 

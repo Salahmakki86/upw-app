@@ -44,6 +44,10 @@ export default function StateCheckin({ onDone, compact = false }) {
   const isAr = lang === 'ar'
   const today = new Date().toISOString().slice(0, 10)
 
+  // Quick mode for new users (< 3 mornings): single emoji tap instead of 3 sliders
+  const morningCount = (state.morningLog || []).length
+  const isQuickMode = morningCount < 3
+
   const existing = state.stateCheckin?.[today]
   const [energy,  setEnergy]  = useState(existing?.energy  || 5)
   const [mood,    setMood]    = useState(existing?.mood    || 5)
@@ -103,6 +107,65 @@ export default function StateCheckin({ onDone, compact = false }) {
           <span style={{ fontSize: 14, fontWeight: 900, color: avgColor }}>
             {avg}
           </span>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Quick Mode for new users: 5-emoji tap (no sliders) ──
+  if (isQuickMode && !saved) {
+    const QUICK_OPTIONS = [
+      { emoji: '😫', val: 2,  labelAr: 'صعبة', labelEn: 'Tough',  stateType: 'suffering' },
+      { emoji: '😐', val: 4,  labelAr: 'مقبولة', labelEn: 'Meh',    stateType: 'suffering' },
+      { emoji: '🙂', val: 6,  labelAr: 'جيدة', labelEn: 'Good',   stateType: 'beautiful' },
+      { emoji: '😊', val: 8,  labelAr: 'ممتازة', labelEn: 'Great',  stateType: 'beautiful' },
+      { emoji: '🤩', val: 10, labelAr: 'رائعة!', labelEn: 'Amazing!', stateType: 'beautiful' },
+    ]
+
+    const quickSave = (opt) => {
+      const checkinData = { energy: opt.val, mood: opt.val, clarity: opt.val, ts: new Date().toISOString(), quickMode: true }
+      const existing = state.stateCheckin || {}
+      update('stateCheckin', { ...existing, [today]: checkinData })
+      logState(opt.stateType, isAr ? (opt.stateType === 'beautiful' ? 'حالة جميلة' : 'معاناة') : (opt.stateType === 'beautiful' ? 'Beautiful' : 'Suffering'))
+      setEnergy(opt.val); setMood(opt.val); setClarity(opt.val)
+      setSaved(true)
+      showToast(isAr ? 'تم تسجيل حالتك ✓' : 'State logged ✓', 'success', 1500)
+      if (onDone) onDone()
+    }
+
+    return (
+      <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
+        <p style={{ fontSize: 11, fontWeight: 900, color: '#c9a84c', marginBottom: 4 }}>
+          {isAr ? '⚡ كيف حالتك الآن؟' : '⚡ How do you feel right now?'}
+        </p>
+        <p style={{ fontSize: 10, color: '#555', marginBottom: 12 }}>
+          {isAr ? 'اضغط على الإيموجي الأقرب لحالتك' : 'Tap the emoji closest to how you feel'}
+        </p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
+          {QUICK_OPTIONS.map((opt, i) => (
+            <button
+              key={i}
+              onClick={() => quickSave(opt)}
+              className="transition-all active:scale-90"
+              style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 4,
+                padding: '10px 4px',
+                borderRadius: 12,
+                background: '#111',
+                border: '1px solid #222',
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{ fontSize: 24 }}>{opt.emoji}</span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: '#888' }}>
+                {isAr ? opt.labelAr : opt.labelEn}
+              </span>
+            </button>
+          ))}
         </div>
       </div>
     )

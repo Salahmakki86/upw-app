@@ -80,10 +80,19 @@ import { useApp } from './context/AppContext'
  * SmartHome — redirects to /today if morning not done (before 2 PM),
  * otherwise shows Dashboard. Uses <Navigate> so URL changes properly
  * and the user can still navigate back to Dashboard via BottomNav.
+ *
+ * For brand-new users (< 3 mornings), ALWAYS redirect to /today
+ * even after 2 PM to keep them focused and avoid dashboard overwhelm.
  */
 function SmartHome() {
   const { state } = useApp()
   const hour = new Date().getHours()
+  const morningCount = (state.morningLog || []).length
+
+  // New users (< 3 mornings) → always go to focused /today page
+  if (morningCount < 3) {
+    return <Navigate to="/today" replace />
+  }
   // Redirect to /today before 2pm if morning ritual not yet completed
   if (!state.morningDone && hour < 14) {
     return <Navigate to="/today" replace />
