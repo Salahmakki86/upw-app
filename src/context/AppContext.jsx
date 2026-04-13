@@ -780,9 +780,17 @@ export function AppProvider({ children, userId, hasData }) {
     }))
   }, [setState])
 
+  // ── Always derive todayState from stateLog — never trust the stored value ──
+  // This eliminates ALL edge cases where todayState could be stale across a day boundary.
+  // stateLog is the source of truth; todayState is just a convenience snapshot.
+  const computedTodayState = (state.stateLog || []).find(e => e.date === today)?.state || null
+  const stateWithDerivedToday = computedTodayState !== state.todayState
+    ? { ...state, todayState: computedTodayState }
+    : state
+
   return (
     <AppContext.Provider value={{
-      state, setState, update,
+      state: stateWithDerivedToday, setState, update,
       today,
       logState,
       completeMorning,
