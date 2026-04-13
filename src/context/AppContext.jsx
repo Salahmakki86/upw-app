@@ -348,6 +348,13 @@ export function AppProvider({ children, userId, hasData }) {
   const isMounted = useRef(true)
   const { showToast } = useToast()
 
+  // Today's date string (local time, not UTC) — must be defined before any useEffect that uses it
+  function getLocalToday() {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  }
+  const today = getLocalToday()
+
   // On mount: fetch state from backend (or upload localStorage if first time)
   useEffect(() => {
     isMounted.current = true
@@ -413,13 +420,6 @@ export function AppProvider({ children, userId, hasData }) {
   const update = useCallback((key, value) => {
     setState(prev => ({ ...prev, [key]: value }))
   }, [setState])
-
-  // Today's date string (local time, not UTC)
-  function getLocalToday() {
-    const d = new Date()
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-  }
-  const today = getLocalToday()
 
   // Log emotional state
   const logState = useCallback((stateVal, label) => {
