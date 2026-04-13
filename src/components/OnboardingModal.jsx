@@ -94,15 +94,19 @@ export default function OnboardingModal({ onDone }) {
     if (step === 3) {
       if (!name.trim()) { setNameErr(true); return }
       if (!timePerDay) return
-      // Save profile + name
+      // Save profile + name (but NOT onboardingDone yet — wait for last step)
       const focusPath = computeFocusPath({ goalArea })
       const profile = { goalArea, challenge, timePerDay, focusPath }
       update('userName', name.trim())
       update('onboardingProfile', profile)
-      update('onboardingDone', true)
     }
-    if (step < TOTAL_STEPS - 1) { setStep(s => s + 1) }
-    else { onDone() }
+    if (step < TOTAL_STEPS - 1) {
+      setStep(s => s + 1)
+    } else {
+      // Final step — mark onboarding complete and close
+      update('onboardingDone', true)
+      onDone()
+    }
   }
 
   const back = () => setStep(s => s - 1)
