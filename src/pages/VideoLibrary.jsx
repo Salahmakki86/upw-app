@@ -455,51 +455,108 @@ const VIDEOS = [
 
 function VideoCard({ video, isAr, navigate }) {
   const [playing, setPlaying] = useState(false)
+  const [imgError, setImgError] = useState(false)
+
+  // Direct link if we have an ID, otherwise search YouTube for the title
+  const ytDirectUrl   = `https://www.youtube.com/watch?v=${video.id}`
+  const ytSearchUrl   = `https://www.youtube.com/results?search_query=Tony+Robbins+${encodeURIComponent(video.titleEn)}`
+  const ytUrl         = imgError ? ytSearchUrl : ytDirectUrl
 
   return (
     <div className="rounded-2xl overflow-hidden" style={{ background: '#111', border: '1px solid #1e1e1e' }}>
-      {/* Thumbnail / Player */}
+      {/* ── Thumbnail / Inline Player ── */}
       {playing ? (
-        <div style={{ position: 'relative', paddingTop: '56.25%' }}>
-          <iframe
-            src={`https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0`}
-            title={isAr ? video.titleAr : video.titleEn}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
-          />
+        <div>
+          <div style={{ position: 'relative', paddingTop: '56.25%' }}>
+            <iframe
+              src={`https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0`}
+              title={isAr ? video.titleAr : video.titleEn}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+            />
+          </div>
+          {/* Fallback below iframe in case video is unavailable */}
+          <div className="flex items-center justify-between px-3 py-2"
+            style={{ background: '#0a0a0a', borderTop: '1px solid #1a1a1a' }}>
+            <span className="text-xs" style={{ color: '#555' }}>
+              {isAr ? 'الفيديو لا يعمل؟' : "Video not playing?"}
+            </span>
+            <a
+              href={ytUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs font-bold rounded-lg px-3 py-1.5 transition-all active:scale-95"
+              style={{ background: 'rgba(255,60,60,0.12)', border: '1px solid rgba(255,60,60,0.25)', color: '#ff5555' }}
+            >
+              ▶ {isAr ? 'شاهد على يوتيوب' : 'Watch on YouTube'}
+            </a>
+          </div>
         </div>
       ) : (
-        <button onClick={() => setPlaying(true)} className="relative w-full" style={{ paddingTop: '56.25%' }}>
-          <img
-            src={`https://img.youtube.com/vi/${video.id}/hqdefault.jpg`}
-            alt={isAr ? video.titleAr : video.titleEn}
-            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-          />
+        <button
+          onClick={() => imgError ? window.open(ytUrl, '_blank') : setPlaying(true)}
+          className="relative w-full"
+          style={{ paddingTop: '56.25%' }}
+        >
+          {/* Thumbnail — fallback gradient if image 404s */}
+          {imgError ? (
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(145deg, #1c1400 0%, #111 100%)',
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: 10,
+              padding: '0 20px',
+            }}>
+              <span style={{ fontSize: 28 }}>🎬</span>
+              <p style={{
+                color: '#c9a84c', fontSize: 12, fontWeight: 700,
+                textAlign: 'center', lineHeight: 1.5,
+              }}>
+                {isAr ? video.titleAr : video.titleEn}
+              </p>
+              <p style={{ color: '#555', fontSize: 11 }}>
+                {isAr ? 'انقر للبحث على يوتيوب' : 'Tap to search on YouTube'}
+              </p>
+            </div>
+          ) : (
+            <img
+              src={`https://img.youtube.com/vi/${video.id}/hqdefault.jpg`}
+              alt={isAr ? video.titleAr : video.titleEn}
+              onError={() => setImgError(true)}
+              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          )}
+
           {/* Play overlay */}
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'rgba(0,0,0,0.35)',
+            background: imgError ? 'transparent' : 'rgba(0,0,0,0.35)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: '50%',
-              background: 'rgba(201,168,76,0.9)', display: 'flex',
-              alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Play size={24} fill="#fff" color="#fff" style={{ marginLeft: 3 }} />
-            </div>
+            {!imgError && (
+              <div style={{
+                width: 56, height: 56, borderRadius: '50%',
+                background: 'rgba(201,168,76,0.9)', display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Play size={24} fill="#fff" color="#fff" style={{ marginLeft: 3 }} />
+              </div>
+            )}
           </div>
+
           {/* Duration badge */}
-          <span style={{
-            position: 'absolute', bottom: 8, right: 8,
-            background: 'rgba(0,0,0,0.8)', color: '#fff',
-            fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
-          }}>{video.duration}</span>
+          {!imgError && (
+            <span style={{
+              position: 'absolute', bottom: 8, right: 8,
+              background: 'rgba(0,0,0,0.8)', color: '#fff',
+              fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
+            }}>{video.duration}</span>
+          )}
         </button>
       )}
 
-      {/* Info */}
+      {/* ── Info ── */}
       <div className="p-3">
         <h4 className="text-sm font-bold text-white mb-1" style={{ lineHeight: 1.4 }}>
           {isAr ? video.titleAr : video.titleEn}
@@ -507,16 +564,32 @@ function VideoCard({ video, isAr, navigate }) {
         <p className="text-xs mb-3" style={{ color: '#888', lineHeight: 1.5 }}>
           {isAr ? video.descAr : video.descEn}
         </p>
-        {/* Related page link */}
-        {video.relatedPage && (
-          <button
-            onClick={() => navigate(video.relatedPage)}
-            className="flex items-center gap-1.5 text-xs font-bold transition-all"
-            style={{ color: '#c9a84c' }}>
-            <ExternalLink size={12} />
-            {isAr ? `افتح: ${video.relatedLabelAr}` : `Open: ${video.relatedLabelEn}`}
-          </button>
-        )}
+        <div className="flex items-center flex-wrap gap-2">
+          {/* Always-visible YouTube button */}
+          <a
+            href={ytUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs font-bold rounded-xl px-3 py-1.5 transition-all active:scale-95"
+            style={{
+              background: 'rgba(255,60,60,0.1)',
+              border: '1px solid rgba(255,60,60,0.22)',
+              color: '#ff5555',
+            }}
+          >
+            ▶ {isAr ? 'يوتيوب' : 'YouTube'}
+          </a>
+          {/* Related tool link */}
+          {video.relatedPage && (
+            <button
+              onClick={() => navigate(video.relatedPage)}
+              className="flex items-center gap-1.5 text-xs font-bold transition-all"
+              style={{ color: '#c9a84c' }}>
+              <ExternalLink size={12} />
+              {isAr ? `افتح: ${video.relatedLabelAr}` : `Open: ${video.relatedLabelEn}`}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
