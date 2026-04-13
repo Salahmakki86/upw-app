@@ -6,7 +6,7 @@ import {
   BarChart2, BookOpen, Briefcase, Compass, Calendar,
   TrendingUp, Shield, Clock,
   Trophy, Mail, Users, Heart, Activity, Shuffle, PieChart,
-  LogOut, Settings, NotebookPen, CheckSquare, Eye, Smile,
+  LogOut, Settings, NotebookPen, CheckSquare, Eye, Smile, Play,
   MessageSquare, GraduationCap, Moon as MoonIcon,
   LifeBuoy, Brain, Sparkles, FileText, Swords,
 } from 'lucide-react'
@@ -193,6 +193,7 @@ export default function Dashboard() {
         { path: '/group-challenge',icon: Swords,    labelKey: 'dash_link_group_challenge',color: '#e67e22' },
         { path: '/commitment',   icon: FileText,    labelKey: 'dash_link_commitment',    color: '#e91e8c' },
         { path: '/letters',      icon: Mail,        labelKey: 'dash_link_letters',       color: '#3498db' },
+        { path: '/videos',       icon: Play,        labelKey: 'dash_link_videos',        color: '#e63946' },
         { path: '/library',      icon: BookOpen,    labelKey: 'dash_link_library',       color: '#1abc9c' },
         { path: '/nac',           icon: Zap,      labelKey: 'dash_link_nac',           color: '#e63946' },
         { path: '/incantations',  icon: Sparkles, labelKey: 'dash_link_incantations',  color: '#c9a84c' },

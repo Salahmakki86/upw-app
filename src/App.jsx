@@ -68,6 +68,7 @@ import UPWProgram from './pages/UPWProgram'
 import CelebrationRituals from './pages/CelebrationRituals'
 import LifeStoryReframing from './pages/LifeStoryReframing'
 import EmergencyToolkit from './pages/EmergencyToolkit'
+import VideoLibrary from './pages/VideoLibrary'
 import WeeklyPulse from './pages/WeeklyPulse'
 import MonthlyReset from './pages/MonthlyReset'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -160,6 +161,7 @@ function AppRoutes() {
             <Route path="/emergency"          element={<EmergencyToolkit />}       />
             <Route path="/weekly-pulse"       element={<WeeklyPulse />}            />
             <Route path="/monthly-reset"      element={<MonthlyReset />}           />
+            <Route path="/videos"            element={<VideoLibrary />}           />
             <Route
               path="/weekly-report"
               element={currentUser.role === 'admin' ? <WeeklyReportPage /> : <Navigate to="/" />}
