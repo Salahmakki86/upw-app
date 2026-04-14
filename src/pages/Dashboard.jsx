@@ -35,6 +35,8 @@ import GuidedJourney from '../components/GuidedJourney'
 import { getCategoryOrder } from '../utils/adaptivePath'
 import { getDashboardVisibility, getUIComplexity } from '../utils/progressiveUI'
 import ShareProgressCard from '../components/ShareProgressCard'
+import { generateActionableInsights } from '../utils/insightEngine'
+import ActionableInsightCard from '../components/ActionableInsightCard'
 
 const QUOTES = {
   ar: [
@@ -295,6 +297,7 @@ export default function Dashboard() {
   const dashPct   = weightedScore  // already 0-100
   const dashComplete = weightedScore === 100
   const scoreInsight = useMemo(() => getScoreInsight(state, isAr), [state, isAr])
+  const actionableInsights = useMemo(() => generateActionableInsights(state, isAr), [state, isAr])
 
   // #6 — Progressive unlocking
   const unlockTier = useMemo(() => getUnlockTier(state), [state.morningLog, state.streak])
@@ -471,6 +474,27 @@ export default function Dashboard() {
             <span style={{ fontSize: 14 }}>💡</span>
             <p className="text-xs" style={{ color: '#c9a84c' }}>{scoreInsight}</p>
           </div>
+        )}
+
+        {/* ── Top Actionable Insight ─────────────────── */}
+        {actionableInsights.length > 0 && (
+          <ActionableInsightCard
+            insight={actionableInsights[0]}
+            onAction={(id, optIdx) => {
+              const opt = actionableInsights[0].decision.options[optIdx]
+              const log = { ...(state.insightActionsLog || {}) }
+              log[id] = {
+                action: opt.label,
+                startDate: new Date().toISOString().slice(0, 10),
+                metric: actionableInsights[0].progress?.metric,
+                metricLabel: actionableInsights[0].data?.metric,
+                baseline: actionableInsights[0].progress?.baseline,
+                checkAfterDays: actionableInsights[0].progress?.checkAfterDays || 7,
+                completed: false,
+              }
+              update('insightActionsLog', log)
+            }}
+          />
         )}
 
         {/* ── Enhanced State Check-in ─────────────────────────── */}

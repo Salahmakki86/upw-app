@@ -19,6 +19,9 @@ import WelcomeExperience from '../components/WelcomeExperience'
 import WeeklyDiscovery from '../components/WeeklyDiscovery'
 import PersonalizedCoachCard from '../components/PersonalizedCoachCard'
 import InsightHarvester from '../components/InsightHarvester'
+import { generateActionableInsights, checkInsightProgress } from '../utils/insightEngine'
+import ActionableInsightCard from '../components/ActionableInsightCard'
+import ProgressCheckCard from '../components/ProgressCheckCard'
 import { generateBriefing } from '../utils/morningBriefing'
 import { calcWeightedScore, getScoreInsight } from '../utils/dailyScore'
 import { getDailyPersonalizedTip } from '../utils/personalization'
@@ -366,6 +369,8 @@ export default function TodayPage() {
 
   // ── Morning Briefing — smart intelligence sentence ────────────────────
   const briefing = useMemo(() => generateBriefing(state, isAr), [state, isAr])
+  const actionableInsights = useMemo(() => generateActionableInsights(state, isAr), [state, isAr])
+  const progressResults = useMemo(() => checkInsightProgress(state, isAr), [state, isAr])
 
   // ── Yesterday's Evening Reflection (surface it back to the user) ──────
   const yesterdayReflection = useMemo(() => {
@@ -537,6 +542,46 @@ export default function TodayPage() {
                 </p>
               )}
             </div>
+          </div>
+        )}
+
+        {/* ── Progress Check Results ──────────────────── */}
+        {progressResults.map(result => (
+          <ProgressCheckCard
+            key={result.id}
+            result={result}
+            onDismiss={() => {
+              const log = { ...(state.insightActionsLog || {}) }
+              if (log[result.id]) log[result.id].completed = true
+              update('insightActionsLog', log)
+            }}
+            onAdjust={() => navigate('/insights')}
+          />
+        ))}
+
+        {/* ── Actionable Insights (Data→Decision→Action) ── */}
+        {actionableInsights.length > 0 && (
+          <div className="space-y-3">
+            {actionableInsights.map(insight => (
+              <ActionableInsightCard
+                key={insight.id}
+                insight={insight}
+                onAction={(id, optIdx) => {
+                  const opt = insight.decision.options[optIdx]
+                  const log = { ...(state.insightActionsLog || {}) }
+                  log[id] = {
+                    action: opt.label,
+                    startDate: new Date().toISOString().slice(0, 10),
+                    metric: insight.progress?.metric,
+                    metricLabel: insight.data?.metric,
+                    baseline: insight.progress?.baseline,
+                    checkAfterDays: insight.progress?.checkAfterDays || 7,
+                    completed: false,
+                  }
+                  update('insightActionsLog', log)
+                }}
+              />
+            ))}
           </div>
         )}
 
