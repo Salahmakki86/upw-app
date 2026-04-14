@@ -16,6 +16,7 @@ import StaleGoalNudge from '../components/StaleGoalNudge'
 import AccountabilityCard from '../components/AccountabilityCard'
 import ProgressSnapshot from '../components/ProgressSnapshot'
 import WelcomeExperience from '../components/WelcomeExperience'
+import WeeklyDiscovery from '../components/WeeklyDiscovery'
 import { generateBriefing } from '../utils/morningBriefing'
 import { calcWeightedScore, getScoreInsight } from '../utils/dailyScore'
 import { getDailyPersonalizedTip } from '../utils/personalization'
@@ -337,6 +338,21 @@ export default function TodayPage() {
   // ── Progressive UI — hide advanced elements for new users ──────────
   const todayVis = useMemo(() => getTodayVisibility(state), [state.morningLog])
 
+  // ── Wheel of Life ↔ State Connection ──────────────────────────
+  const wheelStateLink = useMemo(() => {
+    const wheel = state.wheelScores || {}
+    const entries = Object.entries(wheel).filter(([, v]) => v !== 5 && v <= 4)
+    if (entries.length === 0) return null
+    const AREA_LABELS = {
+      body: { ar: 'الصحة', en: 'Health' }, emotions: { ar: 'العواطف', en: 'Emotions' },
+      relationships: { ar: 'العلاقات', en: 'Relationships' }, time: { ar: 'الوقت', en: 'Time' },
+      career: { ar: 'المهنة', en: 'Career' }, money: { ar: 'المال', en: 'Money' },
+      contribution: { ar: 'المساهمة', en: 'Contribution' },
+    }
+    const lowest = entries.reduce((a, b) => a[1] < b[1] ? a : b)
+    return { area: lowest[0], score: lowest[1], label: AREA_LABELS[lowest[0]] || { ar: lowest[0], en: lowest[0] } }
+  }, [state.wheelScores])
+
   // ── Yesterday's evening reflection (data value return) ────────────────
   const yesterdayEvening = state.eveningLog?.[yesterdayKey]
   const morningCommitment = state.morningAnswers?.[6] // "What step will I take today?"
@@ -470,6 +486,58 @@ export default function TodayPage() {
                   {isAr ? '📊 بناءً على بياناتك' : '📊 Based on your data'}
                 </p>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Weekly Discovery — auto-generated insights (continuity) ── */}
+        <WeeklyDiscovery />
+
+        {/* ── Yesterday's Sleep — explicit actionable card ──────────── */}
+        {(() => {
+          const yKey = new Date(Date.now() - 86400000).toISOString().split('T')[0]
+          const ySleep = state.sleepLog?.[yKey]
+          if (!ySleep?.hours) return null
+          const h = ySleep.hours
+          const isLow = h < 6
+          const isMid = h >= 6 && h < 7
+          if (!isLow && !isMid) return null // Only show if concerning
+          return (
+            <div style={{
+              borderRadius: 16, padding: '10px 14px', marginBottom: 14,
+              background: isLow ? 'rgba(231,76,60,0.06)' : 'rgba(230,126,34,0.06)',
+              border: `1px solid ${isLow ? 'rgba(231,76,60,0.2)' : 'rgba(230,126,34,0.2)'}`,
+            }}>
+              <p style={{ fontSize: 10, fontWeight: 800, color: isLow ? '#e74c3c' : '#e67e22', marginBottom: 3 }}>
+                😴 {isAr ? `نومك البارحة: ${h} ساعات` : `Last night: ${h} hours of sleep`}
+              </p>
+              <p style={{ fontSize: 11, color: '#bbb', lineHeight: 1.5 }}>
+                {isLow
+                  ? (isAr ? '⚡ ابدأ بالماء + تنفس عميق. تجنّب القهوة بعد الظهر. اليوم ركّز على أهم مهمة واحدة فقط.'
+                          : '⚡ Start with water + deep breathing. Skip caffeine after noon. Focus on just ONE key task today.')
+                  : (isAr ? '💡 نوم مقبول — حاول النوم 30 دقيقة أبكر الليلة للوصول للمثالي.'
+                          : '💡 Decent sleep — try sleeping 30 min earlier tonight to reach optimal.')}
+              </p>
+            </div>
+          )
+        })()}
+
+        {/* ── Wheel of Life ↔ State Connection ────────────────────── */}
+        {wheelStateLink && (
+          <div style={{
+            borderRadius: 16, padding: '10px 14px', marginBottom: 14,
+            background: 'rgba(243,156,18,0.05)', border: '1px solid rgba(243,156,18,0.15)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 10, fontWeight: 800, color: '#f39c12', marginBottom: 2 }}>
+                🎡 {isAr ? 'عجلة حياتك' : 'Your Life Wheel'}
+              </p>
+              <p style={{ fontSize: 11, color: '#bbb' }}>
+                {isAr
+                  ? `"${wheelStateLink.label.ar}" عند ${wheelStateLink.score}/10 — ما خطوتك اليوم لرفعها؟`
+                  : `"${wheelStateLink.label.en}" at ${wheelStateLink.score}/10 — what's your move today?`}
+              </p>
             </div>
           </div>
         )}

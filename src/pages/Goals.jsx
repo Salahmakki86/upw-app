@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus, Trash2, ChevronDown, ChevronUp, Check, Pencil } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
@@ -9,7 +10,7 @@ const TIMEFRAMES = {
   en: ['7 days', '30 days', '90 days', '1 year', '3 years'],
 }
 
-function GoalCard({ goal, onUpdate, onDelete, t }) {
+function GoalCard({ goal, onUpdate, onDelete, t, blockers, isAr, onGoToBeliefs }) {
   const [expanded, setExpanded] = useState(false)
   const [editProg, setEditProg] = useState(false)
   const [prog, setProg] = useState(goal.progress || 0)
@@ -223,6 +224,27 @@ function GoalCard({ goal, onUpdate, onDelete, t }) {
         </div>
       </div>
 
+      {/* Belief Blocker Warning */}
+      {blockers && blockers.length > 0 && (
+        <div className="mx-4 mb-1 rounded-xl p-3" style={{ background: 'rgba(231,76,60,0.06)', border: '1px solid rgba(231,76,60,0.2)' }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm">🚧</span>
+              <span className="text-xs font-bold" style={{ color: '#e74c3c' }}>
+                {isAr ? 'معتقد مقيّد قد يمنع هذا الهدف' : 'A limiting belief may block this goal'}
+              </span>
+            </div>
+            <button onClick={onGoToBeliefs} className="text-xs font-bold px-2 py-1 rounded-lg"
+              style={{ background: 'rgba(231,76,60,0.1)', color: '#e74c3c', border: '1px solid rgba(231,76,60,0.3)' }}>
+              {isAr ? 'عالج ←' : 'Address →'}
+            </button>
+          </div>
+          <p className="text-xs mt-1.5 italic" style={{ color: '#999' }}>
+            "{blockers[0].text}"
+          </p>
+        </div>
+      )}
+
       {/* Expanded */}
       {expanded && (
         <div className="border-t px-4 pb-4 pt-3 space-y-4 animate-fade-in" style={{ borderColor: '#222' }}>
@@ -323,7 +345,30 @@ function GoalCard({ goal, onUpdate, onDelete, t }) {
             </div>
 
             {actions.length === 0 && !showActionInput && (
-              <p className="text-xs" style={{ color: '#444' }}>لم تُضف خطوات بعد</p>
+              <div>
+                <p className="text-xs mb-2" style={{ color: '#444' }}>لم تُضف خطوات بعد</p>
+                {/* Quick action templates to reduce input friction */}
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { ar: 'ابحث عن معلومات', en: 'Research information' },
+                    { ar: 'تواصل مع شخص يساعد', en: 'Contact someone who can help' },
+                    { ar: 'خصص ٣٠ دقيقة يومياً', en: 'Dedicate 30 min daily' },
+                    { ar: 'حدد موعد نهائي', en: 'Set a deadline' },
+                  ].map((tmpl, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        const text = t('lang') === 'ar' ? tmpl.ar : tmpl.en
+                        onUpdate(goal.id, { actions: [...actions, text] })
+                      }}
+                      className="text-xs px-2.5 py-1 rounded-lg transition-all active:scale-95"
+                      style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#888' }}
+                    >
+                      + {t('lang') === 'ar' ? tmpl.ar : tmpl.en}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
 
             <div className="space-y-2">
@@ -691,16 +736,61 @@ function AnnualPlanTab({ lang, t }) {
   )
 }
 
+// ── Belief-Goal Connection: detect limiting beliefs that may block goals ──
+const BELIEF_GOAL_MAP = [
+  { keywords: ['money', 'مال', 'كسب', 'earn', 'rich', 'wealth', 'ثروة'],
+    goalKeywords: ['revenue', 'income', 'مال', 'دخل', 'ربح', 'profit', 'sales', 'مبيعات', 'financial', 'مالي'] },
+  { keywords: ['success', 'نجاح', 'deserve', 'أستحق', 'enough', 'كافي', 'good enough', 'جيد'],
+    goalKeywords: ['career', 'مهنة', 'promotion', 'ترقية', 'business', 'أعمال', 'growth', 'نمو'] },
+  { keywords: ['love', 'حب', 'relationship', 'علاقة', 'partner', 'شريك'],
+    goalKeywords: ['relationship', 'علاقة', 'marriage', 'زواج', 'family', 'عائلة', 'love', 'حب'] },
+  { keywords: ['lazy', 'كسول', 'discipline', 'انضباط', 'can\'t', 'لا أستطيع', 'impossible', 'مستحيل'],
+    goalKeywords: ['fitness', 'لياقة', 'exercise', 'تمرين', 'health', 'صحة', 'weight', 'وزن', 'habit', 'عادة'] },
+  { keywords: ['late', 'فات', 'old', 'كبير', 'age', 'عمر', 'too late', 'فات الأوان'],
+    goalKeywords: ['learn', 'تعلم', 'start', 'ابدأ', 'new', 'جديد', 'change', 'تغيير'] },
+]
+
+function findBlockingBeliefs(limitingBeliefs, goalText) {
+  if (!limitingBeliefs?.length || !goalText) return []
+  const goalLower = goalText.toLowerCase()
+  const blockers = []
+
+  limitingBeliefs.forEach(belief => {
+    const beliefLower = belief.text.toLowerCase()
+    BELIEF_GOAL_MAP.forEach(mapping => {
+      const beliefMatch = mapping.keywords.some(k => beliefLower.includes(k))
+      const goalMatch = mapping.goalKeywords.some(k => goalLower.includes(k))
+      if (beliefMatch && goalMatch) blockers.push(belief)
+    })
+  })
+  return blockers
+}
+
 export default function Goals() {
   const { state, addGoal, updateGoal, deleteGoal } = useApp()
   const { lang, t } = useLang()
+  const navigate = useNavigate()
   const [showAdd, setShowAdd] = useState(false)
   const [activeTab, setActiveTab] = useState('goals')
 
   const handleSave = (goal) => { addGoal(goal); setShowAdd(false) }
+  const isAr = lang === 'ar'
 
   const today = new Date().toISOString().split('T')[0]
   const sevenDaysAgo = Date.now() - 7 * 86400000
+
+  // Detect beliefs blocking goals
+  const beliefBlockers = useMemo(() => {
+    const beliefs = state.limitingBeliefs || []
+    if (beliefs.length === 0) return {}
+    const map = {}
+    state.goals.forEach(goal => {
+      const text = `${goal.title || ''} ${goal.purpose || ''} ${goal.category || ''}`
+      const blockers = findBlockingBeliefs(beliefs, text)
+      if (blockers.length > 0) map[goal.id] = blockers
+    })
+    return map
+  }, [state.limitingBeliefs, state.goals])
 
   // Sort goals: overdue first (red border), then in-progress, then completed
   const sortedGoals = [...state.goals].sort((a, b) => {
@@ -785,7 +875,7 @@ export default function Goals() {
                   <div>
                     <p className="section-title">{t('goals_active')}</p>
                     <div className="space-y-3">
-                      {activeGoals.map(g => <GoalCard key={g.id} goal={g} onUpdate={updateGoal} onDelete={deleteGoal} t={t} />)}
+                      {activeGoals.map(g => <GoalCard key={g.id} goal={g} onUpdate={updateGoal} onDelete={deleteGoal} t={t} blockers={beliefBlockers[g.id]} isAr={isAr} onGoToBeliefs={() => navigate('/beliefs')} />)}
                     </div>
                   </div>
                 )}

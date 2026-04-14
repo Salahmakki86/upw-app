@@ -124,6 +124,29 @@ function getSmartQuestion(state, isAr) {
     })
   }
 
+  // 5b. If user has limiting beliefs — connect beliefs to action
+  const limitingBeliefs = state.limitingBeliefs || []
+  if (limitingBeliefs.length > 0) {
+    const randomBelief = limitingBeliefs[Math.floor(Date.now() / 86400000) % limitingBeliefs.length]
+    questions.push({
+      emoji: '🚧',
+      textAr: `معتقدك "${randomBelief.text.slice(0, 40)}" — ما الدليل من حياتك أنه غير صحيح؟`,
+      textEn: `Your belief "${randomBelief.text.slice(0, 40)}" — what evidence from your life proves it wrong?`,
+      category: 'beliefs',
+      priority: 7,
+    })
+  }
+  const empoweringBeliefs = state.empoweringBeliefs || []
+  if (empoweringBeliefs.length > 0 && limitingBeliefs.length > 0) {
+    questions.push({
+      emoji: '💪',
+      textAr: 'ما المعتقد التمكيني الذي ستعيش به اليوم بنسبة 100%؟',
+      textEn: 'Which empowering belief will you live by 100% today?',
+      category: 'beliefs',
+      priority: 6,
+    })
+  }
+
   // 6. Root cause aligned questions
   if (rootCause.type === 'energy') {
     questions.push({

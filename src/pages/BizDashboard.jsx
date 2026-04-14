@@ -250,6 +250,36 @@ export default function BizDashboard() {
           </div>
         )}
 
+        {/* ── Personal State → Business Performance Link ──── */}
+        {(() => {
+          const checkin = state.stateCheckin?.[today]
+          if (!checkin) return null
+          const avg = Math.round(((checkin.energy + checkin.mood + checkin.clarity) / 3) * 10) / 10
+          const isLow = avg <= 4
+          const isHigh = avg >= 7
+          if (!isLow && !isHigh) return null
+          return (
+            <div className="rounded-2xl p-3 flex items-center gap-3" style={{
+              background: isLow ? 'rgba(231,76,60,0.06)' : 'rgba(46,204,113,0.06)',
+              border: `1px solid ${isLow ? 'rgba(231,76,60,0.2)' : 'rgba(46,204,113,0.2)'}`,
+            }}>
+              <span className="text-xl">{isLow ? '⚠️' : '🔥'}</span>
+              <div>
+                <p className="text-xs font-bold" style={{ color: isLow ? '#e74c3c' : '#2ecc71' }}>
+                  {isLow
+                    ? (isAr ? `حالتك ${avg}/10 — تجنّب القرارات الكبيرة اليوم` : `Your state is ${avg}/10 — avoid big decisions today`)
+                    : (isAr ? `حالتك ${avg}/10 — يوم مثالي للمبيعات والتفاوض!` : `Your state is ${avg}/10 — perfect day for sales & negotiations!`)}
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: '#888' }}>
+                  {isLow
+                    ? (isAr ? 'ركّز على المهام الإدارية والتخطيط' : 'Focus on admin tasks & planning')
+                    : (isAr ? 'استغل طاقتك في المكالمات والعروض' : 'Use your energy for calls & proposals')}
+                </p>
+              </div>
+            </div>
+          )
+        })()}
+
         {/* ── Smart Recommendations (Fix #9 — Intelligence) ──── */}
         {bizRecommendations.length > 0 && (
           <div style={cardStyle} className="space-y-2">

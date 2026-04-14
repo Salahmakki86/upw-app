@@ -39,26 +39,86 @@ const PHASES_DATA = {
   ]
 }
 
-const POWER_QUESTIONS = {
-  ar: [
-    'ما الذي أشعر بالسعادة تجاهه في حياتي الآن؟ ولماذا؟',
-    'ما الذي أشعر بالحماس تجاهه الآن؟ ولماذا أنا متحمس؟',
-    'ما الذي أشعر بالفخر تجاهه في حياتي؟',
-    'ما الذي أشعر بالامتنان تجاهه الآن؟',
-    'من أحب؟ ومن يحبني؟ وكيف يجعلني ذلك أشعر؟',
-    'ما الذي ألتزم به في حياتي الآن؟',
-    'ما الخطوة الواحدة التي سأتخذها اليوم لأقترب من هدفي الأكبر؟',
-  ],
-  en: [
-    'What am I happy about in my life right now? And why?',
-    'What am I excited about right now? Why am I excited?',
-    'What am I proud of in my life?',
-    'What am I grateful for right now?',
-    'Who do I love? Who loves me? How does that make me feel?',
-    'What am I committed to in my life right now?',
-    'What is the one step I will take today to get closer to my biggest goal?',
-  ]
+const POWER_QUESTIONS_SETS = [
+  // Set 0 — Classic Tony Robbins (days 1-7)
+  {
+    ar: [
+      'ما الذي أشعر بالسعادة تجاهه في حياتي الآن؟ ولماذا؟',
+      'ما الذي أشعر بالحماس تجاهه الآن؟ ولماذا أنا متحمس؟',
+      'ما الذي أشعر بالفخر تجاهه في حياتي؟',
+      'ما الذي أشعر بالامتنان تجاهه الآن؟',
+      'من أحب؟ ومن يحبني؟ وكيف يجعلني ذلك أشعر؟',
+      'ما الذي ألتزم به في حياتي الآن؟',
+      'ما الخطوة الواحدة التي سأتخذها اليوم لأقترب من هدفي الأكبر؟',
+    ],
+    en: [
+      'What am I happy about in my life right now? And why?',
+      'What am I excited about right now? Why am I excited?',
+      'What am I proud of in my life?',
+      'What am I grateful for right now?',
+      'Who do I love? Who loves me? How does that make me feel?',
+      'What am I committed to in my life right now?',
+      'What is the one step I will take today to get closer to my biggest goal?',
+    ],
+  },
+  // Set 1 — Growth & Identity (weeks 2-3)
+  {
+    ar: [
+      'أي نسخة من نفسي أريد أن أكون اليوم؟',
+      'ما الخوف الذي أحتاج مواجهته هذا الأسبوع؟',
+      'ما العادة الصغيرة التي غيّرت حياتي مؤخراً؟',
+      'لو كان عندي 10 أضعاف الثقة — ماذا سأفعل اليوم؟',
+      'ما الذي يمكنني إعطاؤه لشخص آخر اليوم؟',
+      'ما المعتقد القديم الذي أحتاج التخلي عنه؟',
+      'ما النتيجة الأهم التي ستجعل اليوم ناجحاً؟',
+    ],
+    en: [
+      'Which version of myself do I want to be today?',
+      'What fear do I need to face this week?',
+      'What small habit has changed my life recently?',
+      'If I had 10x the confidence — what would I do today?',
+      'What can I give to someone else today?',
+      'What old belief do I need to let go of?',
+      'What is the #1 result that would make today a success?',
+    ],
+  },
+  // Set 2 — Mastery & Legacy (weeks 4+)
+  {
+    ar: [
+      'ما الذي يجعل حياتي ذات معنى حقيقي الآن؟',
+      'كيف أريد أن يتذكرني الناس بعد 20 سنة؟',
+      'ما المهارة التي إذا أتقنتها ستغيّر كل شيء؟',
+      'ما الذي أتجنبه وأعرف أنه مهم؟',
+      'لو بقي عام واحد في حياتي — ما أول شيء سأفعله؟',
+      'ما أكبر درس تعلمته في آخر 30 يوم؟',
+      'ما الإرث الذي أبنيه بأفعالي اليومية؟',
+    ],
+    en: [
+      'What makes my life truly meaningful right now?',
+      'How do I want to be remembered in 20 years?',
+      'What skill, if mastered, would change everything?',
+      'What am I avoiding that I know is important?',
+      'If I had one year left — what would I do first?',
+      'What is the biggest lesson I learned in the last 30 days?',
+      'What legacy am I building with my daily actions?',
+    ],
+  },
+]
+
+function getPowerQuestions(morningCount) {
+  if (morningCount < 7) return POWER_QUESTIONS_SETS[0]
+  if (morningCount < 21) {
+    // Rotate between set 0 and 1 weekly
+    const weekNum = Math.floor(morningCount / 7)
+    return POWER_QUESTIONS_SETS[weekNum % 2 === 0 ? 0 : 1]
+  }
+  // After 21 days: rotate all 3 sets
+  const weekNum = Math.floor(morningCount / 7)
+  return POWER_QUESTIONS_SETS[weekNum % 3]
 }
+
+// Backward compat alias
+const POWER_QUESTIONS = POWER_QUESTIONS_SETS[0]
 
 function BreathingCircle({ active, phase }) {
   return (
@@ -161,7 +221,9 @@ export default function MorningRitual() {
   const [videoMode, setVideoMode] = useState(false)
 
   const PHASES = PHASES_DATA[lang]
-  const QUESTIONS = POWER_QUESTIONS[lang]
+  const morningCount = (state.morningLog || []).length
+  const currentSet = getPowerQuestions(morningCount)
+  const QUESTIONS = currentSet[lang]
   const donePhases = state.primingPhasesDone || []
 
   const handlePhaseComplete = (phaseId) => {
@@ -230,6 +292,38 @@ export default function MorningRitual() {
               {lang === 'ar' ? 'أنت تبني شخصاً جديداً كل يوم' : 'You are building a new version of yourself every day'}
             </p>
           </div>
+
+          {/* Progressive Challenge — keeps ritual fresh after day 7 */}
+          {morningCount >= 7 && (
+            <div className="rounded-2xl p-4 text-center mb-4 w-full"
+              style={{ background: 'linear-gradient(135deg, rgba(147,112,219,0.08), rgba(52,152,219,0.06))', border: '1px solid rgba(147,112,219,0.2)' }}>
+              <p className="text-xs font-bold mb-1" style={{ color: '#9370db' }}>
+                🎯 {isAr ? 'تحدّي اليوم' : "Today's Challenge"}
+              </p>
+              <p className="text-sm font-bold text-white">
+                {(() => {
+                  const challenges = isAr ? [
+                    'أرسل رسالة شكر لشخص غيّر حياتك',
+                    'تبرّع بشيء صغير اليوم — وقت، مال، أو مساعدة',
+                    'تحدّث مع شخص غريب وابتسم',
+                    'اكتب 3 إنجازات أنت فخور بها ولم تفكر فيها مؤخراً',
+                    'أمضِ 5 دقائق في التنفس العميق وأنت ممتن',
+                    'أخبر شخصاً تحبه لماذا هو مهم في حياتك',
+                    'افعل شيئاً تخاف منه — ولو صغيراً جداً',
+                  ] : [
+                    'Send a thank-you message to someone who changed your life',
+                    'Give something small today — time, money, or help',
+                    'Talk to a stranger and smile',
+                    'Write 3 achievements you\'re proud of but forgot about',
+                    'Spend 5 minutes in deep grateful breathing',
+                    'Tell someone you love why they matter to you',
+                    'Do something you\'re afraid of — even something tiny',
+                  ]
+                  return challenges[Math.floor(Date.now() / 86400000) % challenges.length]
+                })()}
+              </p>
+            </div>
+          )}
           {/* Smart Flow — What's Next (Fix #2) */}
           <button
             onClick={() => navigate(nextStep.path)}
