@@ -103,8 +103,8 @@ function SmartHome() {
 
 function AppRoutes() {
   const { currentUser } = useAuth()
-  // hasData flag is stored after login to know if backend already has state
-  const hasData = !!localStorage.getItem('upw-token')
+  // hasData: use backend's flag if available, otherwise fall back to token check
+  const hasData = localStorage.getItem('upw-hasData') === '1' || !!localStorage.getItem('upw-token')
 
   if (!currentUser) return <LoginPage />
 

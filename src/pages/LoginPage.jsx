@@ -13,6 +13,10 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     const result = await login(email.trim(), password)
+    if (result.ok) {
+      // Store the real hasData flag from backend (not just token existence)
+      localStorage.setItem('upw-hasData', result.hasData ? '1' : '0')
+    }
     if (!result.ok) setError(result.error || 'البريد الإلكتروني أو كلمة المرور غير صحيحة')
     setLoading(false)
   }

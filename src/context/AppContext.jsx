@@ -522,21 +522,66 @@ export function AppProvider({ children, userId, hasData }) {
     return merged
   }
 
+  // ── Check if a state object has real user data (not just defaults) ──
+  function hasRealData(s) {
+    if (!s) return false
+    return (s.morningLog?.length > 0) ||
+           (s.stateLog?.length > 0) ||
+           (s.streak > 0) ||
+           (s.name && s.name !== '' && s.onboardingDone)
+  }
+
   // ── Pull from backend and merge ──────────────────────────────────────
-  async function pullAndMerge() {
+  async function pullAndMerge(isInitial = false) {
     try {
+      setSyncing(true)
       const { state: remoteState } = await upwApi.getState()
-      if (!remoteState || !isMounted.current) return
+      if (!isMounted.current) return
+
       const base = userId === 'admin' ? INITIAL_STATE : STUDENT_INITIAL_STATE
       const localState = loadState(userId)
-      const merged = smartMerge(remoteState, localState, base)
+
+      let final
+      if (!remoteState || !hasRealData(remoteState)) {
+        // Backend has no data — keep local (or initial) state
+        // If local has real data AND this is initial sync, push to backend
+        if (hasRealData(localState) && isInitial) {
+          localState._lastSyncedAt = Date.now()
+          saveState(localState, userId)
+          upwApi.saveState(localState).catch(() => {})
+        }
+        return // don't overwrite local with empty remote
+      }
+
+      if (!hasRealData(localState)) {
+        // Local is empty (fresh device) — use remote directly, no merge needed
+        final = { ...base, ...remoteState }
+      } else {
+        // Both have data — smart merge
+        final = smartMerge(remoteState, localState, base)
+      }
+
       // Stamp sync time
-      merged._lastSyncedAt = Date.now()
-      setStateRaw(merged)
-      saveState(merged, userId)
+      final._lastSyncedAt = Date.now()
+      setStateRaw(final)
+      saveState(final, userId)
       // Push merged state back so backend has the complete picture
-      upwApi.saveState(merged).catch(() => {})
-    } catch {}
+      upwApi.saveState(final).catch(() => {})
+    } catch (err) {
+      console.warn('[UPW Sync] Pull failed:', err?.message || err)
+      // Show toast only on initial load so user knows sync failed
+      if (isInitial) {
+        const _lang = localStorage.getItem('upw-lang') || 'ar'
+        showToast(
+          _lang === 'ar'
+            ? 'تعذر المزامنة — بياناتك المحلية محفوظة'
+            : 'Sync failed — your local data is safe',
+          'info', 3000
+        )
+      }
+    } finally {
+      setSyncing(false)
+    }
   }
 
   // On mount: fetch state from backend (or upload localStorage if first time)
@@ -545,15 +590,19 @@ export function AppProvider({ children, userId, hasData }) {
     async function initSync() {
       try {
         if (hasData) {
-          await pullAndMerge()
+          await pullAndMerge(true)
         } else {
           // First sync: push localStorage state to backend
           const localState = loadState(userId)
-          localState._lastSyncedAt = Date.now()
-          saveState(localState, userId)
-          await upwApi.saveState(localState)
+          if (hasRealData(localState)) {
+            localState._lastSyncedAt = Date.now()
+            saveState(localState, userId)
+            await upwApi.saveState(localState)
+          }
         }
-      } catch {}
+      } catch (err) {
+        console.warn('[UPW Sync] Init failed:', err?.message || err)
+      }
     }
     initSync()
     return () => { isMounted.current = false }
@@ -573,6 +622,33 @@ export function AppProvider({ children, userId, hasData }) {
     document.addEventListener('visibilitychange', onVisibilityChange)
     return () => document.removeEventListener('visibilitychange', onVisibilityChange)
   }, [hasData, userId]) // eslint-disable-line
+
+  // ── Flush pending sync before page unload (closing tab/browser) ──
+  useEffect(() => {
+    function onBeforeUnload() {
+      // Cancel debounced timer and send immediately via sendBeacon
+      if (syncTimer.current) {
+        clearTimeout(syncTimer.current)
+        syncTimer.current = null
+      }
+      const currentState = loadState(userId)
+      if (hasRealData(currentState)) {
+        const token = localStorage.getItem('upw-token')
+        const API = import.meta.env.DEV ? 'http://localhost:3001' : 'https://www.salahmakki.app'
+        const blob = new Blob(
+          [JSON.stringify({ state: currentState })],
+          { type: 'application/json' }
+        )
+        // sendBeacon works even during page unload
+        navigator.sendBeacon?.(
+          `${API}/api/upw/sync?token=${token}`,
+          blob
+        )
+      }
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [userId]) // eslint-disable-line
 
   // ── Daily reset: clear today-flags when a new day starts ──────────────────
   useEffect(() => {
