@@ -276,6 +276,172 @@ export default function SleepTracker() {
     return { avgStateGood, avgStatePoor, diff, goodCount: goodSleepDays.length, poorCount: poorSleepDays.length }
   }, [sleepLog, state.stateCheckin])
 
+  // Tonight's Recommendation — personalized behavioral advice
+  const tonightRec = useMemo(() => {
+    const entries = []
+    for (let i = 1; i <= 14; i++) {
+      const key = getDateKey(i)
+      if (sleepLog[key]?.hours) entries.push({ date: key, ...sleepLog[key] })
+    }
+    if (entries.length < 3) return null
+
+    const last3 = entries.slice(0, 3)
+    const checkin = state.stateCheckin || {}
+
+    // Avg bedtime (in minutes past midnight, handling post-midnight)
+    const bedtimeMins = last3
+      .filter(e => e.bedtime)
+      .map(e => {
+        const [h, m] = e.bedtime.split(':').map(Number)
+        return h < 12 ? (h + 24) * 60 + m : h * 60 + m  // treat 00:30 as 24:30
+      })
+    const avgBedtimeMin = bedtimeMins.length > 0
+      ? Math.round(bedtimeMins.reduce((s, v) => s + v, 0) / bedtimeMins.length)
+      : null
+
+    // Avg waketime (in minutes)
+    const waketimeMins = last3
+      .filter(e => e.waketime)
+      .map(e => {
+        const [h, m] = e.waketime.split(':').map(Number)
+        return h * 60 + m
+      })
+    const avgWaketimeMin = waketimeMins.length > 0
+      ? Math.round(waketimeMins.reduce((s, v) => s + v, 0) / waketimeMins.length)
+      : null
+
+    // Ideal bedtime = avg waketime - 8 hours
+    let idealBedtime = null
+    if (avgWaketimeMin !== null) {
+      let idealMin = avgWaketimeMin - 480 // 8 hours
+      if (idealMin < 0) idealMin += 1440
+      const ih = Math.floor(idealMin / 60) % 24
+      const im = idealMin % 60
+      idealBedtime = `${String(ih).padStart(2, '0')}:${String(im).padStart(2, '0')}`
+    }
+
+    const avgHours = last3.reduce((s, e) => s + e.hours, 0) / last3.length
+    const avgQuality = last3.reduce((s, e) => s + (e.quality || 0), 0) / last3.length
+
+    // Quality declining trend: last3[0] is most recent
+    const qualityDeclining = last3.length >= 3 &&
+      last3[0].quality < last3[1].quality && last3[1].quality < last3[2].quality
+
+    // Tomorrow's state check — recent state avg < 6 signals a tough stretch
+    const recentStateKeys = [getDateKey(0), getDateKey(1), getDateKey(2)]
+    const recentStates = recentStateKeys
+      .map(k => checkin[k])
+      .filter(Boolean)
+      .map(c => (c.energy + c.mood + c.clarity) / 3)
+    const avgRecentState = recentStates.length > 0
+      ? recentStates.reduce((s, v) => s + v, 0) / recentStates.length
+      : null
+
+    // Determine recommendation (priority order)
+    if (avgBedtimeMin !== null && avgBedtimeMin >= 24 * 60) {
+      // After midnight
+      return {
+        emoji: '🕐',
+        title: isAr ? 'نم مبكراً الليلة' : 'Sleep Earlier Tonight',
+        desc: isAr
+          ? 'متوسط وقت نومك بعد الـ 12 — حاول النوم قبل 30 دقيقة الليلة'
+          : 'Your avg bedtime is after midnight — try sleeping 30 min earlier tonight',
+        idealBedtime,
+      }
+    }
+
+    if (qualityDeclining) {
+      return {
+        emoji: '📵',
+        title: isAr ? 'جودة نومك تنخفض' : 'Quality Is Declining',
+        desc: isAr
+          ? 'الجودة تتراجع — جرّب إيقاف الشاشات قبل النوم بساعة الليلة'
+          : 'Quality declining — try no screens 1h before bed tonight',
+        idealBedtime,
+      }
+    }
+
+    if (avgHours < 7) {
+      return {
+        emoji: '⚠️',
+        title: isAr ? 'دَيْن النوم يتراكم' : 'Sleep Debt Is Building',
+        desc: isAr
+          ? 'ساعات نومك أقل من 7 — حاول إضافة ساعة إضافية الليلة'
+          : 'Sleep debt is building — aim for an extra hour tonight',
+        idealBedtime,
+      }
+    }
+
+    if (avgRecentState !== null && avgRecentState < 6) {
+      return {
+        emoji: '🔋',
+        title: isAr ? 'غداً يحتاج أفضل طاقتك' : 'Tomorrow Needs Your Best',
+        desc: isAr
+          ? 'حالتك الأخيرة منخفضة — أعطِ الأولوية لـ 8 ساعات نوم الليلة'
+          : 'Your recent state is low — prioritize 8 hours tonight',
+        idealBedtime,
+      }
+    }
+
+    if (avgHours >= 7 && avgQuality >= 7) {
+      return {
+        emoji: '🌟',
+        title: isAr ? 'نومك ممتاز!' : 'Your Sleep Is Great!',
+        desc: isAr
+          ? 'حافظ على هذا الإيقاع — الاستمرارية هي المفتاح'
+          : 'Keep this rhythm — consistency is key',
+        idealBedtime,
+      }
+    }
+
+    // Generic fallback
+    return {
+      emoji: '🌙',
+      title: isAr ? 'خطة الليلة' : 'Tonight\'s Plan',
+      desc: isAr
+        ? 'استهدف 7-8 ساعات نوم جيدة الليلة'
+        : 'Aim for 7-8 hours of quality sleep tonight',
+      idealBedtime,
+    }
+  }, [sleepLog, state.stateCheckin, isAr])
+
+  // Habit → State Impact: sleep + morning ritual → state correlation
+  const habitStateImpact = useMemo(() => {
+    const checkin = state.stateCheckin || {}
+    const morningLog = state.morningLog || []
+    const morningSet = new Set(morningLog)
+
+    const withBoth = []  // good sleep AND morning ritual next day
+    const withoutBoth = []  // everything else
+
+    Object.entries(sleepLog).forEach(([date, entry]) => {
+      if (!entry?.hours) return
+      // Check the NEXT day for morning ritual and state
+      const d = new Date(date + 'T00:00:00')
+      d.setDate(d.getDate() + 1)
+      const nextDay = d.toISOString().split('T')[0]
+      const nextCheckin = checkin[nextDay]
+      if (!nextCheckin) return
+
+      const stateAvg = Math.round(((nextCheckin.energy + nextCheckin.mood + nextCheckin.clarity) / 3) * 10) / 10
+      const goodSleep = entry.hours >= 7
+      const didRitual = morningSet.has(nextDay)
+
+      if (goodSleep && didRitual) {
+        withBoth.push(stateAvg)
+      } else {
+        withoutBoth.push(stateAvg)
+      }
+    })
+
+    if (withBoth.length < 2 || withoutBoth.length < 2) return null
+
+    const avgWith = Math.round(withBoth.reduce((s, v) => s + v, 0) / withBoth.length * 10) / 10
+    const avgWithout = Math.round(withoutBoth.reduce((s, v) => s + v, 0) / withoutBoth.length * 10) / 10
+
+    return { avgWith, avgWithout, withCount: withBoth.length, withoutCount: withoutBoth.length }
+  }, [sleepLog, state.stateCheckin, state.morningLog])
+
   // Last 14 days for history
   const history = useMemo(() => {
     const result = []
@@ -318,6 +484,101 @@ export default function SleepTracker() {
           </div>
         </div>
       </div>
+
+      {/* Tonight's Smart Plan — behavioral recommendation */}
+      {tonightRec && (
+        <div
+          className="rounded-2xl p-4 mb-4"
+          style={{
+            background: '#0e0e0e',
+            borderLeft: '4px solid #9370db',
+            border: '1px solid rgba(147,112,219,0.25)',
+            borderLeftWidth: 4,
+            borderLeftColor: '#9370db',
+          }}
+        >
+          <h3
+            className="text-sm font-bold mb-3 flex items-center gap-2"
+            style={{ color: '#c9a84c' }}
+          >
+            <span>🌙</span> {t('خطة الليلة الذكية', 'Tonight\'s Smart Plan')}
+          </h3>
+
+          <div className="flex items-start gap-3 mb-3">
+            <span className="text-2xl mt-0.5">{tonightRec.emoji}</span>
+            <div className="flex-1">
+              <p className="font-bold text-sm mb-1" style={{ color: '#e0e0e0' }}>
+                {tonightRec.title}
+              </p>
+              <p className="text-xs leading-relaxed" style={{ color: '#999' }}>
+                {tonightRec.desc}
+              </p>
+            </div>
+          </div>
+
+          {tonightRec.idealBedtime && (
+            <div
+              className="flex items-center gap-2 px-3 py-2 rounded-lg"
+              style={{ background: 'rgba(147,112,219,0.1)', border: '1px solid rgba(147,112,219,0.2)' }}
+            >
+              <Clock size={14} style={{ color: '#9370db' }} />
+              <span className="text-xs" style={{ color: '#888' }}>
+                {t('وقت النوم المثالي:', 'Ideal bedtime:')}
+              </span>
+              <span className="font-bold text-sm" style={{ color: '#9370db' }}>
+                {tonightRec.idealBedtime}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Habit → State Impact Insight */}
+      {habitStateImpact && (
+        <div
+          className="rounded-2xl p-4 mb-4"
+          style={{
+            background: '#0e0e0e',
+            border: '1px solid rgba(201,168,76,0.2)',
+          }}
+        >
+          <h3 className="text-xs font-bold mb-2 flex items-center gap-2" style={{ color: '#c9a84c' }}>
+            ⚡ {t('نوم + روتين صباحي = حالة أفضل', 'Sleep + Morning Ritual = Better State')}
+          </h3>
+          <div className="grid grid-cols-2 gap-2 mb-2">
+            <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(46,204,113,0.08)', border: '1px solid rgba(46,204,113,0.15)' }}>
+              <p className="text-xs mb-0.5" style={{ color: '#888' }}>
+                {t('نوم ٧+ + روتين ☀️', '7+ Sleep + Ritual ☀️')}
+              </p>
+              <p className="text-lg font-black" style={{ color: '#2ecc71' }}>
+                {habitStateImpact.avgWith}
+              </p>
+              <p className="text-xs" style={{ color: '#555' }}>
+                ({habitStateImpact.withCount} {t('يوم', 'days')})
+              </p>
+            </div>
+            <div className="rounded-lg p-2 text-center" style={{ background: 'rgba(231,76,60,0.08)', border: '1px solid rgba(231,76,60,0.15)' }}>
+              <p className="text-xs mb-0.5" style={{ color: '#888' }}>
+                {t('بدون الاثنين معاً', 'Without Both')}
+              </p>
+              <p className="text-lg font-black" style={{ color: '#e74c3c' }}>
+                {habitStateImpact.avgWithout}
+              </p>
+              <p className="text-xs" style={{ color: '#555' }}>
+                ({habitStateImpact.withoutCount} {t('يوم', 'days')})
+              </p>
+            </div>
+          </div>
+          {habitStateImpact.avgWith > habitStateImpact.avgWithout && (
+            <p className="text-xs font-bold text-center" style={{ color: '#c9a84c' }}>
+              💡 {t(
+                `النوم ٧+ ساعات + الروتين الصباحي = حالتك تصل ${habitStateImpact.avgWith} (مقابل ${habitStateImpact.avgWithout} بدونهم)`,
+                `Sleep 7+ hrs + Morning Ritual → Your state averages ${habitStateImpact.avgWith} (vs ${habitStateImpact.avgWithout} without)`
+              )}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Today's Entry */}
       <div className="card p-4 mb-4">

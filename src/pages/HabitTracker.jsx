@@ -172,6 +172,68 @@ export default function HabitTracker() {
     }
   }, [doneCount, todayLog, list, isAr])
 
+  // Impact Attribution: which habit correlates most with good state days
+  const habitImpact = useMemo(() => {
+    const checkin = state.stateCheckin || {}
+    // Build last 14 days
+    const dates = Array.from({ length: 14 }, (_, i) => {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      return d.toISOString().split('T')[0]
+    })
+    // Only dates that have a state check-in
+    const datesWithState = dates.filter(d => checkin[d]?.energy)
+    if (datesWithState.length < 3) return null
+
+    let best = null
+    for (const habit of list) {
+      const doneStates = []
+      const notDoneStates = []
+      for (const d of datesWithState) {
+        const avg = (checkin[d].energy + checkin[d].mood + checkin[d].clarity) / 3
+        if ((log[d] || []).includes(habit.id)) {
+          doneStates.push(avg)
+        } else {
+          notDoneStates.push(avg)
+        }
+      }
+      // Need at least 2 days done and 1 day not-done (or vice versa) for meaningful comparison
+      if (doneStates.length < 2 || notDoneStates.length < 1) continue
+      const avgDone = doneStates.reduce((a, b) => a + b, 0) / doneStates.length
+      const avgNotDone = notDoneStates.reduce((a, b) => a + b, 0) / notDoneStates.length
+      const impact = Math.round((avgDone - avgNotDone) * 10) / 10
+      if (impact > 0.3 && (!best || impact > best.impact)) {
+        best = {
+          habit,
+          avgDone: Math.round(avgDone * 10) / 10,
+          avgNotDone: Math.round(avgNotDone * 10) / 10,
+          impact,
+        }
+      }
+    }
+    return best
+  }, [list, log, state.stateCheckin])
+
+  // Focus Suggestion based on progress + impact
+  const focusSuggestion = useMemo(() => {
+    if (totalCount === 0) return null
+    if (progressPct > 50) {
+      return {
+        type: 'fire',
+        textAr: 'أنت في أفضل حالاتك! استمر بالزخم!',
+        textEn: "You're on fire — keep the momentum going!",
+      }
+    }
+    if (progressPct < 25 && habitImpact) {
+      return {
+        type: 'start',
+        textAr: `ابدأ بعادة "${habitImpact.habit.nameAr}" أولاً — تصنع أكبر فرق في حالتك`,
+        textEn: `Start with "${habitImpact.habit.nameEn}" first — it makes the biggest difference`,
+      }
+    }
+    return null
+  }, [progressPct, totalCount, habitImpact])
+
   function dayLabel(dateStr) {
     const d = new Date(dateStr)
     return d.toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { weekday: 'short' })
@@ -258,6 +320,42 @@ export default function HabitTracker() {
             </p>
           )}
         </div>
+
+        {/* Impact Attribution Card */}
+        {!isNewHabitUser && habitImpact && (
+          <div className="rounded-2xl p-3" style={{ background: 'rgba(46,204,113,0.06)', border: '1px solid rgba(46,204,113,0.2)' }}>
+            <p className="text-xs font-bold mb-2" style={{ color: '#2ecc71' }}>
+              💡 {isAr ? 'أكثر عادة تؤثر على حالتك' : 'Your Highest-Impact Habit'}
+            </p>
+            <div className="flex items-center gap-3 rounded-xl p-3" style={{ background: '#111', border: '1px solid #2a2a2a' }}>
+              <span className="text-2xl">{habitImpact.habit.emoji}</span>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-white">{isAr ? habitImpact.habit.nameAr : habitImpact.habit.nameEn}</p>
+                <p className="text-xs mt-1" style={{ color: '#888' }}>
+                  {isAr
+                    ? `أيام مع العادة: حالة ${habitImpact.avgDone}/10 | بدونها: ${habitImpact.avgNotDone}/10`
+                    : `Days with habit: state ${habitImpact.avgDone}/10 | Without: ${habitImpact.avgNotDone}/10`}
+                </p>
+                <p className="text-xs font-bold mt-1" style={{ color: '#2ecc71' }}>
+                  ↑ +{habitImpact.impact} {isAr ? 'نقطة تأثير' : 'impact points'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Focus Suggestion */}
+        {!isNewHabitUser && focusSuggestion && (
+          <div className="rounded-2xl p-3" style={{
+            background: focusSuggestion.type === 'fire' ? 'rgba(243,156,18,0.06)' : 'rgba(46,204,113,0.06)',
+            border: `1px solid ${focusSuggestion.type === 'fire' ? 'rgba(243,156,18,0.2)' : 'rgba(46,204,113,0.2)'}`,
+          }}>
+            <p className="text-xs font-bold" style={{ color: focusSuggestion.type === 'fire' ? '#f39c12' : '#2ecc71' }}>
+              {focusSuggestion.type === 'fire' ? '🔥' : '🎯'}{' '}
+              {isAr ? focusSuggestion.textAr : focusSuggestion.textEn}
+            </p>
+          </div>
+        )}
 
         {/* #10 — Habit Stacking Tip (hidden for new users) */}
         {!isNewHabitUser && stackingTip && doneCount > 0 && doneCount < totalCount && (

@@ -3,7 +3,7 @@
  * Inspired by Chet Holmes "Ultimate Sales Machine" Core Story methodology
  * Tab 1: Core Story  |  Tab 2: Content Calendar  |  Tab 3: Lead Magnets
  */
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
 import Layout from '../components/Layout'
@@ -307,6 +307,81 @@ function ContentCalendarTab({ state, update, isAr }) {
   }, {})
   const bestLeadsPlatform = Object.entries(leadsByPlatform).sort((a, b) => b[1] - a[1])[0]
 
+  // ── Content → Revenue Attribution (cross-references contentLog with businessScorecard) ──
+  const revenueAttribution = useMemo(() => {
+    const scorecard = state.businessScorecard || {}
+    if (!log.length || !Object.keys(scorecard).length) return null
+
+    // Build set of dates with content posted
+    const contentDates = new Set(log.map(e => e.date))
+
+    // Gather all scorecard days that have leads > 0
+    let contentDayLeads = []
+    let nonContentDayLeads = []
+
+    Object.entries(scorecard).forEach(([date, entry]) => {
+      const leads = Number(entry?.leads) || 0
+      if (contentDates.has(date)) {
+        contentDayLeads.push(leads)
+      } else {
+        nonContentDayLeads.push(leads)
+      }
+    })
+
+    // Need at least 3 overlapping days (days present in both systems)
+    const totalOverlap = contentDayLeads.length + nonContentDayLeads.length
+    if (totalOverlap < 3 || contentDayLeads.length === 0) return null
+
+    const avgContentLeads = contentDayLeads.length > 0
+      ? (contentDayLeads.reduce((s, v) => s + v, 0) / contentDayLeads.length).toFixed(1)
+      : '0'
+    const avgNonContentLeads = nonContentDayLeads.length > 0
+      ? (nonContentDayLeads.reduce((s, v) => s + v, 0) / nonContentDayLeads.length).toFixed(1)
+      : '0'
+
+    return { avgContentLeads, avgNonContentLeads, contentDays: contentDayLeads.length, nonContentDays: nonContentDayLeads.length }
+  }, [log, state.businessScorecard])
+
+  // ── Smart Content Suggestion (best type + platform combo by leads) ──
+  const smartSuggestion = useMemo(() => {
+    const entriesWithLeads = log.filter(e => Number(e.leadsGenerated) > 0)
+    if (entriesWithLeads.length < 3) return null
+
+    // Best content TYPE by average leads
+    const typeLeads = {}
+    const typeCounts = {}
+    entriesWithLeads.forEach(e => {
+      if (!e.type) return
+      typeLeads[e.type] = (typeLeads[e.type] || 0) + Number(e.leadsGenerated)
+      typeCounts[e.type] = (typeCounts[e.type] || 0) + 1
+    })
+    const bestType = Object.entries(typeLeads)
+      .map(([type, total]) => ({ type, avg: total / typeCounts[type] }))
+      .sort((a, b) => b.avg - a.avg)[0]
+
+    // Best PLATFORM by average leads
+    const platLeads = {}
+    const platCounts = {}
+    entriesWithLeads.forEach(e => {
+      if (!e.platform) return
+      platLeads[e.platform] = (platLeads[e.platform] || 0) + Number(e.leadsGenerated)
+      platCounts[e.platform] = (platCounts[e.platform] || 0) + 1
+    })
+    const bestPlat = Object.entries(platLeads)
+      .map(([platform, total]) => ({ platform, avg: total / platCounts[platform] }))
+      .sort((a, b) => b.avg - a.avg)[0]
+
+    if (!bestType || !bestPlat) return null
+
+    // Check the specific combo average
+    const comboEntries = entriesWithLeads.filter(e => e.type === bestType.type && e.platform === bestPlat.platform)
+    const comboAvg = comboEntries.length > 0
+      ? (comboEntries.reduce((s, e) => s + Number(e.leadsGenerated), 0) / comboEntries.length).toFixed(1)
+      : Math.max(bestType.avg, bestPlat.avg).toFixed(1)
+
+    return { type: bestType.type, platform: bestPlat.platform, avg: comboAvg }
+  }, [log])
+
   const setF = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
   const saveLog = () => {
@@ -361,6 +436,55 @@ function ContentCalendarTab({ state, update, isAr }) {
           small
         />
       </div>
+
+      {/* Content → Revenue Attribution */}
+      {revenueAttribution && (
+        <div className="rounded-2xl p-3 space-y-1" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)' }}>
+          <p className="text-xs font-bold" style={{ color: '#c9a84c' }}>
+            📊 {isAr ? 'ربط المحتوى بالإيرادات' : 'Content → Revenue Attribution'}
+          </p>
+          <div className="flex gap-2 mt-1">
+            <div className="flex-1 rounded-xl p-2 text-center" style={{ background: '#1a1a1a' }}>
+              <div className="text-sm font-black" style={{ color: '#2ecc71' }}>{revenueAttribution.avgContentLeads}</div>
+              <div className="text-xs" style={{ color: '#888' }}>
+                {isAr ? 'وسطي ليدز (أيام محتوى)' : 'Avg leads (content days)'}
+              </div>
+              <div className="text-xs" style={{ color: '#555' }}>{revenueAttribution.contentDays} {isAr ? 'يوم' : 'days'}</div>
+            </div>
+            <div className="flex-1 rounded-xl p-2 text-center" style={{ background: '#1a1a1a' }}>
+              <div className="text-sm font-black" style={{ color: '#e74c3c' }}>{revenueAttribution.avgNonContentLeads}</div>
+              <div className="text-xs" style={{ color: '#888' }}>
+                {isAr ? 'وسطي ليدز (بدون محتوى)' : 'Avg leads (no content)'}
+              </div>
+              <div className="text-xs" style={{ color: '#555' }}>{revenueAttribution.nonContentDays} {isAr ? 'يوم' : 'days'}</div>
+            </div>
+          </div>
+          <p className="text-xs mt-1" style={{ color: '#888' }}>
+            {isAr
+              ? `أيام نشر المحتوى → وسطي ${revenueAttribution.avgContentLeads} ليدز | بدون نشر → وسطي ${revenueAttribution.avgNonContentLeads} ليدز`
+              : `Days with content posted → avg ${revenueAttribution.avgContentLeads} leads | Days without → avg ${revenueAttribution.avgNonContentLeads} leads`}
+          </p>
+        </div>
+      )}
+
+      {/* Smart Content Suggestion */}
+      {smartSuggestion && (
+        <div className="rounded-2xl p-3" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)' }}>
+          <p className="text-xs font-bold" style={{ color: '#c9a84c' }}>
+            💡 {isAr ? 'اقتراح ذكي للمحتوى' : 'Smart Content Suggestion'}
+          </p>
+          <p className="text-sm font-bold mt-1" style={{ color: '#fff' }}>
+            {isAr
+              ? `أفضل تركيبة: ${smartSuggestion.type} على ${smartSuggestion.platform} → وسطي ${smartSuggestion.avg} ليدز`
+              : `Your best combo: ${smartSuggestion.type} on ${smartSuggestion.platform} → avg ${smartSuggestion.avg} leads`}
+          </p>
+          <p className="text-xs mt-1" style={{ color: '#555' }}>
+            {isAr
+              ? 'بناءً على بيانات المحتوى السابقة'
+              : 'Based on your past content performance data'}
+          </p>
+        </div>
+      )}
 
       {/* Add Content */}
       {!showForm ? (

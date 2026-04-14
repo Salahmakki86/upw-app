@@ -45,6 +45,9 @@ export function getDashboardVisibility(state) {
     learnCategory:    true, // always visible (educational content)
     weeklyReport:     level >= 2,
 
+    // Level 2+ — Intelligence (surface early)
+    miniInsight:      level >= 2,
+
     // Level 3 — After 7 mornings
     adaptiveNudge:    level >= 3,
     staleGoalNudge:   level >= 3,
@@ -82,12 +85,13 @@ export function getTodayVisibility(state) {
 
     // Level 2+
     personalTip:       level >= 2,
+    personalizedCoach: level >= 2,
     staleGoalNudge:    level >= 2,
     accountability:    level >= 2,
     smartQuestion:     level >= 2,
     todaysPlan:        true,
 
-    // Level 3+
+    // Level 3+ (full intelligence)
     transformPulse:    level >= 3,
     progressSnapshot:  level >= 3,
     morningCommitment: true,

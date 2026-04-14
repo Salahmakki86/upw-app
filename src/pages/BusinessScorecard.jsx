@@ -128,6 +128,93 @@ export default function BusinessScorecard() {
     return null
   }, [scorecard, state.stateLog])
 
+  // Previous week revenue (for comparison)
+  const prevWeekRevenue = useMemo(() => {
+    let total = 0
+    Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(); d.setDate(d.getDate() - (13 - i))
+      return d.toISOString().slice(0, 10)
+    }).forEach(d => {
+      total += Number(scorecard[d]?.revenue) || 0
+    })
+    return total
+  }, [scorecard])
+
+  // Actionable recommendations based on saved data
+  const actionableRecommendations = useMemo(() => {
+    const recs = []
+
+    // Low calls
+    if (weekStats.totalCalls < 5) {
+      recs.push({
+        emoji: '📞',
+        text: isAr
+          ? 'مكالماتك هذا الأسبوع قليلة — خصص ساعة غداً للتواصل'
+          : 'Your calls this week are low — block 1 hour tomorrow for outreach',
+        priority: true,
+      })
+    }
+
+    // Zero leads
+    if (weekStats.totalLeads === 0) {
+      recs.push({
+        emoji: '🧲',
+        text: isAr
+          ? 'صفر عملاء هذا الأسبوع. راجع أفضل مصدر عملاء وركّز عليه'
+          : 'Zero leads this week. Revisit your top lead source and double down',
+        priority: true,
+      })
+    }
+
+    // Revenue dipping vs previous week
+    if (weekStats.totalRevenue > 0 && prevWeekRevenue > 0 && weekStats.totalRevenue < prevWeekRevenue) {
+      recs.push({
+        emoji: '📉',
+        text: isAr
+          ? 'الإيرادات تنخفض — حان وقت حملة متابعة مكثفة'
+          : 'Revenue dipping — time for a follow-up blitz',
+        priority: true,
+      })
+    }
+
+    // Top source recommendation
+    if (topSource) {
+      const srcLabel = SOURCES.find(s => s.key === topSource)?.[isAr ? 'ar' : 'en'] ?? topSource
+      recs.push({
+        emoji: '🎯',
+        text: isAr
+          ? `ضاعف جهودك على ${srcLabel} — إنه أقوى قناة لديك`
+          : `Double down on ${srcLabel} — it's your strongest channel`,
+        priority: false,
+      })
+    }
+
+    // Blocker today
+    const todayBlocker = form.blocker || todayData.blocker
+    if (todayBlocker) {
+      recs.push({
+        emoji: '🚧',
+        text: isAr
+          ? `عائقك #1: ${todayBlocker}. ما هو الإجراء الواحد لإزالته؟`
+          : `Your #1 blocker: ${todayBlocker}. What's ONE action to remove it?`,
+        priority: true,
+      })
+    }
+
+    // State correlation insight
+    if (stateCorrelation) {
+      recs.push({
+        emoji: '🧠',
+        text: isAr
+          ? 'ابدأ غداً في حالة جميلة — بياناتك تُثبت أنها = إيرادات أكثر'
+          : 'Start tomorrow in beautiful state — your data shows it = more revenue',
+        priority: false,
+      })
+    }
+
+    return recs
+  }, [weekStats, prevWeekRevenue, topSource, form.blocker, todayData.blocker, stateCorrelation, isAr])
+
   // Revenue bar chart
   const maxRevenue = Math.max(...last7.map(d => Number(scorecard[d]?.revenue) || 0), 1)
 
@@ -289,6 +376,30 @@ export default function BusinessScorecard() {
             {saved ? '✓ ' + (isAr ? 'تم الحفظ' : 'Saved') : '💾 ' + (isAr ? 'احفظ السبورة' : 'Save Scorecard')}
           </button>
         </div>
+
+        {/* Post-Save Behavioral Recommendations */}
+        {(saved || todayData.savedAt) && actionableRecommendations.length > 0 && (
+          <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', borderLeft: '3px solid #c9a84c', border: '1px solid #1e1e1e', borderLeftColor: '#c9a84c', borderLeftWidth: 3 }}>
+            <p className="text-xs font-black uppercase tracking-widest mb-3" style={{ color: '#c9a84c' }}>
+              📋 {isAr ? 'خطوات الغد' : "Tomorrow's Actions"}
+            </p>
+            <div className="space-y-2">
+              {actionableRecommendations.slice(0, 3).map((rec, i) => (
+                <div key={i} className="flex items-start gap-3 rounded-xl p-3" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a' }}>
+                  <span className="text-lg flex-shrink-0">{rec.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-white leading-relaxed">{rec.text}</p>
+                    {rec.priority && (
+                      <span className="text-xs mt-1 inline-block px-2 py-0.5 rounded-full" style={{ background: 'rgba(201,168,76,0.1)', color: '#c9a84c', fontSize: 9, fontWeight: 800 }}>
+                        {isAr ? 'أولوية عالية' : 'High Priority'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* History */}
         {weekStats.daysLogged > 0 && (

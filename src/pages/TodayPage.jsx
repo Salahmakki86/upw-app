@@ -17,6 +17,7 @@ import AccountabilityCard from '../components/AccountabilityCard'
 import ProgressSnapshot from '../components/ProgressSnapshot'
 import WelcomeExperience from '../components/WelcomeExperience'
 import WeeklyDiscovery from '../components/WeeklyDiscovery'
+import PersonalizedCoachCard from '../components/PersonalizedCoachCard'
 import { generateBriefing } from '../utils/morningBriefing'
 import { calcWeightedScore, getScoreInsight } from '../utils/dailyScore'
 import { getDailyPersonalizedTip } from '../utils/personalization'
@@ -450,6 +451,13 @@ export default function TodayPage() {
           </div>
           <ScoreRing score={score} total={7} weighted={weightedScore} insight={scoreInsight} isAr={isAr} />
         </div>
+
+        {/* ── Personalized AI Coach Card — "this app understands me" ──── */}
+        {todayVis.personalizedCoach && (
+          <div style={{ marginBottom: 14 }}>
+            <PersonalizedCoachCard />
+          </div>
+        )}
 
         {/* ── Morning Briefing — Smart Intelligence Sentence ──────────── */}
         {briefing && (

@@ -30,6 +30,7 @@ import AdaptiveNudge from '../components/AdaptiveNudge'
 import ProfileAssessment from '../components/ProfileAssessment'
 import StaleGoalNudge from '../components/StaleGoalNudge'
 import WeeklyAutoReport from '../components/WeeklyAutoReport'
+import MiniInsightBanner from '../components/MiniInsightBanner'
 import GuidedJourney from '../components/GuidedJourney'
 import { getCategoryOrder } from '../utils/adaptivePath'
 import { getDashboardVisibility, getUIComplexity } from '../utils/progressiveUI'
@@ -431,6 +432,9 @@ export default function Dashboard() {
         {/* ── Weekly Auto Report (Fix #18) ── */}
         {vis.weeklyReport && <WeeklyAutoReport />}
 
+        {/* ── Mini Intelligence Banner — visible earlier ──────── */}
+        {vis.miniInsight && <MiniInsightBanner />}
+
         {/* ── Enhanced State Check-in ─────────────────────────── */}
         {state.stateCheckin?.[today] ? (
           <StateCheckin compact onDone={() => setShowStateModal(false)} />
@@ -438,7 +442,7 @@ export default function Dashboard() {
           <StateCheckin onDone={() => {}} />
         )}
 
-        {/* ── Transformation Intelligence ─────────────────────── */}
+        {/* ── Transformation Intelligence (full — level 3+) ──── */}
         {vis.transformPulse && <TransformationPulse />}
 
         {/* ── Today's Plan (from yesterday's evening) ────────── */}

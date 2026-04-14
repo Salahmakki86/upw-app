@@ -55,6 +55,10 @@ export default function GratitudeJournal() {
   const allDone = filled === 3
   const streak = useMemo(() => calcStreak(gratitude, today), [gratitude, today])
 
+  // Progressive: hide advanced elements for new users
+  const totalGratitudeDays = Object.keys(gratitude).filter(d => (gratitude[d] || []).filter(v => v && v.trim()).length >= 3).length
+  const isNewUser = totalGratitudeDays < 3
+
   const last7 = useMemo(() => getLast7Days(), [])
   const historyDays = last7.filter(d => d !== today && (gratitude[d] || []).some(v => v && v.trim()))
 
@@ -109,11 +113,13 @@ export default function GratitudeJournal() {
               </span>
             </div>
           )}
-          <p className="text-xs mt-3 px-2" style={{ color: '#666', lineHeight: 1.7 }}>
-            {isAr
-              ? '🧠 علم الأعصاب: ٣ أشياء يومياً تعيد برمجة دماغك نحو الإيجابية في ٢١ يوماً'
-              : '🧠 Neuroscience: 3 daily items rewire your brain toward positivity in 21 days'}
-          </p>
+          {!isNewUser && (
+            <p className="text-xs mt-3 px-2" style={{ color: '#666', lineHeight: 1.7 }}>
+              {isAr
+                ? '🧠 علم الأعصاب: ٣ أشياء يومياً تعيد برمجة دماغك نحو الإيجابية في ٢١ يوماً'
+                : '🧠 Neuroscience: 3 daily items rewire your brain toward positivity in 21 days'}
+            </p>
+          )}
         </div>
 
         {/* Today's Entry */}
@@ -208,8 +214,8 @@ export default function GratitudeJournal() {
           )}
         </div>
 
-        {/* 7-Day History */}
-        {historyDays.length > 0 && (
+        {/* 7-Day History — hidden for first-time users to reduce clutter */}
+        {!isNewUser && historyDays.length > 0 && (
           <div
             className="rounded-2xl p-4"
             style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}
@@ -263,8 +269,8 @@ export default function GratitudeJournal() {
           </div>
         )}
 
-        {/* Empty state for history */}
-        {historyDays.length === 0 && (
+        {/* Empty state for history — only show after user has data */}
+        {!isNewUser && historyDays.length === 0 && (
           <div className="text-center py-6">
             <p className="text-sm" style={{ color: '#444' }}>
               {isAr ? 'سجّل امتنانك يومياً لترى تاريخك هنا' : 'Journal daily to see your history here'}
