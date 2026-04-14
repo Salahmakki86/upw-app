@@ -876,7 +876,7 @@ export default function Dashboard() {
         />
       )}
 
-      {/* ── State Modal ─────────────────────────────────────── */}
+      {/* ── State Modal (unified: uses 3D StateCheckin) ───── */}
       {showStateModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center"
           style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
@@ -886,21 +886,13 @@ export default function Dashboard() {
             onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 rounded-full mx-auto mb-6" style={{ background: '#333' }} />
             <p className="text-lg font-black text-white mb-1">{t('dash_how_feel')}</p>
-            <p className="text-xs mb-5" style={{ color: '#888' }}>{t('dash_choose_state')}</p>
-            <div className="space-y-3">
-              {[
-                { value: 'beautiful', label: `✨ ${t('dash_beautiful')}`, sub: t('dash_beautiful_desc'), color: 'rgba(46,204,113,' },
-                { value: 'suffering', label: `🌧 ${t('dash_suffering')}`, sub: t('dash_suffering_desc'), color: 'rgba(230,57,70,' },
-              ].map(opt => (
-                <button key={opt.value}
-                  onClick={() => { logState(opt.value, opt.label); setShowStateModal(false) }}
-                  className="w-full rounded-2xl p-4 text-right transition-all active:scale-[0.98]"
-                  style={{ background: `${opt.color}0.1)`, border: `1px solid ${opt.color}0.3)` }}>
-                  <p className="font-bold text-white">{opt.label}</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#888' }}>{opt.sub}</p>
-                </button>
-              ))}
-            </div>
+            <p className="text-xs mb-4" style={{ color: '#888' }}>{t('dash_choose_state')}</p>
+            <StateCheckin onDone={() => setShowStateModal(false)} />
+            <p className="text-xs mt-3 text-center" style={{ color: '#555' }}>
+              {isAr
+                ? 'حالتك تُشتق تلقائياً: 7+ = جميلة، 4- = معاناة'
+                : 'State auto-derived: 7+ = beautiful, 4- = suffering'}
+            </p>
           </div>
         </div>
       )}

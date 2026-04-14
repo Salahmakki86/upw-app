@@ -18,6 +18,7 @@ import ProgressSnapshot from '../components/ProgressSnapshot'
 import WelcomeExperience from '../components/WelcomeExperience'
 import WeeklyDiscovery from '../components/WeeklyDiscovery'
 import PersonalizedCoachCard from '../components/PersonalizedCoachCard'
+import InsightHarvester from '../components/InsightHarvester'
 import { generateBriefing } from '../utils/morningBriefing'
 import { calcWeightedScore, getScoreInsight } from '../utils/dailyScore'
 import { getDailyPersonalizedTip } from '../utils/personalization'
@@ -300,6 +301,47 @@ export default function TodayPage() {
     }
   }
 
+  // ── Ritual Reflection Trend (last 7 days) ──────────────────────────────────
+  const ritualTrend = useMemo(() => {
+    const refs = state.ritualReflections || {}
+    const keys = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date()
+      d.setDate(d.getDate() - (6 - i))
+      return d.toISOString().split('T')[0]
+    })
+
+    const morningRatings = []
+    const eveningRatings = []
+
+    keys.forEach(k => {
+      const day = refs[k]
+      if (day?.morning?.rating) morningRatings.push(day.morning.rating)
+      if (day?.evening?.rating) eveningRatings.push(day.evening.rating)
+    })
+
+    const totalDays = new Set(keys.filter(k => refs[k]?.morning || refs[k]?.evening)).size
+    if (totalDays < 3) return null
+
+    const avg = arr => arr.length ? Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10 : null
+
+    // Detect trend: compare first half vs second half of morning ratings
+    let morningTrend = 'stable'
+    if (morningRatings.length >= 4) {
+      const mid = Math.floor(morningRatings.length / 2)
+      const firstHalf = avg(morningRatings.slice(0, mid))
+      const secondHalf = avg(morningRatings.slice(mid))
+      if (secondHalf - firstHalf >= 0.4) morningTrend = 'up'
+      else if (firstHalf - secondHalf >= 0.4) morningTrend = 'down'
+    }
+
+    return {
+      avgMorning: avg(morningRatings),
+      avgEvening: avg(eveningRatings),
+      morningTrend,
+      totalDays,
+    }
+  }, [state.ritualReflections])
+
   // ── Yesterday's Evening Plan → Today's Tasks ──────────────────────────────
   const yesterdayKey = useMemo(() => {
     const d = new Date()
@@ -500,6 +542,61 @@ export default function TodayPage() {
 
         {/* ── Weekly Discovery — auto-generated insights (continuity) ── */}
         <WeeklyDiscovery />
+
+        {/* ── Insight Harvester — surface abandoned data (Critical Gap #1) ── */}
+        <InsightHarvester />
+
+        {/* ── Ritual Quality Trend — surface reflection data back ─── */}
+        {ritualTrend && (
+          <div style={{
+            borderRadius: 16, padding: '12px 14px', marginBottom: 14,
+            background: '#0e0e0e', border: '1px solid #1e1e1e',
+          }}>
+            <p style={{
+              fontSize: 9, fontWeight: 800, color: '#666',
+              letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10,
+            }}>
+              {isAr ? 'جودة طقوسك — آخر ٧ أيام' : 'Ritual Quality — Last 7 Days'}
+            </p>
+            {ritualTrend.avgMorning !== null && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                marginBottom: ritualTrend.avgEvening !== null ? 8 : 0,
+              }}>
+                <span style={{ fontSize: 14, lineHeight: 1 }}>☀️</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#c9a84c' }}>
+                  {ritualTrend.avgMorning}/5
+                </span>
+                <span style={{ fontSize: 11, color: '#888' }}>
+                  {isAr ? 'الروتين الصباحي' : 'Morning ritual'}
+                </span>
+                <span style={{ fontSize: 12, color:
+                  ritualTrend.morningTrend === 'up' ? '#2ecc71'
+                  : ritualTrend.morningTrend === 'down' ? '#e74c3c'
+                  : '#888',
+                  fontWeight: 800, marginInlineStart: 'auto',
+                }}>
+                  {ritualTrend.morningTrend === 'up'
+                    ? (isAr ? '↑ تحسّن!' : '↑ improving!')
+                    : ritualTrend.morningTrend === 'down'
+                      ? (isAr ? '↓ تراجع' : '↓ declining')
+                      : (isAr ? '→ مستقر' : '→ stable')}
+                </span>
+              </div>
+            )}
+            {ritualTrend.avgEvening !== null && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 14, lineHeight: 1 }}>🌙</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#9370db' }}>
+                  {ritualTrend.avgEvening}/5
+                </span>
+                <span style={{ fontSize: 11, color: '#888' }}>
+                  {isAr ? 'الروتين المسائي' : 'Evening ritual'}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Yesterday's Sleep — explicit actionable card ──────────── */}
         {(() => {

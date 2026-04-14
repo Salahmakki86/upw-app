@@ -784,26 +784,16 @@ export default function StateManagement() {
           <span className="text-xs text-white opacity-70">{t('state_sos_desc')}</span>
         </button>
 
-        {/* Enhanced State Check-in (3 dimensions) */}
+        {/* State Check-in (3 dimensions — single source of truth) */}
         <StateCheckinComponent onDone={() => {}} />
 
-        {/* Quick State Toggle (backward compatible) */}
-        <div className="card">
-          <p className="text-xs mb-2" style={{ color: '#888' }}>{t('dash_how_feel')}</p>
-          <div className="flex gap-3">
-            {[
-              { val: 'beautiful', label: `✨ ${t('dash_beautiful')}`, c: '#2ecc71' },
-              { val: 'suffering',  label: `🌧 ${t('dash_suffering')}`,  c: '#e63946' },
-            ].map(opt => (
-              <button key={opt.val} onClick={() => logState(opt.val, opt.label)}
-                className="flex-1 py-2 rounded-xl font-bold text-sm transition-all"
-                style={{ background: state.todayState === opt.val ? `${opt.c}20` : '#111',
-                  border: `1px solid ${state.todayState === opt.val ? opt.c + '66' : '#222'}`,
-                  color: state.todayState === opt.val ? opt.c : '#666' }}>
-                {opt.label}
-              </button>
-            ))}
-          </div>
+        {/* How state is derived */}
+        <div className="rounded-xl px-4 py-2" style={{ background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.12)' }}>
+          <p className="text-xs" style={{ color: '#888' }}>
+            {isAr
+              ? 'حالتك تُقاس بالطاقة + المزاج + الوضوح. حالة جميلة = متوسط 7+، معاناة = متوسط 4 أو أقل'
+              : 'Your state is measured as Energy + Mood + Clarity. Beautiful state = average 7+, Suffering = average 4 or below.'}
+          </p>
         </div>
 
         {/* Breathing */}

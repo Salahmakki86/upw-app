@@ -11,6 +11,14 @@ import JourneyTimeline from '../components/JourneyTimeline'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
+function getLast14Keys() {
+  return Array.from({ length: 14 }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - (13 - i))
+    return d.toISOString().split('T')[0]
+  })
+}
+
 function getLast30Keys() {
   return Array.from({ length: 30 }, (_, i) => {
     const d = new Date()
@@ -172,6 +180,7 @@ export default function InsightsPage() {
   const isAr = lang === 'ar'
 
   const last30 = useMemo(() => getLast30Keys(), [])
+  const last14 = useMemo(() => getLast14Keys(), [])
   const last7  = useMemo(() => getLast7Keys(), [])
 
   // ── Sleep average ──────────────────────────────────────────────────────────
@@ -240,6 +249,31 @@ export default function InsightsPage() {
 
     return best
   }, [state.habitTracker, last30])
+
+  // ── Ritual reflection data (last 14 days) ─────────────────────────────────
+  const ritualData = useMemo(() => {
+    const refs = state.ritualReflections || {}
+    const days = last14.map(k => ({
+      key: k,
+      morning: refs[k]?.morning?.rating || null,
+      evening: refs[k]?.evening?.rating || null,
+    }))
+
+    const morningVals = days.map(d => d.morning).filter(Boolean)
+    const eveningVals = days.map(d => d.evening).filter(Boolean)
+    const totalDays = days.filter(d => d.morning || d.evening).length
+
+    if (totalDays < 2) return null
+
+    const avg = arr => arr.length ? Math.round((arr.reduce((a, b) => a + b, 0) / arr.length) * 10) / 10 : null
+
+    return {
+      days,
+      avgMorning: avg(morningVals),
+      avgEvening: avg(eveningVals),
+      totalDays,
+    }
+  }, [state.ritualReflections, last14])
 
   // ── Smart observations ────────────────────────────────────────────────────
   const observations = useMemo(() => {
@@ -514,6 +548,71 @@ export default function InsightsPage() {
         <div style={{ marginBottom: 14 }}>
           <JourneyTimeline />
         </div>
+
+        {/* ── Ritual Quality Over Time ──────────────────────────────────────── */}
+        {ritualData && (
+          <div style={{
+            borderRadius: 16, padding: 16, marginBottom: 14,
+            background: '#0e0e0e', border: '1px solid #1e1e1e',
+          }}>
+            <p style={{ fontSize: 10, fontWeight: 900, color: '#c9a84c', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>
+              {isAr ? '📊 جودة الطقوس — آخر 14 يوم' : '📊 Ritual Quality — Last 14 Days'}
+            </p>
+
+            {/* Mini dot chart */}
+            <div style={{ display: 'flex', gap: 4, marginBottom: 12, flexWrap: 'wrap' }}>
+              {ritualData.days.map((d, i) => {
+                const mColor = d.morning ? ['#e74c3c','#e67e22','#f39c12','#c9a84c','#2ecc71'][d.morning - 1] : '#1e1e1e'
+                const eColor = d.evening ? ['#e74c3c','#e67e22','#f39c12','#9370db','#2ecc71'][d.evening - 1] : '#1e1e1e'
+                return (
+                  <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    <div style={{ width: 14, height: 14, borderRadius: 3, background: mColor }} title={`M: ${d.morning || '-'}`} />
+                    <div style={{ width: 14, height: 14, borderRadius: 3, background: eColor }} title={`E: ${d.evening || '-'}`} />
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Legend */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: '#c9a84c' }} />
+                <span style={{ fontSize: 9, color: '#888' }}>{isAr ? 'صباح' : 'Morning'}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <div style={{ width: 8, height: 8, borderRadius: 2, background: '#9370db' }} />
+                <span style={{ fontSize: 9, color: '#888' }}>{isAr ? 'مساء' : 'Evening'}</span>
+              </div>
+            </div>
+
+            {/* Averages + insight */}
+            <div style={{ display: 'flex', gap: 16, marginBottom: 8 }}>
+              {ritualData.avgMorning !== null && (
+                <div>
+                  <span style={{ fontSize: 18, fontWeight: 900, color: '#c9a84c' }}>{ritualData.avgMorning}</span>
+                  <span style={{ fontSize: 10, color: '#666' }}>/5 {isAr ? 'صباح' : 'morning'}</span>
+                </div>
+              )}
+              {ritualData.avgEvening !== null && (
+                <div>
+                  <span style={{ fontSize: 18, fontWeight: 900, color: '#9370db' }}>{ritualData.avgEvening}</span>
+                  <span style={{ fontSize: 10, color: '#666' }}>/5 {isAr ? 'مساء' : 'evening'}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Comparison insight */}
+            {ritualData.avgMorning !== null && ritualData.avgEvening !== null && (
+              <p style={{ fontSize: 11, color: '#888', lineHeight: 1.5 }}>
+                {ritualData.avgMorning > ritualData.avgEvening
+                  ? (isAr ? '☀️ صباحاتك أقوى من مساءاتك — استثمر في روتينك المسائي' : '☀️ Your mornings outshine evenings — invest in your evening routine')
+                  : ritualData.avgEvening > ritualData.avgMorning
+                    ? (isAr ? '🌙 مساءاتك أقوى — جرّب تنشيط روتينك الصباحي' : '🌙 Evenings are stronger — try energizing your morning ritual')
+                    : (isAr ? '⚖️ صباحاتك ومساءاتك متوازنة — ممتاز!' : '⚖️ Mornings and evenings are balanced — excellent!')}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* ── Deep Growth Insights (21+ days) ──────────────────────────────── */}
         {(state.morningLog || []).length >= 21 && (() => {
