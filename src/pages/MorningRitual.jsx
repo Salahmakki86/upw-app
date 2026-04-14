@@ -219,11 +219,20 @@ export default function MorningRitual() {
   const [qIndex, setQIndex] = useState(0)
   const [answer, setAnswer] = useState('')
   const [videoMode, setVideoMode] = useState(false)
+  const [ritualMode, setRitualMode] = useState('standard')
 
-  const PHASES = PHASES_DATA[lang]
+  const ALL_PHASES = PHASES_DATA[lang]
+  const PHASES = ritualMode === 'quick' ? ALL_PHASES.filter(p => p.id <= 1) : ALL_PHASES
+  const phaseDuration = ritualMode === 'quick' ? 60 : ritualMode === 'deep' ? 300 : 180
   const morningCount = (state.morningLog || []).length
   const currentSet = getPowerQuestions(morningCount)
-  const QUESTIONS = currentSet[lang]
+  const ALL_QUESTIONS = currentSet[lang]
+  const DEEP_EXTRA_Q = isAr ? 'ما التحول الذي تلتزم به اليوم؟' : 'What transformation are you committed to today?'
+  const QUESTIONS = ritualMode === 'quick'
+    ? ALL_QUESTIONS.slice(0, 3)
+    : ritualMode === 'deep'
+      ? [...ALL_QUESTIONS, DEEP_EXTRA_Q]
+      : ALL_QUESTIONS
   const donePhases = state.primingPhasesDone || []
 
   const handlePhaseComplete = (phaseId) => {
@@ -251,6 +260,7 @@ export default function MorningRitual() {
     update('morningAnswerDraft', null)
     setAnswer('')
     if (qIndex < QUESTIONS.length - 1) setQIndex(qIndex + 1)
+    else if (ritualMode === 'quick') finishMorning()
     else setView('incantations')
   }
 
@@ -581,6 +591,28 @@ export default function MorningRitual() {
           )
         })()}
 
+        {/* Ritual mode selector — only before first phase is started */}
+        {donePhases.length === 0 && (
+          <div className="flex gap-2">
+            {[
+              { key: 'quick', emoji: '\u26A1', ar: '\u0633\u0631\u064A\u0639 (5 \u062F)', en: 'Quick (5 min)' },
+              { key: 'standard', emoji: '\u2600\uFE0F', ar: '\u0639\u0627\u062F\u064A (12 \u062F)', en: 'Standard (12 min)' },
+              { key: 'deep', emoji: '\uD83E\uDDD8', ar: '\u0639\u0645\u064A\u0642 (20 \u062F)', en: 'Deep (20 min)' },
+            ].map(m => (
+              <button key={m.key}
+                onClick={() => setRitualMode(m.key)}
+                className="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all"
+                style={{
+                  background: ritualMode === m.key ? 'rgba(201,168,76,0.15)' : '#111',
+                  border: ritualMode === m.key ? '2px solid #c9a84c' : '1px solid #222',
+                  color: ritualMode === m.key ? '#c9a84c' : '#555',
+                }}>
+                {m.emoji} {isAr ? m.ar : m.en}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Mode toggle */}
         <div className="flex rounded-2xl overflow-hidden" style={{ background: '#111', border: '1px solid #222' }}>
           <button
@@ -633,7 +665,7 @@ export default function MorningRitual() {
         {/* Interactive mode */}
         {!videoMode && (
           <>
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className={`grid gap-1.5 ${PHASES.length <= 2 ? 'grid-cols-2' : 'grid-cols-4'}`}>
               {PHASES.map((ph) => {
                 const done = donePhases.includes(ph.id)
                 const active = activePhase === ph.id
@@ -681,7 +713,7 @@ export default function MorningRitual() {
                 </div>
               )}
 
-              <PhaseTimer key={`${activePhase}-${lang}`} phase={PHASES[activePhase]}
+              <PhaseTimer key={`${activePhase}-${lang}-${ritualMode}`} phase={{ ...PHASES[activePhase], duration: phaseDuration }}
                 onComplete={() => handlePhaseComplete(activePhase)} t={t} />
             </div>
 

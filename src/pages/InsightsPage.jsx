@@ -8,6 +8,7 @@ import { useLang } from '../context/LangContext'
 import TransformationPulse from '../components/TransformationPulse'
 import WeeklyTruthReview from '../components/WeeklyTruthReview'
 import JourneyTimeline from '../components/JourneyTimeline'
+import { detectRootCause } from '../utils/transformationEngine'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -275,6 +276,9 @@ export default function InsightsPage() {
     }
   }, [state.ritualReflections, last14])
 
+  // ── Root cause for Today's Focus ──────────────────────────────────────────
+  const rootCause = useMemo(() => detectRootCause(state), [state])
+
   // ── Smart observations ────────────────────────────────────────────────────
   const observations = useMemo(() => {
     const obs = []
@@ -286,49 +290,61 @@ export default function InsightsPage() {
     }).length
 
     if (morningCount > 0) {
-      obs.push(
-        isAr
+      obs.push({
+        text: isAr
           ? `سجّلت نومك ${morningCount} مرة خلال آخر ٣٠ يوم`
-          : `You logged sleep ${morningCount} times in the last 30 days`
-      )
+          : `You logged sleep ${morningCount} times in the last 30 days`,
+        action: '/sleep',
+        actionLabel: isAr ? 'تتبع النوم' : 'Track Sleep',
+      })
     }
 
     if (gratitudeDays > 0) {
-      obs.push(
-        isAr
+      obs.push({
+        text: isAr
           ? `معدل امتنانك: ${gratitudeDays} يوم من ٣٠`
-          : `Gratitude rate: ${gratitudeDays} days out of 30`
-      )
+          : `Gratitude rate: ${gratitudeDays} days out of 30`,
+        action: '/gratitude',
+        actionLabel: isAr ? 'الامتنان' : 'Gratitude',
+      })
     }
 
     if (beautifulPct !== null) {
       if (beautifulPct >= 70) {
-        obs.push(
-          isAr
+        obs.push({
+          text: isAr
             ? `${beautifulPct}٪ من أيامك كانت جميلة — تفوق رائع! ✨`
-            : `${beautifulPct}% of your days were beautiful — outstanding! ✨`
-        )
+            : `${beautifulPct}% of your days were beautiful — outstanding! ✨`,
+          action: '/state',
+          actionLabel: isAr ? 'سجّل حالتك' : 'Log State',
+        })
       } else if (beautifulPct >= 40) {
-        obs.push(
-          isAr
+        obs.push({
+          text: isAr
             ? `لديك ${beautifulPct}٪ أيام جميلة — الروتين الصباحي سيرفعها أكثر`
-            : `You have ${beautifulPct}% beautiful days — morning ritual can boost this`
-        )
+            : `You have ${beautifulPct}% beautiful days — morning ritual can boost this`,
+          action: '/state',
+          actionLabel: isAr ? 'سجّل حالتك' : 'Log State',
+        })
       } else {
-        obs.push(
-          isAr
+        obs.push({
+          text: isAr
             ? 'ركّز على ربط حالتك كل يوم — هذا يغير كل شيء'
-            : 'Focus on logging your state daily — it changes everything'
-        )
+            : 'Focus on logging your state daily — it changes everything',
+          action: '/state',
+          actionLabel: isAr ? 'سجّل حالتك' : 'Log State',
+        })
       }
     }
 
     if (!obs.length) {
-      obs.push(
-        isAr
+      obs.push({
+        text: isAr
           ? 'ابدأ بتسجيل بياناتك يومياً لتظهر رؤى شخصية هنا'
-          : 'Start logging daily data to unlock personal insights here'
-      )
+          : 'Start logging daily data to unlock personal insights here',
+        action: '/',
+        actionLabel: isAr ? 'ابدأ الآن' : 'Start Now',
+      })
     }
 
     return obs.slice(0, 2)
@@ -378,6 +394,38 @@ export default function InsightsPage() {
       </div>
 
       <div style={{ padding: '0 16px' }}>
+
+        {/* ── Today's Focus ──────────────────────────────────────────────────── */}
+        {rootCause && (
+          <div style={{
+            borderRadius: 20, padding: 16, marginBottom: 14,
+            background: `linear-gradient(135deg, ${rootCause.color}18, ${rootCause.color}08)`,
+            border: `1px solid ${rootCause.color}40`,
+          }}>
+            <p style={{
+              fontSize: 11, fontWeight: 900, color: rootCause.color,
+              letterSpacing: '0.08em', textTransform: 'uppercase',
+              marginBottom: 10,
+            }}>
+              {rootCause.emoji} {isAr ? 'تركيز اليوم' : "Today's Focus"}
+            </p>
+            <p style={{ color: '#fff', fontSize: 15, fontWeight: 800, marginBottom: 4 }}>
+              {isAr ? rootCause.labelAr : rootCause.labelEn}
+            </p>
+            <p style={{ color: '#999', fontSize: 12, lineHeight: 1.6, marginBottom: 10 }}>
+              {isAr ? rootCause.descAr : rootCause.descEn}
+            </p>
+            {rootCause.action && (
+              <button onClick={() => navigate(rootCause.action)} style={{
+                fontSize: 12, fontWeight: 800, color: '#0a0a0a',
+                background: rootCause.color, borderRadius: 10,
+                padding: '8px 18px', border: 'none', cursor: 'pointer',
+              }}>
+                {isAr ? (rootCause.actionAr || 'ابدأ الآن') : (rootCause.actionEn || 'Take Action')} →
+              </button>
+            )}
+          </div>
+        )}
 
         {/* ── Transformation Intelligence ────────────────────────────────────── */}
         <div style={{ marginBottom: 14 }}>
@@ -652,6 +700,8 @@ export default function InsightsPage() {
               text: isAr
                 ? `حالتك تطوّرت ${stateGrowth > 0 ? '+' : ''}${stateGrowth} نقطة (أول أسبوع ${firstAvg} → آخر أسبوع ${lastAvg})`
                 : `State evolved ${stateGrowth > 0 ? '+' : ''}${stateGrowth} points (first week ${firstAvg} → latest week ${lastAvg})`,
+              action: '/state',
+              actionLabel: isAr ? 'تحقق من حالتك' : 'Check State',
             })
           }
 
@@ -662,6 +712,8 @@ export default function InsightsPage() {
               text: isAr
                 ? `نسبة معتقداتك التمكينية: ${beliefRatio}% (${empoweringCount} تمكينية / ${limitingCount} مقيّدة)`
                 : `Empowering belief ratio: ${beliefRatio}% (${empoweringCount} empowering / ${limitingCount} limiting)`,
+              action: '/beliefs',
+              actionLabel: isAr ? 'راجع معتقداتك' : 'Review Beliefs',
             })
           }
 
@@ -672,6 +724,8 @@ export default function InsightsPage() {
               text: isAr
                 ? `أكملت ${completedGoals} هدف — أنت تصنع نتائج حقيقية`
                 : `${completedGoals} goal${completedGoals > 1 ? 's' : ''} completed — you're creating real results`,
+              action: '/goals',
+              actionLabel: isAr ? 'الأهداف' : 'Goals',
             })
           }
 
@@ -698,7 +752,19 @@ export default function InsightsPage() {
                     background: `${ins.color}0a`, border: `1px solid ${ins.color}20`,
                   }}>
                     <span style={{ fontSize: 16 }}>{ins.emoji}</span>
-                    <p style={{ color: '#ccc', fontSize: 12, lineHeight: 1.5 }}>{ins.text}</p>
+                    <div>
+                      <p style={{ color: '#ccc', fontSize: 12, lineHeight: 1.5 }}>{ins.text}</p>
+                      {ins.action && (
+                        <button onClick={() => navigate(ins.action)} style={{
+                          fontSize: 10, fontWeight: 800, color: '#0a0a0a',
+                          background: ins.color || '#c9a84c', borderRadius: 8,
+                          padding: '4px 10px', border: 'none', cursor: 'pointer',
+                          marginTop: 4,
+                        }}>
+                          {ins.actionLabel} →
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -726,9 +792,21 @@ export default function InsightsPage() {
                 flexDirection: isAr ? 'row-reverse' : 'row',
               }}>
                 <Sparkles size={14} style={{ color: '#c9a84c', flexShrink: 0, marginTop: 1 }} />
-                <p style={{ color: '#bbb', fontSize: 13, lineHeight: 1.5, textAlign: isAr ? 'right' : 'left' }}>
-                  {obs}
-                </p>
+                <div style={{ textAlign: isAr ? 'right' : 'left' }}>
+                  <p style={{ color: '#bbb', fontSize: 13, lineHeight: 1.5 }}>
+                    {obs.text}
+                  </p>
+                  {obs.action && (
+                    <button onClick={() => navigate(obs.action)} style={{
+                      fontSize: 10, fontWeight: 800, color: '#0a0a0a',
+                      background: '#c9a84c', borderRadius: 8,
+                      padding: '4px 10px', border: 'none', cursor: 'pointer',
+                      marginTop: 4,
+                    }}>
+                      {obs.actionLabel} →
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

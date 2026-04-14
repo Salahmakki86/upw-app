@@ -7,7 +7,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ArrowRight, User, Flame, Target, Brain, Moon, Heart,
   TrendingUp, AlertTriangle, CheckCircle, Send, RefreshCw,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, Copy, ClipboardCheck,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useLang } from '../context/LangContext'
@@ -15,6 +15,7 @@ import { useToast } from '../context/ToastContext'
 import { upwApi } from '../api/upwApi'
 import { detectInterventions, severityColor } from '../utils/interventions'
 import { analyzeStudentPatterns, getStudentSummary } from '../utils/studentPatterns'
+import { detectRootCause, calcMomentum, calcTransformationScore } from '../utils/transformationEngine'
 import Layout from '../components/Layout'
 
 function MetricCard({ emoji, value, label, color }) {
@@ -128,6 +129,373 @@ function HeatmapGrid({ studentState, isAr }) {
   )
 }
 
+function getLast7Days() {
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - i)
+    return d.toISOString().slice(0, 10)
+  })
+}
+
+function getLast14Days() {
+  return Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - i)
+    return d.toISOString().slice(0, 10)
+  })
+}
+
+function StudentBrief({ studentState, studentName, isAr, showToast }) {
+  const [copied, setCopied] = useState(false)
+
+  const brief = useMemo(() => {
+    if (!studentState) return null
+    const s = studentState
+    const days7 = getLast7Days()
+    const days14 = getLast14Days()
+
+    // Root Cause
+    const rootCause = detectRootCause(s)
+
+    // Momentum
+    const momentum = calcMomentum(s)
+
+    // Transformation Score
+    const transformation = calcTransformationScore(s)
+
+    // Sleep pattern — average last 7 days
+    const sleepEntries = days7.map(d => s.sleepLog?.[d]?.hours).filter(Boolean)
+    const avgSleep = sleepEntries.length > 0
+      ? Math.round((sleepEntries.reduce((a, b) => a + b, 0) / sleepEntries.length) * 10) / 10
+      : null
+
+    // Ritual consistency — morning log count last 14 days
+    const morningLog = s.morningLog || []
+    const morningCount14 = days14.filter(d => morningLog.includes(d)).length
+
+    // Goals analysis — active vs stale
+    const goals = s.goals || []
+    const activeGoals = goals.filter(g => (g.progress || 0) < 100)
+    const staleGoals = goals.filter(g => {
+      if ((g.progress || 0) >= 100) return false
+      if ((g.progress || 0) === 0) return true
+      // Check if goal has an updatedAt or fallback to no update detection
+      if (g.updatedAt) {
+        const daysSinceUpdate = Math.floor((Date.now() - new Date(g.updatedAt).getTime()) / (1000 * 60 * 60 * 24))
+        return daysSinceUpdate >= 14
+      }
+      return (g.progress || 0) === 0
+    })
+
+    // Belief balance
+    const limitingCount = (s.limitingBeliefs || []).length
+    const empoweringCount = (s.empoweringBeliefs || []).length
+
+    // Recent reflections — evening log last 7 entries
+    const reflections = []
+    for (const d of days7) {
+      const entry = s.eveningLog?.[d]
+      if (entry) {
+        const text = entry.reflection || entry.gratitude || entry.highlight || entry.lesson || ''
+        if (text.trim()) {
+          reflections.push({ date: d, text: text.trim() })
+        }
+      }
+      if (reflections.length >= 3) break
+    }
+
+    // Smart question log — last 7 entries
+    const smartQLog = (s.smartQuestionLog || []).slice(-7)
+
+    // Power questions log — last 7 entries
+    const powerQLog = (s.powerQuestionsLog || []).slice(-7)
+
+    // Build focus areas
+    const focusAreas = []
+    if (rootCause.type !== 'thriving' && rootCause.type !== 'exploring') {
+      focusAreas.push(isAr ? rootCause.labelAr : rootCause.labelEn)
+    }
+    if (staleGoals.length > 0) {
+      focusAreas.push(isAr ? `${staleGoals.length} أهداف راكدة — تحتاج مراجعة` : `${staleGoals.length} stale goal(s) — need review`)
+    }
+    if (limitingCount > empoweringCount) {
+      focusAreas.push(isAr ? 'معتقدات مقيدة أكثر من المحفزة — يحتاج عمل على الهوية' : 'More limiting than empowering beliefs — identity work needed')
+    }
+    if (avgSleep !== null && avgSleep < 6.5) {
+      focusAreas.push(isAr ? `نوم منخفض (${avgSleep}h) — يؤثر على كل شيء` : `Low sleep (${avgSleep}h) — affecting everything`)
+    }
+    if (morningCount14 < 5) {
+      focusAreas.push(isAr ? 'التزام صباحي ضعيف — يحتاج بناء عادة' : 'Weak morning ritual — habit building needed')
+    }
+    if (momentum.status === 'needs_attention') {
+      focusAreas.push(isAr ? 'زخم منخفض — يحتاج خطة إعادة تفعيل' : 'Low momentum — needs reactivation plan')
+    }
+    // Ensure at least one focus area
+    if (focusAreas.length === 0) {
+      focusAreas.push(isAr ? 'استمر على هذا المسار الممتاز!' : 'Keep up the excellent trajectory!')
+    }
+
+    return {
+      rootCause,
+      momentum,
+      transformation,
+      avgSleep,
+      morningCount14,
+      activeGoals: activeGoals.length,
+      staleGoals: staleGoals.length,
+      empoweringCount,
+      limitingCount,
+      reflections,
+      smartQLog,
+      powerQLog,
+      focusAreas,
+    }
+  }, [studentState, isAr])
+
+  if (!brief) return null
+
+  const name = studentName || (isAr ? 'الطالب' : 'Student')
+  const trendLabels = { up: isAr ? 'صاعد' : 'rising', down: isAr ? 'هابط' : 'falling', stable: isAr ? 'مستقر' : 'stable' }
+  const levelLabels = {
+    exceptional: isAr ? 'استثنائي' : 'exceptional',
+    strong: isAr ? 'قوي' : 'strong',
+    building: isAr ? 'يبني' : 'building',
+    starting: isAr ? 'يبدأ' : 'starting',
+    beginning: isAr ? 'بداية' : 'beginning',
+  }
+
+  const rootLabel = isAr ? brief.rootCause.labelAr : brief.rootCause.labelEn
+  const rootDesc = isAr ? brief.rootCause.descAr : brief.rootCause.descEn
+
+  // Build plain-text version for clipboard
+  function buildPlainText() {
+    const lines = []
+    const sep = '\u2501'.repeat(36)
+    lines.push(`\ud83d\udccb Coaching Brief \u2014 ${name}`)
+    lines.push(sep)
+    lines.push(`\ud83d\udd0b Root Cause: ${brief.rootCause.type} \u2014 ${isAr ? brief.rootCause.labelAr : brief.rootCause.labelEn}`)
+    lines.push(`\ud83d\udcca Transformation: ${brief.transformation.total}/100 (${levelLabels[brief.transformation.level]})`)
+    lines.push(`\ud83d\udd25 Momentum: ${brief.momentum.score}/100 (${trendLabels[brief.momentum.trend]})`)
+    lines.push(`\ud83d\ude34 Sleep: avg ${brief.avgSleep !== null ? brief.avgSleep + 'h' : 'N/A'} (last 7 days)`)
+    lines.push(`\u2600\ufe0f Rituals: ${brief.morningCount14}/14 mornings done`)
+    lines.push(`\ud83c\udfaf Goals: ${brief.activeGoals} active, ${brief.staleGoals} stale`)
+    lines.push(`\ud83e\ude9e Beliefs: ${brief.empoweringCount} empowering vs ${brief.limitingCount} limiting`)
+    lines.push('')
+    if (brief.reflections.length > 0) {
+      lines.push(`\ud83d\udcdd Recent Reflections:`)
+      brief.reflections.forEach(r => {
+        const excerpt = r.text.length > 80 ? r.text.slice(0, 80) + '...' : r.text
+        lines.push(`- "${excerpt}"`)
+      })
+      lines.push('')
+    }
+    lines.push(`\u26a0\ufe0f Focus Areas:`)
+    brief.focusAreas.forEach((f, i) => {
+      lines.push(`${i + 1}. ${f}`)
+    })
+    return lines.join('\n')
+  }
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(buildPlainText())
+      setCopied(true)
+      showToast?.(isAr ? 'تم النسخ!' : 'Brief copied!', 'success')
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      showToast?.(isAr ? 'فشل النسخ' : 'Copy failed', 'error')
+    }
+  }
+
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ background: '#0d0d0d', border: '1px solid rgba(201,168,76,0.35)' }}>
+      {/* Header */}
+      <div className="px-4 py-3 flex items-center justify-between" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05))' }}>
+        <div>
+          <p className="text-sm font-black" style={{ color: '#c9a84c' }}>
+            {'\ud83d\udccb'} {isAr ? 'ملخص الكوتشنج' : 'Coaching Brief'} — {name}
+          </p>
+        </div>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+          style={{
+            background: copied ? 'rgba(46,204,113,0.15)' : 'rgba(201,168,76,0.1)',
+            color: copied ? '#2ecc71' : '#c9a84c',
+            border: `1px solid ${copied ? 'rgba(46,204,113,0.3)' : 'rgba(201,168,76,0.25)'}`,
+          }}
+        >
+          {copied ? <ClipboardCheck size={12} /> : <Copy size={12} />}
+          {copied ? (isAr ? 'تم!' : 'Copied!') : (isAr ? 'نسخ' : 'Copy')}
+        </button>
+      </div>
+
+      {/* Brief Body */}
+      <div className="px-4 py-3 space-y-2.5" style={{ fontFamily: "'SF Mono', 'Fira Code', 'Consolas', monospace" }}>
+        {/* Root Cause */}
+        <div className="flex items-start gap-2">
+          <span className="text-sm flex-shrink-0">{brief.rootCause.emoji || '\ud83d\udd0b'}</span>
+          <div className="min-w-0">
+            <span className="text-xs font-bold" style={{ color: brief.rootCause.color || '#888' }}>
+              {isAr ? 'السبب الجذري' : 'Root Cause'}: {brief.rootCause.type}
+            </span>
+            <p className="text-xs mt-0.5" style={{ color: '#999' }}>{rootDesc}</p>
+          </div>
+        </div>
+
+        {/* Transformation */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm flex-shrink-0">{'\ud83d\udcca'}</span>
+          <span className="text-xs" style={{ color: '#ddd' }}>
+            <span className="font-bold" style={{ color: brief.transformation.color }}>
+              {isAr ? 'التحول' : 'Transformation'}: {brief.transformation.total}/100
+            </span>
+            <span style={{ color: '#777' }}> ({levelLabels[brief.transformation.level]})</span>
+          </span>
+        </div>
+
+        {/* Momentum */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm flex-shrink-0">{'\ud83d\udd25'}</span>
+          <span className="text-xs" style={{ color: '#ddd' }}>
+            <span className="font-bold" style={{ color: brief.momentum.color }}>
+              {isAr ? 'الزخم' : 'Momentum'}: {brief.momentum.score}/100
+            </span>
+            <span style={{ color: '#777' }}> ({trendLabels[brief.momentum.trend]})</span>
+          </span>
+        </div>
+
+        {/* Sleep */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm flex-shrink-0">{'\ud83d\ude34'}</span>
+          <span className="text-xs" style={{ color: '#ddd' }}>
+            <span className="font-bold" style={{ color: brief.avgSleep !== null && brief.avgSleep < 6.5 ? '#e63946' : '#2ecc71' }}>
+              {isAr ? 'النوم' : 'Sleep'}: {brief.avgSleep !== null ? `avg ${brief.avgSleep}h` : 'N/A'}
+            </span>
+            <span style={{ color: '#777' }}> ({isAr ? 'آخر ٧ أيام' : 'last 7 days'})</span>
+          </span>
+        </div>
+
+        {/* Rituals */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm flex-shrink-0">{'\u2600\ufe0f'}</span>
+          <span className="text-xs" style={{ color: '#ddd' }}>
+            <span className="font-bold" style={{ color: brief.morningCount14 >= 10 ? '#2ecc71' : brief.morningCount14 >= 5 ? '#f39c12' : '#e63946' }}>
+              {isAr ? 'الطقوس' : 'Rituals'}: {brief.morningCount14}/14
+            </span>
+            <span style={{ color: '#777' }}> {isAr ? 'صباحات مكتملة' : 'mornings done'}</span>
+          </span>
+        </div>
+
+        {/* Goals */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm flex-shrink-0">{'\ud83c\udfaf'}</span>
+          <span className="text-xs" style={{ color: '#ddd' }}>
+            <span className="font-bold" style={{ color: '#3498db' }}>
+              {isAr ? 'الأهداف' : 'Goals'}: {brief.activeGoals} {isAr ? 'نشط' : 'active'}
+            </span>
+            {brief.staleGoals > 0 && (
+              <span style={{ color: '#e63946' }}>, {brief.staleGoals} {isAr ? 'راكد' : 'stale'}</span>
+            )}
+          </span>
+        </div>
+
+        {/* Beliefs */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm flex-shrink-0">{'\ud83e\ude9e'}</span>
+          <span className="text-xs" style={{ color: '#ddd' }}>
+            <span className="font-bold" style={{ color: brief.empoweringCount >= brief.limitingCount ? '#2ecc71' : '#e63946' }}>
+              {isAr ? 'المعتقدات' : 'Beliefs'}:
+            </span>
+            {' '}{brief.empoweringCount} {isAr ? 'محفزة' : 'empowering'} vs {brief.limitingCount} {isAr ? 'مقيدة' : 'limiting'}
+          </span>
+        </div>
+
+        {/* Separator */}
+        <div style={{ borderTop: '1px solid #222', margin: '8px 0' }} />
+
+        {/* Recent Reflections */}
+        {brief.reflections.length > 0 && (
+          <div>
+            <p className="text-xs font-bold mb-1.5" style={{ color: '#c9a84c' }}>
+              {'\ud83d\udcdd'} {isAr ? 'آخر التأملات' : 'Recent Reflections'}
+            </p>
+            <div className="space-y-1.5">
+              {brief.reflections.map((r, i) => (
+                <p key={i} className="text-xs rounded-lg px-2.5 py-1.5" style={{ color: '#aaa', background: '#111', fontStyle: 'italic' }}>
+                  "{r.text.length > 100 ? r.text.slice(0, 100) + '...' : r.text}"
+                  <span className="ml-1" style={{ color: '#555', fontSize: 10, fontStyle: 'normal' }}>{r.date}</span>
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Smart / Power Questions */}
+        {(brief.smartQLog.length > 0 || brief.powerQLog.length > 0) && (
+          <div>
+            <p className="text-xs font-bold mb-1" style={{ color: '#9b59b6' }}>
+              {'\ud83e\udde0'} {isAr ? 'نشاط الأسئلة' : 'Question Activity'}
+            </p>
+            <p className="text-xs" style={{ color: '#888' }}>
+              {brief.smartQLog.length > 0 && (
+                <span>{brief.smartQLog.length} {isAr ? 'أسئلة ذكية' : 'smart questions'}</span>
+              )}
+              {brief.smartQLog.length > 0 && brief.powerQLog.length > 0 && ' | '}
+              {brief.powerQLog.length > 0 && (
+                <span>{brief.powerQLog.length} {isAr ? 'أسئلة قوة' : 'power questions'}</span>
+              )}
+              <span style={{ color: '#555' }}> ({isAr ? 'آخر ٧' : 'last 7'})</span>
+            </p>
+          </div>
+        )}
+
+        {/* Separator */}
+        <div style={{ borderTop: '1px solid #222', margin: '8px 0' }} />
+
+        {/* Focus Areas */}
+        <div>
+          <p className="text-xs font-bold mb-1.5" style={{ color: '#e63946' }}>
+            {'\u26a0\ufe0f'} {isAr ? 'مناطق التركيز' : 'Focus Areas'}
+          </p>
+          <div className="space-y-1">
+            {brief.focusAreas.map((area, i) => (
+              <div key={i} className="flex items-start gap-2">
+                <span className="text-xs font-black flex-shrink-0" style={{ color: '#c9a84c', minWidth: 14 }}>{i + 1}.</span>
+                <p className="text-xs" style={{ color: '#ccc' }}>{area}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Transformation Breakdown mini-bar */}
+        <div style={{ borderTop: '1px solid #222', margin: '8px 0' }} />
+        <div>
+          <p className="text-xs font-bold mb-2" style={{ color: '#777' }}>
+            {isAr ? 'تفصيل التحول' : 'Transformation Breakdown'}
+          </p>
+          <div className="grid grid-cols-4 gap-1.5">
+            {[
+              { key: 'discipline', label: isAr ? 'انضباط' : 'Discipline', color: '#c9a84c' },
+              { key: 'state', label: isAr ? 'حالة' : 'State', color: '#3498db' },
+              { key: 'progress', label: isAr ? 'تقدم' : 'Progress', color: '#2ecc71' },
+              { key: 'depth', label: isAr ? 'عمق' : 'Depth', color: '#9b59b6' },
+            ].map(item => (
+              <div key={item.key} className="text-center">
+                <div className="w-full h-1.5 rounded-full overflow-hidden mb-1" style={{ background: '#222' }}>
+                  <div className="h-full rounded-full" style={{ width: `${brief.transformation.breakdown[item.key]}%`, background: item.color }} />
+                </div>
+                <span className="text-xs font-bold" style={{ color: item.color, fontSize: 10 }}>
+                  {brief.transformation.breakdown[item.key]}%
+                </span>
+                <p className="text-xs" style={{ color: '#555', fontSize: 9 }}>{item.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function CoachPrep() {
   const { currentUser } = useAuth()
   const { lang } = useLang()
@@ -214,6 +582,14 @@ export default function CoachPrep() {
 
         {studentState && !loading && (
           <>
+            {/* Student Brief — comprehensive coaching summary */}
+            <StudentBrief
+              studentState={studentState}
+              studentName={student?.name}
+              isAr={isAr}
+              showToast={showToast}
+            />
+
             {/* Quick Stats */}
             <div className="grid grid-cols-4 gap-2">
               <MetricCard emoji="🔥" value={studentState.streak || 0} label={isAr ? 'سلسلة' : 'Streak'} color="#e67e22" />
