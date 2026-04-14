@@ -308,6 +308,39 @@ export default function Dashboard() {
   const vis = useMemo(() => getDashboardVisibility(state), [state.morningLog])
   const uiLevel = useMemo(() => getUIComplexity(state), [state.morningLog])
 
+  // ── Yesterday key (for hero logic) ─────────────────────
+  const yesterday = useMemo(() => {
+    const d = new Date(); d.setDate(d.getDate() - 1)
+    return d.toISOString().slice(0, 10)
+  }, [])
+
+  // ── Hero Section Logic ─────────────────────────────────
+  const heroData = useMemo(() => {
+    const hour = new Date().getHours()
+    const lastSleep = state.sleepLog?.[yesterday]?.hours
+
+    if (lastSleep && lastSleep < 5.5) return {
+      text: isAr ? `نومك أمس ${lastSleep} ساعات — ركّز على الطاقة والتنفس اليوم` : `${lastSleep}h sleep — focus on energy & breathing today`,
+      action: { path: '/state', label: isAr ? 'ابدأ تمرين الحالة' : 'Start State Exercise' }
+    }
+    if (!state.morningDone && hour < 12) return {
+      text: isAr ? 'صباح القوة! الطقس الصباحي هو أساس يومك' : 'Power morning! Your ritual is the foundation',
+      action: { path: '/morning', label: isAr ? 'ابدأ الصباح ☀️' : 'Start Morning ☀️' }
+    }
+    if (!state.todayState) return {
+      text: isAr ? 'حالتك تحدد يومك — سجّل طاقتك الآن' : 'Your state shapes your day — log it now',
+      action: { path: '/state', label: isAr ? 'سجّل حالتك ⚡' : 'Log State ⚡' }
+    }
+    if (!state.eveningDone && hour >= 18) return {
+      text: isAr ? 'حان وقت المراجعة — أغلق يومك بقوة' : 'Time to reflect — close your day powerfully',
+      action: { path: '/evening', label: isAr ? 'الطقس المسائي 🌙' : 'Evening Ritual 🌙' }
+    }
+    return {
+      text: isAr ? 'كل لحظة فرصة للتحول — ماذا ستفعل الآن؟' : 'Every moment is a chance — what will you do now?',
+      action: { path: '/today', label: isAr ? 'خطة اليوم 📋' : 'Today Plan 📋' }
+    }
+  }, [state, isAr, yesterday])
+
   // Filter categories by visibility level
   const visibleCategoryKeys = useMemo(() => {
     const keys = new Set()
@@ -325,18 +358,6 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col" style={{ background: '#090909', minHeight: '100%' }}>
 
-      {/* ── Daily Progress Bar (Dashboard has its own layout) ── */}
-      <div style={{ height: 3, background: '#111', flexShrink: 0 }}>
-        <div style={{
-          height: '100%', width: `${dashPct}%`,
-          background: dashComplete
-            ? 'linear-gradient(90deg,#2ecc71,#27ae60)'
-            : 'linear-gradient(90deg,#c9a84c,#e8c96a)',
-          transition: 'width 0.6s ease',
-          boxShadow: dashComplete ? '0 0 6px #2ecc7180' : '0 0 6px #c9a84c60',
-        }} />
-      </div>
-
       {/* ── Header ─────────────────────────────────────────── */}
       <div className="px-5 pt-12 pb-3 flex items-center justify-between">
         <div>
@@ -351,6 +372,27 @@ export default function Dashboard() {
           </h1>
         </div>
         <div className="flex items-center gap-2">
+          {/* ── Apple Watch Score Ring ── */}
+          <div className="relative" style={{ width: 44, height: 44 }}>
+            <svg width="44" height="44" viewBox="0 0 44 44">
+              <circle cx="22" cy="22" r="19" fill="none" stroke="#222" strokeWidth="3" />
+              <circle cx="22" cy="22" r="19" fill="none"
+                stroke={dashComplete ? '#2ecc71' : '#c9a84c'}
+                strokeWidth="3" strokeLinecap="round"
+                strokeDasharray={`${dashPct * 1.194} 119.4`}
+                transform="rotate(-90 22 22)"
+                style={{ transition: 'stroke-dasharray 0.8s ease' }} />
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center text-xs font-black"
+              style={{ color: dashComplete ? '#2ecc71' : '#c9a84c' }}>
+              {dashPct}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold"
+            style={{ background:'rgba(201,168,76,0.12)', border:'1px solid rgba(201,168,76,0.3)', color:'#c9a84c' }}>
+            <Flame size={12} />
+            {state.streak} {t('day')}
+          </div>
           <button onClick={() => setShowSearch(true)}
             className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
             style={{ background:'rgba(255,255,255,0.06)', border:'1px solid #2a2a2a' }}>
@@ -362,11 +404,6 @@ export default function Dashboard() {
               fontFamily: isAr ? "'Inter', sans-serif" : "'Cairo', sans-serif" }}>
             {t('lang_toggle')}
           </button>
-          <div className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold"
-            style={{ background:'rgba(201,168,76,0.12)', border:'1px solid rgba(201,168,76,0.3)', color:'#c9a84c' }}>
-            <Flame size={12} />
-            {state.streak} {t('day')}
-          </div>
           {currentUser?.role === 'admin' && (
             <button onClick={() => navigate('/admin')}
               className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
@@ -382,47 +419,31 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="px-4 space-y-4 pb-8">
+      <div className="px-4 space-y-5 pb-8">
 
-        {/* ── Start Here card (new users) ─────────────────────── */}
-        {!state.startHereDismissed && (state.streak || 0) < 3 && !state.morningDone && (
-          <div className="rounded-2xl overflow-hidden"
-            style={{ background: 'linear-gradient(135deg,#1a1500,#181818)', border: '1px solid rgba(201,168,76,0.4)' }}>
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 pt-4 pb-2">
-              <div>
-                <p className="text-xs font-black" style={{ color: '#c9a84c' }}>
-                  🚀 {isAr ? 'ابدأ رحلتك من هنا' : 'Start Your Journey Here'}
-                </p>
-                <p className="text-xs mt-0.5" style={{ color: '#666' }}>
-                  {isAr ? '٣ خطوات تبنى عليها كل شيء' : '3 steps everything else is built on'}
-                </p>
-              </div>
-              <button onClick={() => update('startHereDismissed', true)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#444', fontSize: 16 }}>
-                ×
-              </button>
-            </div>
-            {/* Steps */}
-            <div className="px-3 pb-4 space-y-2">
-              {FIRST_STEPS.map((step, i) => (
-                <button key={i} onClick={() => navigate(step.path)}
-                  className="w-full flex items-center gap-3 rounded-xl p-3 transition-all active:scale-[0.98]"
-                  style={{ background: '#111', border: '1px solid #222', textAlign: isAr ? 'right' : 'left' }}>
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'rgba(201,168,76,0.12)', fontSize: 16 }}>
-                    {step.emoji}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs font-bold text-white">{isAr ? step.labelAr : step.labelEn}</p>
-                    <p className="text-xs mt-0.5" style={{ color: '#555' }}>{isAr ? step.descAr : step.descEn}</p>
-                  </div>
-                  <span style={{ color: '#333', fontSize: 14 }}>{isAr ? '←' : '→'}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* ── Hero Section — one sentence + one button ──────── */}
+        <div className="rounded-2xl overflow-hidden relative" style={{
+          background: 'linear-gradient(160deg, #151510, #0e0e0e)',
+          border: '1px solid rgba(201,168,76,0.15)',
+          padding: '28px 24px',
+          minHeight: 160,
+        }}>
+          {/* Subtle gold glow orb in corner */}
+          <div className="absolute top-0 right-0 w-32 h-32 rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.08), transparent)', transform: 'translate(20%,-20%)' }} />
+
+          {/* Briefing text — the main focus */}
+          <p className="text-lg font-medium leading-relaxed relative z-10" style={{ color: '#eee' }}>
+            {heroData.text}
+          </p>
+
+          {/* One CTA button */}
+          <button onClick={() => navigate(heroData.action.path)}
+            className="mt-5 w-full py-3.5 rounded-xl font-bold text-sm transition-all active:scale-[0.97] relative z-10"
+            style={{ background: 'linear-gradient(135deg, #c9a84c, #dbb85c)', color: '#090909' }}>
+            {heroData.action.label}
+          </button>
+        </div>
 
         {/* ── Smart Reminder (time-based nudge + notification prompt) ── */}
         {vis.smartReminder && <SmartReminder state={state} isAr={isAr} navigate={navigate} />}
@@ -610,19 +631,20 @@ export default function Dashboard() {
           </div>
 
           {/* 4 Steps */}
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-3">
             {journeySteps.map((step, i) => (
               <button key={i} onClick={() => navigate(step.path)}
-                className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all active:scale-95"
+                className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl transition-all active:scale-95"
                 style={{
+                  minHeight: 80,
                   background: step.done ? step.color + '15' : '#151515',
                   border: `1px solid ${step.done ? step.color + '40' : '#252525'}`,
                 }}>
-                <span className="text-xl">{step.done ? '✅' : step.emoji}</span>
-                <span className="text-center font-bold" style={{ fontSize: 9, color: step.done ? step.color : '#555' }}>
+                <span className="text-2xl">{step.done ? '✅' : step.emoji}</span>
+                <span className="text-center font-bold" style={{ fontSize: 10, color: step.done ? step.color : '#666' }}>
                   {isAr ? step.labelAr : step.labelEn}
                 </span>
-                <span className="text-center" style={{ fontSize: 8, color: step.done ? step.color + 'cc' : '#444' }}>
+                <span className="text-center font-semibold" style={{ fontSize: 9, color: step.done ? step.color + 'cc' : '#555' }}>
                   {isAr ? step.subAr : step.subEn}
                 </span>
               </button>

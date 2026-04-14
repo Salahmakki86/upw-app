@@ -220,6 +220,31 @@ export default function MorningRitual() {
   const [answer, setAnswer] = useState('')
   const [videoMode, setVideoMode] = useState(false)
   const [ritualMode, setRitualMode] = useState('standard')
+  const [smartSuggested, setSmartSuggested] = useState(false)
+
+  // --- Smart mode suggestion: sleep data + day-of-week ---
+  const yesterdaySleep = (() => { const d = new Date(); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10) })()
+  const lastSleepHours = state.sleepLog?.[yesterdaySleep]?.hours
+  const dayOfWeek = new Date().getDay() // 0=Sun, 1=Mon...
+
+  useEffect(() => {
+    if (smartSuggested) return
+    let suggested = null
+    // Sleep-based suggestion takes priority
+    if (lastSleepHours != null) {
+      if (lastSleepHours < 6) suggested = 'quick'
+      else if (lastSleepHours >= 7) suggested = 'deep'
+    }
+    // Day-of-week refinement (only if no sleep override or sleep was normal range)
+    if (!suggested) {
+      if (dayOfWeek === 1 || dayOfWeek === 0 || dayOfWeek === 6) suggested = 'deep' // Mon, weekends
+      else if (dayOfWeek === 5) suggested = 'standard' // Friday fatigue
+    }
+    if (suggested) {
+      setRitualMode(suggested)
+      setSmartSuggested(true)
+    }
+  }, [lastSleepHours, dayOfWeek, smartSuggested])
 
   const ALL_PHASES = PHASES_DATA[lang]
   const PHASES = ritualMode === 'quick' ? ALL_PHASES.filter(p => p.id <= 1) : ALL_PHASES
@@ -264,7 +289,18 @@ export default function MorningRitual() {
     else setView('incantations')
   }
 
-  const finishMorning = () => { completeMorning(); setView('reflection') }
+  const finishMorning = () => {
+    // Save ritual mode to today's reflection data so milestones can track it
+    const todayKey = new Date().toISOString().slice(0,10)
+    const reflections = { ...(state.ritualReflections || {}) }
+    reflections[todayKey] = {
+      ...(reflections[todayKey] || {}),
+      morning: { ...(reflections[todayKey]?.morning || {}), mode: ritualMode, started: Date.now() }
+    }
+    update('ritualReflections', reflections)
+    completeMorning()
+    setView('reflection')
+  }
 
   // One-Tap Reflection → then done screen
   if (view === 'reflection') {
@@ -278,7 +314,20 @@ export default function MorningRitual() {
           </p>
           {/* One-Tap Reflection */}
           <div className="w-full">
-            <OneTapReflection type="morning" onDone={() => setView('done')} />
+            <OneTapReflection
+              ritualType="morning"
+              onSave={(rating, note) => {
+                const todayKey = new Date().toISOString().slice(0,10)
+                const reflections = { ...(state.ritualReflections || {}) }
+                reflections[todayKey] = {
+                  ...(reflections[todayKey] || {}),
+                  morning: { rating, note, mode: ritualMode, ts: Date.now() }
+                }
+                update('ritualReflections', reflections)
+                setView('done')
+              }}
+              onDismiss={() => setView('done')}
+            />
           </div>
         </div>
       </Layout>
@@ -590,6 +639,30 @@ export default function MorningRitual() {
             </div>
           )
         })()}
+
+        {/* Smart mode suggestion banner */}
+        {donePhases.length === 0 && lastSleepHours != null && (
+          <div className="rounded-xl p-3" style={{
+            background: lastSleepHours < 6
+              ? 'rgba(243,156,18,0.08)' : 'rgba(46,204,113,0.08)',
+            border: `1px solid ${lastSleepHours < 6
+              ? 'rgba(243,156,18,0.2)' : 'rgba(46,204,113,0.2)'}`,
+          }}>
+            <p className="text-xs font-bold" style={{
+              color: lastSleepHours < 6 ? '#f39c12' : '#2ecc71',
+            }}>
+              {lastSleepHours < 6
+                ? (isAr
+                  ? '😴 نومك أمس كان قصيراً — ننصحك بالوضع السريع ⚡'
+                  : '😴 Short sleep last night — Quick mode recommended ⚡')
+                : lastSleepHours >= 7
+                  ? (isAr
+                    ? '💪 نومك ممتاز! جرب الوضع العميق 🧘'
+                    : '💪 Great sleep! Try Deep mode 🧘')
+                  : null}
+            </p>
+          </div>
+        )}
 
         {/* Ritual mode selector — only before first phase is started */}
         {donePhases.length === 0 && (

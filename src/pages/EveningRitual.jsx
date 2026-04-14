@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
@@ -216,14 +216,23 @@ export default function EveningRitual() {
     const pqLog = state.powerQuestionsLog || {}
     const todayPQ = pqLog[todayKey] || {}
     update('powerQuestionsLog', { ...pqLog, [todayKey]: { ...todayPQ, evening: answers } })
+    // Auto-calculate dayRating from StateCheckin (backwards-compatible: falls back to manual value)
+    const checkin = state.stateCheckin?.[todayKey]
+    const computedRating = checkin
+      ? Math.round(((checkin.energy || 5) + (checkin.mood || 5) + (checkin.clarity || 5)) / 3)
+      : dayRating
     // Save ALL evening data to the log — previously this was lost on navigation
+    // Gratitude: prefer the unified gratitude page data, fall back to any local evening entries
+    const unifiedGratitude = state.gratitude?.[todayKey]?.filter(v => v && v.trim()) || []
+    const localGratitude = gratitude.filter(g => g.trim())
+    const finalGratitude = unifiedGratitude.length > 0 ? unifiedGratitude : localGratitude
     const existingLog = state.eveningLog || {}
     update('eveningLog', {
       ...existingLog,
       [todayKey]: {
         answers,
-        gratitude: gratitude.filter(g => g.trim()),
-        dayRating,
+        gratitude: finalGratitude,
+        dayRating: computedRating,
         tomorrow: tomorrow.filter(t => t.trim()),
         reflection: reflection.trim(),
         cani: { q1: caniQ1, q2: caniQ2, area: caniArea, meter: caniMeter },
@@ -264,15 +273,28 @@ export default function EveningRitual() {
           <p className="text-sm leading-relaxed" style={{ color: '#888' }}>
             {lang === 'ar' ? 'نمت بوعٍ اليوم وستستيقظ غداً أقوى.' : 'You slept consciously today and will wake up stronger tomorrow.'}
           </p>
-          <div className="rounded-2xl p-4 w-full"
-            style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)' }}>
-            <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
-              {t('evening_rating')}: {dayRating}/10
-            </p>
-            <div className="progress-bar-bg mt-1">
-              <div className="progress-bar-fill" style={{ width: `${dayRating * 10}%` }} />
-            </div>
-          </div>
+          {(() => {
+            const checkin = state.stateCheckin?.[getTodayStr()]
+            const displayRating = checkin
+              ? Math.round(((checkin.energy || 5) + (checkin.mood || 5) + (checkin.clarity || 5)) / 3)
+              : dayRating
+            return (
+              <div className="rounded-2xl p-4 w-full"
+                style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)' }}>
+                <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
+                  {t('evening_rating')}: {displayRating}/10
+                  {checkin && (
+                    <span className="ml-2 text-xs font-normal" style={{ color: '#666' }}>
+                      {isAr ? '(من حالتك)' : '(from state)'}
+                    </span>
+                  )}
+                </p>
+                <div className="progress-bar-bg mt-1">
+                  <div className="progress-bar-fill" style={{ width: `${displayRating * 10}%` }} />
+                </div>
+              </div>
+            )
+          })()}
           {/* Smart Flow — What's Next (Fix #2) */}
           {(() => {
             const nextStep = getNextStep('evening', state, isAr)
@@ -364,12 +386,26 @@ export default function EveningRitual() {
               </div>
             )}
           </div>
-          <div>
-            <p className="text-xs mb-2" style={{ color: '#888' }}>{t('evening_rating')}: {dayRating}/10</p>
-            <input type="range" min={1} max={10} value={dayRating}
-              onChange={e => setDayRating(Number(e.target.value))}
-              style={{ accentColor: '#c9a84c' }} className="w-full" />
-          </div>
+          {/* Day rating auto-calculated from StateCheckin */}
+          {state.stateCheckin?.[getTodayStr()] && (
+            <div className="rounded-xl p-3" style={{ background: '#111', border: '1px solid #1a1a1a' }}>
+              <p className="text-xs" style={{ color: '#666' }}>
+                {isAr ? '💡 تقييم يومك محسوب تلقائياً من حالتك (الطاقة + المزاج + الوضوح)'
+                       : '💡 Your day rating is auto-calculated from your state (energy + mood + clarity)'}
+              </p>
+              <p className="text-sm font-bold mt-1" style={{ color: '#c9a84c' }}>
+                {Math.round(((state.stateCheckin[getTodayStr()].energy || 5) + (state.stateCheckin[getTodayStr()].mood || 5) + (state.stateCheckin[getTodayStr()].clarity || 5)) / 3)}/10
+              </p>
+            </div>
+          )}
+          {!state.stateCheckin?.[getTodayStr()] && (
+            <div className="rounded-xl p-3" style={{ background: '#111', border: '1px solid #1a1a1a' }}>
+              <p className="text-xs" style={{ color: '#666' }}>
+                {isAr ? '💡 سجّل حالتك في صفحة "حالتك" ليتم احتساب تقييم يومك تلقائياً'
+                       : '💡 Log your state on the State page to auto-calculate your day rating'}
+              </p>
+            </div>
+          )}
           <button onClick={finishEvening} className="w-full btn-gold py-4 text-base">
             🌙 {lang === 'ar' ? 'إنهاء اليوم' : 'End the day'}
           </button>
@@ -566,26 +602,58 @@ export default function EveningRitual() {
   }
 
   if (view === 'gratitude') {
+    const todayGratitude = state.gratitude?.[getTodayStr()] || []
+    const hasGratitudeToday = todayGratitude.filter(v => v && v.trim()).length > 0
+
     return (
       <Layout title={t('evening_gratitude')} subtitle={t('evening_gratitude_desc')}>
         <div className="space-y-4 pt-2">
           <p className="text-xs" style={{ color: '#888' }}>
-            {lang === 'ar'
+            {isAr
               ? 'الامتنان يُغلق يومك بحالة جميلة ويبرمج عقلك الباطن للإيجابية أثناء النوم.'
               : 'Gratitude closes your day in a beautiful state and programs your subconscious for positivity during sleep.'}
           </p>
-          {gratitude.map((g, i) => (
-            <div key={i}>
-              <p className="text-xs mb-1 font-bold" style={{ color: '#c9a84c' }}>
-                {i === 0 ? '🌟 1' : i === 1 ? '💛 2' : '🙏 3'}
+
+          {/* Show today's gratitude if already entered on the Gratitude page */}
+          {hasGratitudeToday ? (
+            <div className="rounded-2xl p-4" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
+              <p className="text-xs font-bold mb-2" style={{ color: '#2ecc71' }}>
+                {isAr ? '✓ أضفت امتنانك اليوم' : '✓ You logged gratitude today'}
               </p>
-              <textarea value={g} onChange={e => setGrat(i, e.target.value)}
-                placeholder={t('evening_gratitude_placeholder')} rows={2} className="input-dark resize-none text-sm" />
+              {todayGratitude.filter(v => v && v.trim()).map((g, i) => (
+                <p key={i} className="text-xs mb-1 leading-relaxed" style={{ color: '#999' }}>
+                  {i === 0 ? '🌟' : i === 1 ? '💛' : '🙏'} {g}
+                </p>
+              ))}
+              <button
+                onClick={() => navigate('/gratitude')}
+                className="mt-3 w-full rounded-xl py-2 text-xs font-bold transition-all active:scale-[0.97]"
+                style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)', color: '#c9a84c' }}>
+                {isAr ? 'تعديل الامتنان ←' : 'Edit Gratitude ->'}
+              </button>
             </div>
-          ))}
-          <button onClick={() => setView('cani')} disabled={!gratitude.some(g => g.trim())}
-            className="w-full btn-gold py-3 text-sm disabled:opacity-40">
-            {isAr ? 'CANI — التحسين المستمر →' : 'CANI — Improvement →'}
+          ) : (
+            <div className="rounded-2xl p-4" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
+              <p className="text-sm font-bold mb-2" style={{ color: '#c9a84c' }}>
+                {isAr ? '🙏 هل أضفت شيئاً للامتنان اليوم؟' : '🙏 Did you add something to be grateful for today?'}
+              </p>
+              <p className="text-xs mb-3" style={{ color: '#888' }}>
+                {isAr
+                  ? 'الامتنان قبل النوم يبرمج عقلك الباطن للإيجابية — أضف 3 أشياء تشكرها'
+                  : 'Gratitude before sleep programs your subconscious for positivity — add 3 things you are grateful for'}
+              </p>
+              <button
+                onClick={() => navigate('/gratitude')}
+                className="w-full rounded-xl py-3 text-sm font-bold transition-all active:scale-[0.97]"
+                style={{ background: 'linear-gradient(135deg, #c9a84c, #a07a30)', color: '#000' }}>
+                {isAr ? '🙏 افتح صفحة الامتنان ←' : '-> 🙏 Open Gratitude Page'}
+              </button>
+            </div>
+          )}
+
+          <button onClick={() => setView('cani')}
+            className="w-full btn-gold py-3 text-sm">
+            {isAr ? 'CANI — التحسين المستمر →' : 'CANI — Improvement ->'}
           </button>
         </div>
       </Layout>
