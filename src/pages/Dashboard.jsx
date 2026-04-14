@@ -30,6 +30,7 @@ import AdaptiveNudge from '../components/AdaptiveNudge'
 import ProfileAssessment from '../components/ProfileAssessment'
 import StaleGoalNudge from '../components/StaleGoalNudge'
 import WeeklyAutoReport from '../components/WeeklyAutoReport'
+import ProgressProof from '../components/ProgressProof'
 import MiniInsightBanner from '../components/MiniInsightBanner'
 import GuidedJourney from '../components/GuidedJourney'
 import { getCategoryOrder } from '../utils/adaptivePath'
@@ -37,6 +38,7 @@ import { getDashboardVisibility, getUIComplexity } from '../utils/progressiveUI'
 import ShareProgressCard from '../components/ShareProgressCard'
 import { generateActionableInsights } from '../utils/insightEngine'
 import ActionableInsightCard from '../components/ActionableInsightCard'
+import StreakInsurance from '../components/StreakInsurance'
 
 const QUOTES = {
   ar: [
@@ -421,6 +423,11 @@ export default function Dashboard() {
 
       <div className="px-4 space-y-5 pb-8">
 
+        {/* ── Streak Insurance notification ──────── */}
+        {state.streakInsuranceSaved && (
+          <StreakInsurance onDismiss={() => update('streakInsuranceSaved', false)} />
+        )}
+
         {/* ── Hero Section — one sentence + one button ──────── */}
         <div className="rounded-2xl overflow-hidden relative" style={{
           background: 'linear-gradient(160deg, #151510, #0e0e0e)',
@@ -459,6 +466,9 @@ export default function Dashboard() {
 
         {/* ── Weekly Auto Report (Fix #18) ── */}
         {vis.weeklyReport && <WeeklyAutoReport />}
+
+        {/* ── Monthly Progress Proof ── */}
+        {vis.weeklyReport && <ProgressProof />}
 
         {/* ── Mini Intelligence Banner — visible earlier ──────── */}
         {vis.miniInsight && <MiniInsightBanner />}

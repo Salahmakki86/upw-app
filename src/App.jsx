@@ -4,6 +4,7 @@ import { AppProvider } from './context/AppContext'
 import { LangProvider } from './context/LangContext'
 import NotificationSetup from './components/NotificationSetup'
 import MessageModal from './components/MessageModal'
+import IdentityReinforcement from './components/IdentityReinforcement'
 import { ToastProvider } from './context/ToastContext'
 
 import LoginPage    from './pages/LoginPage'
@@ -113,6 +114,7 @@ function AppRoutes() {
       <AppProvider userId={currentUser.id} hasData={hasData}>
         <NotificationSetup />
         <MessageModal />
+        <IdentityReinforcement />
         <BrowserRouter>
           <Routes>
             <Route path="/"        element={<SmartHome />}       />

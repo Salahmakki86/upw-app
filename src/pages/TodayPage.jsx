@@ -17,7 +17,7 @@ import StaleGoalNudge from '../components/StaleGoalNudge'
 import AccountabilityCard from '../components/AccountabilityCard'
 import ProgressSnapshot from '../components/ProgressSnapshot'
 import WelcomeExperience from '../components/WelcomeExperience'
-import WeeklyDiscovery from '../components/WeeklyDiscovery'
+import WeeklyDiscovery, { useWeeklyDiscoveryAvailable } from '../components/WeeklyDiscovery'
 import PersonalizedCoachCard from '../components/PersonalizedCoachCard'
 import InsightHarvester from '../components/InsightHarvester'
 import { generateActionableInsights, checkInsightProgress } from '../utils/insightEngine'
@@ -205,6 +205,7 @@ export default function TodayPage() {
   const [supportSent, setSupportSent] = useState(false)
   const [supportLoading, setSupportLoading] = useState(false)
   const [showMore, setShowMore] = useState(false)
+  const weeklyDiscoveryReady = useWeeklyDiscoveryAvailable()
 
   const today = todayKey()
   const currentHour = new Date().getHours()
@@ -457,8 +458,23 @@ export default function TodayPage() {
         <p style={{ color: '#555', fontSize: 13, fontWeight: 500, marginBottom: 4 }}>
           {greeting}, <span style={{ color: '#888' }}>{state.userName || (isAr ? 'المحارب' : 'Warrior')}</span>
         </p>
-        <p style={{ color: '#333', fontSize: 11, marginBottom: 24 }}>
+        <p style={{ color: '#333', fontSize: 11, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 6 }}>
           {formatTodayDate(isAr)}
+          {weeklyDiscoveryReady && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              fontSize: 9, color: '#c9a84c', fontWeight: 700,
+              background: 'rgba(201,168,76,0.10)', padding: '2px 7px',
+              borderRadius: 8, border: '1px solid rgba(201,168,76,0.25)',
+            }}>
+              <span style={{
+                width: 6, height: 6, borderRadius: '50%',
+                background: '#c9a84c', display: 'inline-block',
+                animation: 'pulse 2s infinite',
+              }} />
+              {isAr ? '\u0627\u0643\u062A\u0634\u0627\u0641 \u062C\u062F\u064A\u062F' : 'New discovery'}
+            </span>
+          )}
         </p>
 
         {/* Morning Briefing -- the big sentence */}

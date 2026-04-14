@@ -7,6 +7,8 @@ const INITIAL_STATE = {
   streak: 0,
   lastActiveDate: null,
   morningLog: [], // ['YYYY-MM-DD', ...] — one entry per day morning was completed
+  streakInsuranceUsed: '', // date string when last used (YYYY-MM-DD)
+  streakInsuranceSaved: false, // true when insurance just activated (UI flag)
 
   // Emotional state log: [{ date, state: 'beautiful'|'suffering', label }]
   stateLog: [],
@@ -399,6 +401,7 @@ export function AppProvider({ children, userId, hasData }) {
   })()
 
   // Recalculate streak from morningLog (array of 'YYYY-MM-DD' strings) or stateLog
+  // Now supports streak insurance: allows 1 gap per week if 5/7 days were active
   function recalcStreak(merged, todayStr, yesterdayStr) {
     // Build a set of days the user was active (morningLog takes priority, fallback to stateLog)
     const activeDays = new Set([
@@ -409,17 +412,36 @@ export function AppProvider({ children, userId, hasData }) {
     if (merged.morningDone)    activeDays.add(todayStr)
 
     // Count consecutive days going backwards from today (or yesterday if today not active)
+    // With insurance: allow 1 gap if 5/7 days were active around that gap
     const startFrom = activeDays.has(todayStr) ? todayStr : yesterdayStr
     if (!activeDays.has(startFrom)) return merged.streak // nothing to repair
 
     let count = 0
+    let gapsUsed = 0
     const d = new Date()
     if (!activeDays.has(todayStr)) d.setDate(d.getDate() - 1) // start from yesterday
     while (true) {
       const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-      if (!activeDays.has(ds)) break
-      count++
-      d.setDate(d.getDate() - 1)
+      if (activeDays.has(ds)) {
+        count++
+        d.setDate(d.getDate() - 1)
+      } else if (gapsUsed === 0) {
+        // Check if 5/7 days around this gap were active (insurance)
+        const nearby7 = Array.from({ length: 7 }, (_, i) => {
+          const nd = new Date(d); nd.setDate(nd.getDate() - 3 + i)
+          return `${nd.getFullYear()}-${String(nd.getMonth()+1).padStart(2,'0')}-${String(nd.getDate()).padStart(2,'0')}`
+        })
+        const nearbyActive = nearby7.filter(nd => activeDays.has(nd)).length
+        if (nearbyActive >= 5) {
+          gapsUsed++
+          count++ // count the gap day as insured
+          d.setDate(d.getDate() - 1)
+        } else {
+          break
+        }
+      } else {
+        break
+      }
     }
     return count > (merged.streak || 0) ? count : (merged.streak || 0)
   }
@@ -603,17 +625,66 @@ export function AppProvider({ children, userId, hasData }) {
     }))
   }, [setState, today])
 
-  // Complete morning ritual
+  // Helper: get Monday of current week as YYYY-MM-DD
+  function getWeekStart() {
+    const d = new Date()
+    const day = d.getDay() || 7 // Sunday=7
+    d.setDate(d.getDate() - day + 1) // Monday
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  }
+
+  // Complete morning ritual (with streak insurance)
   const completeMorning = useCallback(() => {
     setState(prev => {
-      const newStreak = prev.lastActiveDate === today
-        ? prev.streak                      // already completed today — keep streak
-        : prev.lastActiveDate === yesterday
-          ? (prev.streak || 0) + 1         // completed yesterday — increment
-          : 1                              // missed a day — reset to 1
+      let newStreak
+      let insuranceSaved = false
+
+      if (prev.lastActiveDate === today) {
+        newStreak = prev.streak                      // already completed today — keep streak
+      } else if (prev.lastActiveDate === yesterday) {
+        newStreak = (prev.streak || 0) + 1           // completed yesterday — increment
+      } else {
+        // Missed a day — check streak insurance
+        // Build set of active days from morningLog + stateLog
+        const activeDays = new Set([
+          ...(prev.morningLog || []),
+          ...(prev.stateLog || []).map(e => e.date),
+        ])
+        activeDays.add(today) // count today since we're completing now
+
+        // Count active days in last 7
+        const last7 = Array.from({ length: 7 }, (_, i) => {
+          const d = new Date(); d.setDate(d.getDate() - i)
+          return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+        })
+        const activeLast7 = last7.filter(d => activeDays.has(d)).length
+
+        const weekStart = getWeekStart()
+        const insuranceUsedDate = prev.streakInsuranceUsed || ''
+        const insuranceAvailable = insuranceUsedDate < weekStart // hasn't used this week
+
+        if (activeLast7 >= 5 && insuranceAvailable && (prev.streak || 0) > 0) {
+          // STREAK INSURANCE: don't break the streak
+          newStreak = (prev.streak || 0) + 1
+          insuranceSaved = true
+        } else {
+          newStreak = 1 // missed a day — reset to 1
+        }
+      }
+
       // morningLog: reliable day-by-day history for streak recalculation
       const morningLog = [...new Set([...(prev.morningLog || []), today])]
-      return { ...prev, morningDone: true, streak: newStreak, lastActiveDate: today, morningLog }
+      return {
+        ...prev,
+        morningDone: true,
+        streak: newStreak,
+        lastActiveDate: today,
+        morningLog,
+        ...(insuranceSaved ? {
+          streakInsuranceSaved: true,
+          streakInsuranceUsed: today,
+        } : { streakInsuranceSaved: false }),
+      }
     })
   }, [setState, today, yesterday])
 
