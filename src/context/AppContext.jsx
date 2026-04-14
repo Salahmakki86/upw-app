@@ -446,88 +446,112 @@ export function AppProvider({ children, userId, hasData }) {
     return count > (merged.streak || 0) ? count : (merged.streak || 0)
   }
 
+  // ── Smart merge: merges remote + local using timestamps (newest wins) ──
+  function smartMerge(remoteState, localState, base) {
+    const remoteTs = remoteState?._lastSyncedAt || 0
+    const localTs  = localState?._lastSyncedAt  || 0
+
+    // Newest device wins for flat fields; logs are always unioned
+    const primary   = remoteTs > localTs ? remoteState : localState
+    const secondary = remoteTs > localTs ? localState  : remoteState
+    let merged = { ...base, ...secondary, ...primary }
+
+    // Deep-merge date-keyed log objects (keep entries from BOTH devices)
+    const LOG_KEYS = [
+      'eveningLog', 'caniLog', 'sleepLog', 'dailyWins',
+      'gratitude', 'todayPlanChecked', 'eveningAnswers',
+      'challengeLog', 'energyProtocol', 'stateCheckin', 'sixNeedsHistory', 'smartQuestionLog',
+    ]
+    for (const k of LOG_KEYS) {
+      const remote = remoteState?.[k]
+      const local  = localState?.[k]
+      if ((remote && typeof remote === 'object' && !Array.isArray(remote)) ||
+          (local  && typeof local  === 'object' && !Array.isArray(local))) {
+        // For date-keyed logs: newer entry wins per date key
+        const mergedLog = { ...(remote || {}), ...(local || {}) }
+        // If remote is newer overall, let remote overwrite same-date entries
+        if (remoteTs > localTs) {
+          Object.assign(mergedLog, remote || {})
+        }
+        merged[k] = mergedLog
+      }
+    }
+
+    // Union array logs (morningLog — deduplicated)
+    const remoteMLog = remoteState?.morningLog || []
+    const localMLog  = localState?.morningLog  || []
+    merged.morningLog = [...new Set([...remoteMLog, ...localMLog])]
+
+    // Union stateLog (by date — newest device wins on same-date conflicts)
+    const remoteStateLog = remoteState?.stateLog || []
+    const localStateLog  = localState?.stateLog  || []
+    const byDate = {}
+    secondary?.stateLog?.forEach(e => { if (e?.date) byDate[e.date] = e })
+    primary?.stateLog?.forEach(e   => { if (e?.date) byDate[e.date] = e })
+    merged.stateLog = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date))
+
+    // Deep-merge habitTracker (log is date-keyed, list is an array)
+    if (remoteState?.habitTracker || localState?.habitTracker) {
+      const rHT = remoteState?.habitTracker || {}
+      const lHT = localState?.habitTracker  || {}
+      merged.habitTracker = {
+        list: (lHT.list?.length >= (rHT.list?.length || 0)) ? lHT.list : rHT.list,
+        log:  { ...(rHT.log || {}), ...(lHT.log || {}) },
+      }
+    }
+
+    // ── Apply daily reset if date has changed ────────────────────
+    const isNewDay = merged.lastActiveDate && merged.lastActiveDate !== today
+    const correctTodayState = (merged.stateLog || []).find(e => e.date === today)?.state || null
+    if (isNewDay || merged.todayState !== correctTodayState) {
+      merged = {
+        ...merged,
+        todayState: correctTodayState,
+        ...(isNewDay ? {
+          morningDone:       false,
+          eveningDone:       false,
+          primingPhasesDone: [],
+        } : {}),
+      }
+    }
+    // Auto-repair streak
+    const repairedStreak = recalcStreak(merged, today, yesterday)
+    if (repairedStreak !== merged.streak) {
+      merged = { ...merged, streak: repairedStreak }
+    }
+
+    return merged
+  }
+
+  // ── Pull from backend and merge ──────────────────────────────────────
+  async function pullAndMerge() {
+    try {
+      const { state: remoteState } = await upwApi.getState()
+      if (!remoteState || !isMounted.current) return
+      const base = userId === 'admin' ? INITIAL_STATE : STUDENT_INITIAL_STATE
+      const localState = loadState(userId)
+      const merged = smartMerge(remoteState, localState, base)
+      // Stamp sync time
+      merged._lastSyncedAt = Date.now()
+      setStateRaw(merged)
+      saveState(merged, userId)
+      // Push merged state back so backend has the complete picture
+      upwApi.saveState(merged).catch(() => {})
+    } catch {}
+  }
+
   // On mount: fetch state from backend (or upload localStorage if first time)
   useEffect(() => {
     isMounted.current = true
     async function initSync() {
       try {
         if (hasData) {
-          // Pull from backend
-          const { state: remoteState } = await upwApi.getState()
-          if (remoteState && isMounted.current) {
-            const base = userId === 'admin' ? INITIAL_STATE : STUDENT_INITIAL_STATE
-            const localState = loadState(userId)
-
-            // ── Smart merge: local state has priority, remote fills gaps ──
-            // Start with base → remote → local (local wins on conflicts)
-            let merged = { ...base, ...remoteState, ...localState }
-
-            // Deep-merge date-keyed log objects (keep entries from BOTH)
-            const LOG_KEYS = [
-              'eveningLog', 'caniLog', 'sleepLog', 'dailyWins',
-              'gratitude', 'todayPlanChecked', 'eveningAnswers',
-              'challengeLog', 'energyProtocol', 'stateCheckin', 'sixNeedsHistory', 'smartQuestionLog',
-            ]
-            for (const k of LOG_KEYS) {
-              const remote = remoteState?.[k]
-              const local  = localState?.[k]
-              if ((remote && typeof remote === 'object' && !Array.isArray(remote)) ||
-                  (local  && typeof local  === 'object' && !Array.isArray(local))) {
-                merged[k] = { ...(remote || {}), ...(local || {}) }
-              }
-            }
-
-            // Union array logs (morningLog — deduplicated)
-            const remoteMLog = remoteState?.morningLog || []
-            const localMLog  = localState?.morningLog  || []
-            merged.morningLog = [...new Set([...remoteMLog, ...localMLog])]
-
-            // Union stateLog (by date — local wins on same-date conflicts)
-            const remoteStateLog = remoteState?.stateLog || []
-            const localStateLog  = localState?.stateLog  || []
-            const byDate = {}
-            remoteStateLog.forEach(e => { if (e?.date) byDate[e.date] = e })
-            localStateLog.forEach(e  => { if (e?.date) byDate[e.date] = e })  // local overwrites
-            merged.stateLog = Object.values(byDate).sort((a, b) => a.date.localeCompare(b.date))
-
-            // Deep-merge habitTracker (log is date-keyed, list is an array)
-            if (remoteState?.habitTracker || localState?.habitTracker) {
-              const rHT = remoteState?.habitTracker || {}
-              const lHT = localState?.habitTracker  || {}
-              merged.habitTracker = {
-                list: (lHT.list?.length >= (rHT.list?.length || 0)) ? lHT.list : rHT.list,
-                log:  { ...(rHT.log || {}), ...(lHT.log || {}) },
-              }
-            }
-
-            // ── Apply daily reset if date has changed ────────────────────
-            const isNewDay = merged.lastActiveDate && merged.lastActiveDate !== today
-            const correctTodayState = (merged.stateLog || []).find(e => e.date === today)?.state || null
-            if (isNewDay || merged.todayState !== correctTodayState) {
-              merged = {
-                ...merged,
-                todayState: correctTodayState,
-                ...(isNewDay ? {
-                  morningDone:       false,
-                  eveningDone:       false,
-                  primingPhasesDone: [],
-                } : {}),
-              }
-            }
-            // Auto-repair streak in case UTC bug caused incorrect resets
-            const repairedStreak = recalcStreak(merged, today, yesterday)
-            if (repairedStreak !== merged.streak) {
-              merged = { ...merged, streak: repairedStreak }
-            }
-            setStateRaw(merged)
-            saveState(merged, userId)
-
-            // Push merged state back so backend has the complete picture
-            upwApi.saveState(merged).catch(() => {})
-          }
+          await pullAndMerge()
         } else {
           // First sync: push localStorage state to backend
           const localState = loadState(userId)
+          localState._lastSyncedAt = Date.now()
+          saveState(localState, userId)
           await upwApi.saveState(localState)
         }
       } catch {}
@@ -535,6 +559,21 @@ export function AppProvider({ children, userId, hasData }) {
     initSync()
     return () => { isMounted.current = false }
   }, [userId]) // eslint-disable-line
+
+  // ── Re-sync when app becomes visible (user switches back from other tab/app) ──
+  useEffect(() => {
+    if (!hasData) return
+    let lastPull = Date.now()
+    function onVisibilityChange() {
+      if (document.visibilityState !== 'visible') return
+      // Only re-pull if at least 10 seconds since last pull (avoid rapid fire)
+      if (Date.now() - lastPull < 10000) return
+      lastPull = Date.now()
+      pullAndMerge()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  }, [hasData, userId]) // eslint-disable-line
 
   // ── Daily reset: clear today-flags when a new day starts ──────────────────
   useEffect(() => {
@@ -568,6 +607,7 @@ export function AppProvider({ children, userId, hasData }) {
   const setState = useCallback((updater) => {
     setStateRaw(prev => {
       const next = typeof updater === 'function' ? updater(prev) : { ...prev, ...updater }
+      next._lastSyncedAt = Date.now() // timestamp for cross-device merge
       saveState(next, userId)   // ← always persisted to localStorage first
 
       // Debounced sync to backend (3 s) with retry
