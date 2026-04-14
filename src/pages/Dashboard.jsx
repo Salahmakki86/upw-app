@@ -8,7 +8,7 @@ import {
   Trophy, Mail, Users, Heart, Activity, Shuffle, PieChart,
   LogOut, Settings, NotebookPen, CheckSquare, Eye, Smile, Play,
   MessageSquare, GraduationCap, Moon as MoonIcon,
-  LifeBuoy, Brain, Sparkles, FileText, Swords,
+  LifeBuoy, Brain, Sparkles, FileText, Swords, Share2,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { useLang } from '../context/LangContext'
@@ -34,6 +34,7 @@ import MiniInsightBanner from '../components/MiniInsightBanner'
 import GuidedJourney from '../components/GuidedJourney'
 import { getCategoryOrder } from '../utils/adaptivePath'
 import { getDashboardVisibility, getUIComplexity } from '../utils/progressiveUI'
+import ShareProgressCard from '../components/ShareProgressCard'
 
 const QUOTES = {
   ar: [
@@ -69,6 +70,7 @@ export default function Dashboard() {
   const { currentUser, logout } = useAuth()
   const [showStateModal, setShowStateModal] = useState(false)
   const [showSearch, setShowSearch]       = useState(false)
+  const [showShareCard, setShowShareCard] = useState(false)
   const [supportSent, setSupportSent]     = useState(false)
   const [openCats, setOpenCats]           = useState(() => {
     const base = { daily: true, learn: true, goals: false, programs: false, planning: false, business: false, tools: false, admin: false }
@@ -444,6 +446,22 @@ export default function Dashboard() {
 
         {/* ── Transformation Intelligence (full — level 3+) ──── */}
         {vis.transformPulse && <TransformationPulse />}
+
+        {/* ── Share Progress Card button ─────────────────────── */}
+        {vis.transformPulse && (
+          <button
+            onClick={() => setShowShareCard(true)}
+            className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-bold text-sm transition-all active:scale-[0.97]"
+            style={{
+              background: 'rgba(201,168,76,0.08)',
+              border: '1px solid rgba(201,168,76,0.25)',
+              color: '#c9a84c',
+            }}
+          >
+            <Share2 size={16} />
+            {isAr ? 'شارك تقدمك' : 'Share Progress'}
+          </button>
+        )}
 
         {/* ── Today's Plan (from yesterday's evening) ────────── */}
         {vis.todaysPlan && (() => {
@@ -831,6 +849,11 @@ export default function Dashboard() {
 
       </div>
 
+      {/* ── Share Progress Card Modal ─────────────────────── */}
+      {showShareCard && (
+        <ShareProgressCard state={state} lang={lang} onClose={() => setShowShareCard(false)} />
+      )}
+
       {/* ── Search Modal ───────────────────────────────────── */}
       {showSearch && <SearchModal onClose={() => setShowSearch(false)} />}
 
@@ -872,6 +895,10 @@ export default function Dashboard() {
             const celebrated = state.celebratedMilestones || []
             update('celebratedMilestones', [...celebrated, milestoneToShow.id])
             setMilestoneToShow(null)
+          }}
+          onSaveReflection={(text) => {
+            const reflections = state.milestoneReflections || {}
+            update('milestoneReflections', { ...reflections, [milestoneToShow.id]: { text, date: new Date().toISOString() } })
           }}
         />
       )}
