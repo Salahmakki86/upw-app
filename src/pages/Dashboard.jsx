@@ -19,7 +19,7 @@ import SearchModal from '../components/SearchModal'
 import DiscoveryCard from '../components/DiscoveryCard'
 import GoalNudge from '../components/GoalNudge'
 import MilestoneModal from '../components/MilestoneModal'
-import { calcDailyScore, DAILY_TASKS_TOTAL } from '../utils/dailyScore'
+import { calcDailyScore, DAILY_TASKS_TOTAL, calcWeightedScore, getScoreInsight } from '../utils/dailyScore'
 import { checkMilestones } from '../utils/milestones'
 import { getUnlockTier, isFeatureUnlocked, getNextUnlockMessage, getStageProgress } from '../utils/featureUnlock'
 import JourneyStageMap from '../components/JourneyStageMap'
@@ -290,9 +290,11 @@ export default function Dashboard() {
     },
   ]
 
-  const dashScore = dailyScore
-  const dashPct   = Math.round((dashScore / DAILY_TASKS_TOTAL) * 100)
-  const dashComplete = dashScore === DAILY_TASKS_TOTAL
+  // Weighted score (morning = 20pts, cornerstone habits weighted higher)
+  const weightedScore = useMemo(() => calcWeightedScore(state), [state])
+  const dashPct   = weightedScore  // already 0-100
+  const dashComplete = weightedScore === 100
+  const scoreInsight = useMemo(() => getScoreInsight(state, isAr), [state, isAr])
 
   // #6 — Progressive unlocking
   const unlockTier = useMemo(() => getUnlockTier(state), [state.morningLog, state.streak])
@@ -436,6 +438,40 @@ export default function Dashboard() {
 
         {/* ── Mini Intelligence Banner — visible earlier ──────── */}
         {vis.miniInsight && <MiniInsightBanner />}
+
+        {/* ── Sleep → Performance Briefing ─────────────────────── */}
+        {(() => {
+          const yKey = (() => { const d = new Date(); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10) })()
+          const lastSleep = state.sleepLog?.[yKey]
+          if (!lastSleep?.hours) return null
+          const h = lastSleep.hours
+          const isLow = h < 5.5
+          const isGreat = h >= 8
+          if (!isLow && !isGreat) return null
+          return (
+            <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{
+              background: isLow ? 'rgba(230,57,70,0.08)' : 'rgba(46,204,113,0.08)',
+              border: `1px solid ${isLow ? 'rgba(230,57,70,0.2)' : 'rgba(46,204,113,0.2)'}`,
+            }}>
+              <span style={{ fontSize: 20 }}>{isLow ? '😴' : '💪'}</span>
+              <p className="text-xs flex-1" style={{ color: isLow ? '#ff6b7a' : '#2ecc71', lineHeight: 1.5 }}>
+                {isAr
+                  ? isLow ? `نومك أمس ${h} ساعات ⚠️ ركّز على الطاقة والتنفس اليوم` : `نومك أمس ${h} ساعات 💪 يومك المثالي يبدأ بالصباح!`
+                  : isLow ? `${h}h sleep last night ⚠️ Focus on energy & breathing today` : `${h}h sleep last night 💪 Your ideal day starts with the morning ritual!`}
+              </p>
+            </div>
+          )
+        })()}
+
+        {/* ── Weighted Score Insight ──────────────────────────── */}
+        {scoreInsight && weightedScore < 60 && (
+          <div className="rounded-xl px-4 py-2.5 flex items-center gap-2" style={{
+            background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)',
+          }}>
+            <span style={{ fontSize: 14 }}>💡</span>
+            <p className="text-xs" style={{ color: '#c9a84c' }}>{scoreInsight}</p>
+          </div>
+        )}
 
         {/* ── Enhanced State Check-in ─────────────────────────── */}
         {state.stateCheckin?.[today] ? (
