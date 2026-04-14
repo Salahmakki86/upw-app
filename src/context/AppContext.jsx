@@ -447,13 +447,16 @@ export function AppProvider({ children, userId, hasData }) {
   }
 
   // ── Smart merge: merges remote + local using timestamps (newest wins) ──
+  // When both timestamps are 0 (old data before this fix), REMOTE wins
+  // because remote = last device that pushed to backend = most recent edits
   function smartMerge(remoteState, localState, base) {
     const remoteTs = remoteState?._lastSyncedAt || 0
     const localTs  = localState?._lastSyncedAt  || 0
 
-    // Newest device wins for flat fields; logs are always unioned
-    const primary   = remoteTs > localTs ? remoteState : localState
-    const secondary = remoteTs > localTs ? localState  : remoteState
+    // Remote wins when: remote is newer OR both have no timestamp (pre-fix data)
+    const remoteWins = remoteTs >= localTs
+    const primary   = remoteWins ? remoteState : localState
+    const secondary = remoteWins ? localState  : remoteState
     let merged = { ...base, ...secondary, ...primary }
 
     // Deep-merge date-keyed log objects (keep entries from BOTH devices)
@@ -467,12 +470,8 @@ export function AppProvider({ children, userId, hasData }) {
       const local  = localState?.[k]
       if ((remote && typeof remote === 'object' && !Array.isArray(remote)) ||
           (local  && typeof local  === 'object' && !Array.isArray(local))) {
-        // For date-keyed logs: newer entry wins per date key
-        const mergedLog = { ...(remote || {}), ...(local || {}) }
-        // If remote is newer overall, let remote overwrite same-date entries
-        if (remoteTs > localTs) {
-          Object.assign(mergedLog, remote || {})
-        }
+        // Union all date keys, then let primary overwrite conflicts
+        const mergedLog = { ...(secondary?.[k] || {}), ...(primary?.[k] || {}) }
         merged[k] = mergedLog
       }
     }
@@ -492,11 +491,11 @@ export function AppProvider({ children, userId, hasData }) {
 
     // Deep-merge habitTracker (log is date-keyed, list is an array)
     if (remoteState?.habitTracker || localState?.habitTracker) {
-      const rHT = remoteState?.habitTracker || {}
-      const lHT = localState?.habitTracker  || {}
+      const pHT = primary?.habitTracker  || {}
+      const sHT = secondary?.habitTracker || {}
       merged.habitTracker = {
-        list: (lHT.list?.length >= (rHT.list?.length || 0)) ? lHT.list : rHT.list,
-        log:  { ...(rHT.log || {}), ...(lHT.log || {}) },
+        list: (pHT.list?.length >= (sHT.list?.length || 0)) ? pHT.list : sHT.list,
+        log:  { ...(sHT.log || {}), ...(pHT.log || {}) }, // primary overwrites
       }
     }
 
