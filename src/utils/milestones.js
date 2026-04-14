@@ -167,7 +167,12 @@ const MILESTONES = [
   },
   {
     id: 'deep_work_mode',
-    check: s => (s.ritualReflections || []).some(r => r.mode === 'deep'),
+    check: s => {
+      const rr = s.ritualReflections
+      if (!rr) return false
+      const arr = Array.isArray(rr) ? rr : Object.values(rr)
+      return arr.some(r => r && r.mode === 'deep')
+    },
     emoji: '🧘',
     titleAr: 'وضع التأمل العميق!', titleEn: 'Deep Meditation Mode!',
     msgAr: 'دخلت وضع الطقوس العميق — ٢٠ دقيقة من التركيز الكامل! هنا يحدث السحر الحقيقي',
