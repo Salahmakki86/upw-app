@@ -515,6 +515,98 @@ export default function InsightsPage() {
           <JourneyTimeline />
         </div>
 
+        {/* ── Deep Growth Insights (21+ days) ──────────────────────────────── */}
+        {(state.morningLog || []).length >= 21 && (() => {
+          const checkin = state.stateCheckin || {}
+          const allDates = Object.keys(checkin).sort()
+          if (allDates.length < 14) return null
+
+          // Compare first 7 days vs last 7 days
+          const first7 = allDates.slice(0, 7)
+          const last7Dates = allDates.slice(-7)
+
+          const avgState = (dates) => {
+            const vals = dates.map(d => checkin[d] ? (checkin[d].energy + checkin[d].mood + checkin[d].clarity) / 3 : null).filter(Boolean)
+            return vals.length > 0 ? Math.round(vals.reduce((s, v) => s + v, 0) / vals.length * 10) / 10 : null
+          }
+
+          const firstAvg = avgState(first7)
+          const lastAvg = avgState(last7Dates)
+          const stateGrowth = firstAvg && lastAvg ? Math.round((lastAvg - firstAvg) * 10) / 10 : null
+
+          // Belief transformation
+          const limitingCount = (state.limitingBeliefs || []).length
+          const empoweringCount = (state.empoweringBeliefs || []).length
+          const beliefRatio = limitingCount + empoweringCount > 0
+            ? Math.round((empoweringCount / (limitingCount + empoweringCount)) * 100) : null
+
+          // Goal velocity
+          const goals = state.goals || []
+          const completedGoals = goals.filter(g => (g.progress || 0) >= 100).length
+
+          const deepInsights = []
+
+          if (stateGrowth !== null) {
+            deepInsights.push({
+              emoji: stateGrowth > 0 ? '📈' : '📉',
+              color: stateGrowth > 0 ? '#2ecc71' : '#e74c3c',
+              text: isAr
+                ? `حالتك تطوّرت ${stateGrowth > 0 ? '+' : ''}${stateGrowth} نقطة (أول أسبوع ${firstAvg} → آخر أسبوع ${lastAvg})`
+                : `State evolved ${stateGrowth > 0 ? '+' : ''}${stateGrowth} points (first week ${firstAvg} → latest week ${lastAvg})`,
+            })
+          }
+
+          if (beliefRatio !== null && (limitingCount + empoweringCount) >= 3) {
+            deepInsights.push({
+              emoji: beliefRatio >= 60 ? '💪' : '🚧',
+              color: beliefRatio >= 60 ? '#2ecc71' : '#f39c12',
+              text: isAr
+                ? `نسبة معتقداتك التمكينية: ${beliefRatio}% (${empoweringCount} تمكينية / ${limitingCount} مقيّدة)`
+                : `Empowering belief ratio: ${beliefRatio}% (${empoweringCount} empowering / ${limitingCount} limiting)`,
+            })
+          }
+
+          if (completedGoals > 0) {
+            deepInsights.push({
+              emoji: '🏆',
+              color: '#c9a84c',
+              text: isAr
+                ? `أكملت ${completedGoals} هدف — أنت تصنع نتائج حقيقية`
+                : `${completedGoals} goal${completedGoals > 1 ? 's' : ''} completed — you're creating real results`,
+            })
+          }
+
+          if (deepInsights.length === 0) return null
+
+          return (
+            <div style={{
+              borderRadius: 20, padding: 16, marginBottom: 14,
+              background: 'linear-gradient(135deg, rgba(147,112,219,0.08), rgba(201,168,76,0.05))',
+              border: '1px solid rgba(147,112,219,0.3)',
+            }}>
+              <p style={{
+                color: '#9370db', fontSize: 11, fontWeight: 900,
+                letterSpacing: '0.08em', textTransform: 'uppercase',
+                marginBottom: 12,
+              }}>
+                🔬 {isAr ? 'رؤى النمو العميق' : 'Deep Growth Insights'}
+              </p>
+              <div style={{ display: 'flex', gap: 10, flexDirection: 'column' }}>
+                {deepInsights.map((ins, i) => (
+                  <div key={i} style={{
+                    display: 'flex', gap: 10, alignItems: 'center',
+                    padding: '8px 12px', borderRadius: 12,
+                    background: `${ins.color}0a`, border: `1px solid ${ins.color}20`,
+                  }}>
+                    <span style={{ fontSize: 16 }}>{ins.emoji}</span>
+                    <p style={{ color: '#ccc', fontSize: 12, lineHeight: 1.5 }}>{ins.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
+
         {/* ── Smart Observations ────────────────────────────────────────────── */}
         <div style={{
           borderRadius: 20, padding: 16, marginBottom: 14,

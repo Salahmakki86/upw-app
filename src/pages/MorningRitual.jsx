@@ -476,6 +476,12 @@ export default function MorningRitual() {
     : null
   const lowestAreaKey = lowestArea?.[0]
 
+  // State Check-in → Ritual adaptation
+  const todayCheckin = state.stateCheckin?.[today]
+  const lowEnergy  = todayCheckin && todayCheckin.energy <= 4
+  const lowMood    = todayCheckin && todayCheckin.mood <= 4
+  const lowClarity = todayCheckin && todayCheckin.clarity <= 4
+
   // #3 — Sleep → Energy chain
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
   const lastSleep = state.sleepLog?.[yesterday]
@@ -499,6 +505,41 @@ export default function MorningRitual() {
             <p className="text-xs mt-1" style={{ color: '#888' }}>
               {isAr ? 'تنفس أعمق، تحرك أكثر، اشرب ماء فوراً' : 'Breathe deeper, move more, drink water immediately'}
             </p>
+          </div>
+        )}
+
+        {/* State Check-in → Adaptive ritual guidance */}
+        {todayCheckin && (lowEnergy || lowMood || lowClarity) && (
+          <div className="rounded-2xl p-3" style={{
+            background: 'linear-gradient(135deg, rgba(147,112,219,0.08), rgba(52,152,219,0.06))',
+            border: '1px solid rgba(147,112,219,0.2)',
+          }}>
+            <p className="text-xs font-bold mb-1" style={{ color: '#9370db' }}>
+              🎯 {isAr ? 'روتينك مُكيَّف لحالتك اليوم:' : 'Your ritual is adapted to your state:'}
+            </p>
+            <div className="space-y-1">
+              {lowEnergy && (
+                <p className="text-xs" style={{ color: '#f39c12' }}>
+                  ⚡ {isAr
+                    ? `طاقتك ${todayCheckin.energy}/10 — ركّز أكثر على التنفس العميق والحركة الجسدية`
+                    : `Energy ${todayCheckin.energy}/10 — focus extra on deep breathing & physical movement`}
+                </p>
+              )}
+              {lowMood && (
+                <p className="text-xs" style={{ color: '#3498db' }}>
+                  😊 {isAr
+                    ? `مزاجك ${todayCheckin.mood}/10 — أطِل في مرحلة الامتنان ودع المشاعر تتحرك`
+                    : `Mood ${todayCheckin.mood}/10 — extend the gratitude phase and let emotions flow`}
+                </p>
+              )}
+              {lowClarity && (
+                <p className="text-xs" style={{ color: '#2ecc71' }}>
+                  🎯 {isAr
+                    ? `وضوحك ${todayCheckin.clarity}/10 — ركّز في تخيّل الأهداف على هدف واحد فقط`
+                    : `Clarity ${todayCheckin.clarity}/10 — during visualization, focus on just ONE goal`}
+                </p>
+              )}
+            </div>
           </div>
         )}
 
