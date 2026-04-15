@@ -1,4 +1,30 @@
-import { Component } from 'react'
+import { Component, useState } from 'react'
+
+function ErrorDetails({ error }) {
+  const [show, setShow] = useState(false)
+  const msg = error?.message || String(error || 'Unknown error')
+  const stack = error?.stack || ''
+  if (!show) {
+    return (
+      <button
+        onClick={() => setShow(true)}
+        style={{ fontSize: 11, color: '#555', background: 'none', border: 'none', cursor: 'pointer', marginTop: 12, textDecoration: 'underline' }}
+      >
+        Show error details
+      </button>
+    )
+  }
+  return (
+    <div style={{
+      marginTop: 12, padding: 12, borderRadius: 10,
+      background: '#1a1a1a', border: '1px solid #2a2a2a',
+      textAlign: 'left', direction: 'ltr', maxHeight: 200, overflowY: 'auto',
+    }}>
+      <p style={{ fontSize: 12, color: '#e74c3c', fontWeight: 700, marginBottom: 6, wordBreak: 'break-all' }}>{msg}</p>
+      <pre style={{ fontSize: 9, color: '#666', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>{stack}</pre>
+    </div>
+  )
+}
 
 export default class ErrorBoundary extends Component {
   constructor(props) {
@@ -83,6 +109,9 @@ export default class ErrorBoundary extends Component {
           >
             {isAr ? '🔄 إعادة التحميل' : '🔄 Reload'}
           </button>
+
+          {/* Error details (for debugging) */}
+          <ErrorDetails error={this.state.error} />
         </div>
       </div>
     )
