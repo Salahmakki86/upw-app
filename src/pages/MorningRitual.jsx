@@ -302,6 +302,25 @@ export default function MorningRitual() {
     setView('reflection')
   }
 
+  // ── Hooks that must run on EVERY render (React rules of hooks) ──────────
+  // Restore draft on mount when entering questions view, or when qIndex changes
+  useEffect(() => {
+    if (view !== 'questions') return
+    const draft = state.morningAnswerDraft
+    if (draft && draft.qIndex === qIndex && draft.text) {
+      setAnswer(draft.text)
+    }
+  }, [view, qIndex]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Find last answer to the current question (from powerQuestionsLog)
+  const pastAnswer = (() => {
+    if (view !== 'questions') return null
+    const log = state.powerQuestionsLog || {}
+    const dates = Object.keys(log).filter(d => d !== today && log[d]?.morning?.[qIndex]?.trim()).sort().reverse()
+    if (dates.length === 0) return null
+    return { date: dates[0], text: log[dates[0]].morning[qIndex] }
+  })()
+
   // One-Tap Reflection → then done screen
   if (view === 'reflection') {
     return (
@@ -459,23 +478,6 @@ export default function MorningRitual() {
       </Layout>
     )
   }
-
-  // Restore draft on mount when entering questions view, or when qIndex changes
-  useEffect(() => {
-    if (view !== 'questions') return
-    const draft = state.morningAnswerDraft
-    if (draft && draft.qIndex === qIndex && draft.text) {
-      setAnswer(draft.text)
-    }
-  }, [view, qIndex]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Find last answer to the current question (from powerQuestionsLog)
-  const pastAnswer = (() => {
-    const log = state.powerQuestionsLog || {}
-    const dates = Object.keys(log).filter(d => d !== today && log[d]?.morning?.[qIndex]?.trim()).sort().reverse()
-    if (dates.length === 0) return null
-    return { date: dates[0], text: log[dates[0]].morning[qIndex] }
-  })()
 
   if (view === 'questions') {
     return (
