@@ -9,11 +9,11 @@ import { getNextStep } from '../utils/smartFlow'
 
 const EVENING_QUESTIONS = {
   ar: [
-    'ÙØ§Ø°Ø§ Ø£Ø¹Ø·ÙØª Ø§ÙÙÙÙØ Ø¨Ø£Ù Ø·Ø±ÙÙØ© ÙÙØª ÙØ¹Ø·Ø§Ø¡ÙØ',
-    'ÙØ§Ø°Ø§ ØªØ¹ÙÙØª Ø§ÙÙÙÙØ ÙØ§ Ø§ÙØ¯Ø±Ø³ Ø§ÙØ¬Ø¯ÙØ¯Ø',
-    'ÙÙÙ Ø£Ø¶Ø§Ù Ø§ÙÙÙÙ ÙØ¬ÙØ¯Ø© Ø­ÙØ§ØªÙØ',
-    'ÙØ§ Ø§ÙÙØ­Ø¸Ø© Ø§ÙØ£Ø¬ÙÙ ÙÙ ÙÙÙÙØ ÙÙÙÙ Ø´Ø¹Ø±ØªØ',
-    'ÙÙÙ ÙÙÙÙÙÙ Ø§Ø³ØªØ®Ø¯Ø§Ù Ø§ÙÙÙÙ ÙØ§Ø³ØªØ«ÙØ§Ø± ÙÙ ÙØ³ØªÙØ¨ÙÙØ',
+    'ماذا أعطيت اليوم؟ بأي طريقة كنت معطاءً؟',
+    'ماذا تعلمت اليوم؟ ما الدرس الجديد؟',
+    'كيف أضاف اليوم لجودة حياتي؟',
+    'ما اللحظة الأجمل في يومي؟ وكيف شعرت؟',
+    'كيف يمكنني استخدام اليوم كاستثمار في مستقبلي؟',
   ],
   en: [
     'What did I give today? In what ways was I generous?',
@@ -25,12 +25,12 @@ const EVENING_QUESTIONS = {
 }
 
 const CANI_AREAS = [
-  { ar: 'Ø§ÙØµØ­Ø©',    en: 'Health',         emoji: 'ðª' },
-  { ar: 'Ø§ÙØ¹ÙØ§ÙØ§Øª', en: 'Relationships',  emoji: 'â¤ï¸' },
-  { ar: 'Ø§ÙÙØ§Ù',    en: 'Money',          emoji: 'ð°' },
-  { ar: 'Ø§ÙØ¹ÙÙÙØ©',  en: 'Mindset',        emoji: 'ð§ ' },
-  { ar: 'Ø§ÙÙÙØ§Ø±Ø§Øª', en: 'Skills',         emoji: 'ð¯' },
-  { ar: 'Ø§ÙØ·Ø§ÙØ©',   en: 'Energy',         emoji: 'â¡' },
+  { ar: 'الصحة',    en: 'Health',         emoji: '💪' },
+  { ar: 'العلاقات', en: 'Relationships',  emoji: '❤️' },
+  { ar: 'المال',    en: 'Money',          emoji: '💰' },
+  { ar: 'العقلية',  en: 'Mindset',        emoji: '🧠' },
+  { ar: 'المهارات', en: 'Skills',         emoji: '🎯' },
+  { ar: 'الطاقة',   en: 'Energy',         emoji: '⚡' },
 ]
 
 function getTodayStr() {
@@ -65,14 +65,14 @@ function getMeterColor(val) {
 
 const DAY_ABBR = {
   en: ['S', 'M', 'T', 'W', 'T', 'F', 'S'],
-  ar: ['Ø­', 'Ù', 'Ø«', 'Ø±', 'Ø®', 'Ø¬', 'Ø³'],
+  ar: ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س'],
 }
 
 function CANIMiniCalendar({ caniLog, isAr, lang }) {
   const today = getTodayStr()
   const todayDone = !!(caniLog && caniLog[today])
 
-  // Build last 7 days (oldest â newest)
+  // Build last 7 days (oldest → newest)
   const days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
     d.setDate(d.getDate() - (6 - i))
@@ -88,7 +88,7 @@ function CANIMiniCalendar({ caniLog, isAr, lang }) {
   return (
     <div className="rounded-2xl p-4" style={{ background: '#111', border: '1px solid #1e1e1e' }}>
       <p className="text-xs font-bold mb-3 text-center" style={{ color: '#c9a84c' }}>
-        {doneCount}/7 {isAr ? 'Ø£ÙØ§Ù' : 'days'}
+        {doneCount}/7 {isAr ? 'أيام' : 'days'}
       </p>
       <div className="flex items-center justify-center gap-2">
         {days.map(({ dateStr, done, isToday, dayIndex }) => (
@@ -104,7 +104,7 @@ function CANIMiniCalendar({ caniLog, isAr, lang }) {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >
-              {done && <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>â</span>}
+              {done && <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>✓</span>}
             </div>
             <span style={{ color: '#555', fontSize: 10 }}>
               {DAY_ABBR[lang][dayIndex]}
@@ -114,7 +114,7 @@ function CANIMiniCalendar({ caniLog, isAr, lang }) {
       </div>
       {!todayDone && (
         <p className="text-xs text-center mt-2" style={{ color: '#c9a84c88' }}>
-          {isAr ? 'Ø£ÙÙÙ CANI Ø§ÙÙÙÙ ÙØªÙØ¶ÙØ¡ Ø§ÙØ¯Ø§Ø¦Ø±Ø©!' : 'Complete CANI today to light up your circle!'}
+          {isAr ? 'أكمل CANI اليوم لتُضيء الدائرة!' : 'Complete CANI today to light up your circle!'}
         </p>
       )}
     </div>
@@ -159,28 +159,28 @@ export default function EveningRitual() {
 
   const QUESTIONS = EVENING_QUESTIONS[lang]
 
-  // #7 â Morning answers reference
+  // #7 — Morning answers reference
   const morningAnswers = state.morningAnswers || {}
   const morningCommitment = morningAnswers[6] // "What step will I take today?"
 
-  // #5 â Commitment
+  // #5 — Commitment
   const commitment = state.commitment
 
-  // #2 â Wheel of Life lowest area
-  const AREA_NAMES = { body: { ar: 'Ø§ÙØµØ­Ø©', en: 'Health' }, emotions: { ar: 'Ø§ÙØ¹ÙØ§Ø·Ù', en: 'Emotions' }, relationships: { ar: 'Ø§ÙØ¹ÙØ§ÙØ§Øª', en: 'Relationships' }, time: { ar: 'Ø§ÙÙÙØª', en: 'Time' }, career: { ar: 'Ø§ÙÙÙÙØ©', en: 'Career' }, money: { ar: 'Ø§ÙÙØ§Ù', en: 'Money' }, contribution: { ar: 'Ø§ÙÙØ³Ø§ÙÙØ©', en: 'Contribution' } }
+  // #2 — Wheel of Life lowest area
+  const AREA_NAMES = { body: { ar: 'الصحة', en: 'Health' }, emotions: { ar: 'العواطف', en: 'Emotions' }, relationships: { ar: 'العلاقات', en: 'Relationships' }, time: { ar: 'الوقت', en: 'Time' }, career: { ar: 'المهنة', en: 'Career' }, money: { ar: 'المال', en: 'Money' }, contribution: { ar: 'المساهمة', en: 'Contribution' } }
   const wheelScores = state.wheelScores || {}
   const wheelEntries = Object.entries(wheelScores).filter(([, v]) => v !== 5)
   const lowestArea = wheelEntries.length > 0 ? wheelEntries.reduce((a, b) => a[1] < b[1] ? a : b) : null
 
-  // CROSS-LINK 6: Map wheel areas â CANI areas
+  // CROSS-LINK 6: Map wheel areas → CANI areas
   const WHEEL_TO_CANI = {
-    body:         { ar: 'Ø§ÙØµØ­Ø©',    en: 'Health' },
-    emotions:     { ar: 'Ø§ÙØ¹ÙÙÙØ©',  en: 'Mindset' },
-    relationships:{ ar: 'Ø§ÙØ¹ÙØ§ÙØ§Øª', en: 'Relationships' },
-    money:        { ar: 'Ø§ÙÙØ§Ù',    en: 'Money' },
-    career:       { ar: 'Ø§ÙÙÙØ§Ø±Ø§Øª', en: 'Skills' },
-    contribution: { ar: 'Ø§ÙØµØ­Ø©',    en: 'Health' },
-    time:         { ar: 'Ø§ÙØ·Ø§ÙØ©',   en: 'Energy' },
+    body:         { ar: 'الصحة',    en: 'Health' },
+    emotions:     { ar: 'العقلية',  en: 'Mindset' },
+    relationships:{ ar: 'العلاقات', en: 'Relationships' },
+    money:        { ar: 'المال',    en: 'Money' },
+    career:       { ar: 'المهارات', en: 'Skills' },
+    contribution: { ar: 'الصحة',    en: 'Health' },
+    time:         { ar: 'الطاقة',   en: 'Energy' },
   }
   const wheelSuggestedCaniLabel = lowestArea
     ? (isAr ? WHEEL_TO_CANI[lowestArea[0]]?.ar : WHEEL_TO_CANI[lowestArea[0]]?.en) || null
@@ -221,7 +221,7 @@ export default function EveningRitual() {
     const computedRating = checkin
       ? Math.round(((checkin.energy || 5) + (checkin.mood || 5) + (checkin.clarity || 5)) / 3)
       : dayRating
-    // Save ALL evening data to the log â previously this was lost on navigation
+    // Save ALL evening data to the log — previously this was lost on navigation
     // Gratitude: prefer the unified gratitude page data, fall back to any local evening entries
     const unifiedGratitude = state.gratitude?.[todayKey]?.filter(v => v && v.trim()) || []
     const localGratitude = gratitude.filter(g => g.trim())
@@ -261,10 +261,10 @@ export default function EveningRitual() {
     return (
       <Layout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4 px-4">
-          <div className="text-5xl animate-scale-in">ð</div>
+          <div className="text-5xl animate-scale-in">🌙</div>
           <h2 className="text-2xl font-black text-white">{t('evening_completed')}</h2>
           <p className="text-sm leading-relaxed" style={{ color: '#888' }}>
-            {lang === 'ar' ? 'ÙÙØª Ø¨ÙØ¹Ù Ø§ÙÙÙÙ ÙØ³ØªØ³ØªÙÙØ¸ ØºØ¯Ø§Ù Ø£ÙÙÙ.' : 'You slept consciously today and will wake up stronger tomorrow.'}
+            {lang === 'ar' ? 'نمت بوعٍ اليوم وستستيقظ غداً أقوى.' : 'You slept consciously today and will wake up stronger tomorrow.'}
           </p>
           {/* One-Tap Reflection */}
           <div className="w-full">
@@ -279,10 +279,10 @@ export default function EveningRitual() {
     return (
       <Layout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4 px-4">
-          <div className="text-5xl animate-scale-in">ð</div>
+          <div className="text-5xl animate-scale-in">🌙</div>
           <h2 className="text-2xl font-black text-white">{t('evening_completed')}</h2>
           <p className="text-sm leading-relaxed" style={{ color: '#888' }}>
-            {lang === 'ar' ? 'ÙÙØª Ø¨ÙØ¹Ù Ø§ÙÙÙÙ ÙØ³ØªØ³ØªÙÙØ¸ ØºØ¯Ø§Ù Ø£ÙÙÙ.' : 'You slept consciously today and will wake up stronger tomorrow.'}
+            {lang === 'ar' ? 'نمت بوعٍ اليوم وستستيقظ غداً أقوى.' : 'You slept consciously today and will wake up stronger tomorrow.'}
           </p>
           {(() => {
             const checkin = state.stateCheckin?.[getTodayStr()]
@@ -296,7 +296,7 @@ export default function EveningRitual() {
                   {t('evening_rating')}: {displayRating}/10
                   {checkin && (
                     <span className="ml-2 text-xs font-normal" style={{ color: '#666' }}>
-                      {isAr ? '(ÙÙ Ø­Ø§ÙØªÙ)' : '(from state)'}
+                      {isAr ? '(من حالتك)' : '(from state)'}
                     </span>
                   )}
                 </p>
@@ -306,7 +306,7 @@ export default function EveningRitual() {
               </div>
             )
           })()}
-          {/* Smart Flow â What's Next (Fix #2) */}
+          {/* Smart Flow — What's Next (Fix #2) */}
           {(() => {
             const nextStep = getNextStep('evening', state, isAr)
             return (
@@ -320,7 +320,7 @@ export default function EveningRitual() {
                 <span style={{ fontSize: 24 }}>{nextStep.emoji}</span>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: 10, fontWeight: 700, color: '#3498db' }}>
-                    {isAr ? 'Ø§ÙØ®Ø·ÙØ© Ø§ÙØªØ§ÙÙØ© â' : "What's Next â"}
+                    {isAr ? 'الخطوة التالية ←' : "What's Next →"}
                   </p>
                   <p style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>
                     {isAr ? nextStep.labelAr : nextStep.labelEn}
@@ -332,18 +332,18 @@ export default function EveningRitual() {
           {/* Goals cross-link */}
           <div className="rounded-2xl p-4 mt-2 w-full" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
             <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
-              ð¯ {isAr ? 'Ø±Ø§Ø¬Ø¹ Ø£ÙØ¯Ø§ÙÙ ÙÙÙÙÙ Ø§ÙØªØ§ÙÙ' : 'Review your goals for tomorrow'}
+              🎯 {isAr ? 'راجع أهدافك لليوم التالي' : 'Review your goals for tomorrow'}
             </p>
             <p className="text-xs mb-3" style={{ color: '#666' }}>
               {isAr
-                ? 'ÙØ±Ø§Ø¬Ø¹Ø© Ø£ÙØ¯Ø§ÙÙ ÙØ¨Ù Ø§ÙÙÙÙ ØªØ¬Ø¹Ù Ø¹ÙÙÙ Ø§ÙØ¨Ø§Ø·Ù ÙØ¹ÙÙ Ø¹ÙÙÙØ§ Ø·ÙØ§Ù Ø§ÙÙÙÙ'
+                ? 'مراجعة أهدافك قبل النوم تجعل عقلك الباطن يعمل عليها طوال الليل'
                 : 'Reviewing your goals before sleep makes your subconscious work on them all night'}
             </p>
             <button
               onClick={() => navigate('/goals')}
               className="w-full rounded-xl py-2.5 text-xs font-bold"
               style={{ background: 'rgba(201,168,76,0.1)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.3)' }}>
-              {isAr ? 'ð¯ ÙØ±Ø§Ø¬Ø¹Ø© Ø§ÙØ£ÙØ¯Ø§Ù â' : 'â ð¯ Review Goals'}
+              {isAr ? '🎯 مراجعة الأهداف ←' : '→ 🎯 Review Goals'}
             </button>
           </div>
         </div>
@@ -353,7 +353,7 @@ export default function EveningRitual() {
 
   if (view === 'tomorrow') {
     return (
-      <Layout title={t('evening_planning')} subtitle={lang === 'ar' ? 'Ø®Ø·Ø· ÙØºØ¯Ù Ø§ÙÙÙÙØ©' : 'Plan your tomorrow tonight'}>
+      <Layout title={t('evening_planning')} subtitle={lang === 'ar' ? 'خطط لغدك الليلة' : 'Plan your tomorrow tonight'}>
         <div className="space-y-4 pt-2">
           <div>
             <p className="text-xs mb-2" style={{ color: '#888' }}>{t('evening_tomorrow_tasks')}:</p>
@@ -370,11 +370,11 @@ export default function EveningRitual() {
             <textarea value={reflection} onChange={e => setReflection(e.target.value)}
               placeholder={t('evening_reflection_placeholder')} rows={3} className="input-dark resize-none text-sm" />
 
-            {/* Past reflections â your words back to you */}
+            {/* Past reflections — your words back to you */}
             {pastReflections.length > 0 && (
               <div style={{ marginTop: 10 }}>
                 <p className="text-xs font-bold mb-2" style={{ color: '#555' }}>
-                  ð {isAr ? 'ØªØ£ÙÙØ§ØªÙ Ø§ÙØ³Ø§Ø¨ÙØ©' : 'Your Past Reflections'}
+                  📖 {isAr ? 'تأملاتك السابقة' : 'Your Past Reflections'}
                 </p>
                 {pastReflections.map(([date, entry]) => (
                   <div key={date} className="rounded-xl p-2.5 mb-1.5" style={{ background: '#111', border: '1px solid #1e1e1e' }}>
@@ -391,8 +391,8 @@ export default function EveningRitual() {
           {state.stateCheckin?.[getTodayStr()] && (
             <div className="rounded-xl p-3" style={{ background: '#111', border: '1px solid #1a1a1a' }}>
               <p className="text-xs" style={{ color: '#666' }}>
-                {isAr ? 'ð¡ ØªÙÙÙÙ ÙÙÙÙ ÙØ­Ø³ÙØ¨ ØªÙÙØ§Ø¦ÙØ§Ù ÙÙ Ø­Ø§ÙØªÙ (Ø§ÙØ·Ø§ÙØ© + Ø§ÙÙØ²Ø§Ø¬ + Ø§ÙÙØ¶ÙØ­)'
-                       : 'ð¡ Your day rating is auto-calculated from your state (energy + mood + clarity)'}
+                {isAr ? '💡 تقييم يومك محسوب تلقائياً من حالتك (الطاقة + المزاج + الوضوح)'
+                       : '💡 Your day rating is auto-calculated from your state (energy + mood + clarity)'}
               </p>
               <p className="text-sm font-bold mt-1" style={{ color: '#c9a84c' }}>
                 {Math.round(((state.stateCheckin[getTodayStr()].energy || 5) + (state.stateCheckin[getTodayStr()].mood || 5) + (state.stateCheckin[getTodayStr()].clarity || 5)) / 3)}/10
@@ -402,13 +402,13 @@ export default function EveningRitual() {
           {!state.stateCheckin?.[getTodayStr()] && (
             <div className="rounded-xl p-3" style={{ background: '#111', border: '1px solid #1a1a1a' }}>
               <p className="text-xs" style={{ color: '#666' }}>
-                {isAr ? 'ð¡ Ø³Ø¬ÙÙ Ø­Ø§ÙØªÙ ÙÙ ØµÙØ­Ø© "Ø­Ø§ÙØªÙ" ÙÙØªÙ Ø§Ø­ØªØ³Ø§Ø¨ ØªÙÙÙÙ ÙÙÙÙ ØªÙÙØ§Ø¦ÙØ§Ù'
-                       : 'ð¡ Log your state on the State page to auto-calculate your day rating'}
+                {isAr ? '💡 سجّل حالتك في صفحة "حالتك" ليتم احتساب تقييم يومك تلقائياً'
+                       : '💡 Log your state on the State page to auto-calculate your day rating'}
               </p>
             </div>
           )}
           <button onClick={finishEvening} className="w-full btn-gold py-4 text-base">
-            ð {lang === 'ar' ? 'Ø¥ÙÙØ§Ø¡ Ø§ÙÙÙÙ' : 'End the day'}
+            🌙 {lang === 'ar' ? 'إنهاء اليوم' : 'End the day'}
           </button>
         </div>
       </Layout>
@@ -421,7 +421,7 @@ export default function EveningRitual() {
 
     return (
       <Layout
-        title={isAr ? 'Ø§ÙØªØ­Ø³ÙÙ Ø§ÙÙØ³ØªÙØ±' : 'Constant And Never-Ending Improvement'}
+        title={isAr ? 'التحسين المستمر' : 'Constant And Never-Ending Improvement'}
         subtitle="CANI">
         <div className="space-y-5 pt-2">
 
@@ -432,13 +432,13 @@ export default function EveningRitual() {
           {caniStreak >= 3 && (
             <div className="rounded-2xl p-3 flex items-center gap-3 animate-scale-in"
               style={{ background: 'rgba(46,204,113,0.08)', border: '1px solid rgba(46,204,113,0.25)' }}>
-              <span className="text-2xl">ð¥</span>
+              <span className="text-2xl">🔥</span>
               <div>
                 <p className="text-xs font-black" style={{ color: '#2ecc71' }}>
-                  {isAr ? `Ø³ÙØ³ÙØ© CANI: ${caniStreak} Ø£ÙØ§Ù ÙØªÙØ§ØµÙØ©!` : `CANI Streak: ${caniStreak} days in a row!`}
+                  {isAr ? `سلسلة CANI: ${caniStreak} أيام متواصلة!` : `CANI Streak: ${caniStreak} days in a row!`}
                 </p>
                 <p className="text-xs" style={{ color: '#888' }}>
-                  {isAr ? 'Ø£ÙØª ØªØªØ­Ø³Ù ÙÙ ÙÙÙ â Ø§Ø³ØªÙØ±!' : 'You are improving every day â keep going!'}
+                  {isAr ? 'أنت تتحسن كل يوم — استمر!' : 'You are improving every day — keep going!'}
                 </p>
               </div>
             </div>
@@ -448,11 +448,11 @@ export default function EveningRitual() {
           <div className="rounded-2xl p-4"
             style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
             <p className="text-xs font-black mb-1" style={{ color: '#c9a84c' }}>
-              {isAr ? 'â ØªÙÙÙ Ø±ÙØ¨ÙØ²' : 'â Tony Robbins'}
+              {isAr ? '— توني روبنز' : '— Tony Robbins'}
             </p>
             <p className="text-sm text-white leading-relaxed" style={{ fontStyle: 'italic' }}>
               {isAr
-                ? '"Ø§ÙØªØ­Ø³ÙÙ Ø¨ÙØ³Ø¨Ø© 1% ÙÙ ÙÙÙ ÙØ¹ÙÙ Ø£ÙÙ Ø³ØªÙÙÙ 37 Ø¶Ø¹ÙØ§Ù Ø£ÙØ¶Ù ÙÙ ÙÙØ§ÙØ© Ø§ÙØ¹Ø§Ù."'
+                ? '"التحسين بنسبة 1% كل يوم يعني أنك ستكون 37 ضعفاً أفضل في نهاية العام."'
                 : '"Improving just 1% every day means you will be 37x better by the end of the year."'}
             </p>
           </div>
@@ -461,13 +461,13 @@ export default function EveningRitual() {
           <div>
             <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
               1. {isAr
-                ? 'ÙØ§ Ø§ÙØ´ÙØ¡ Ø§ÙÙØ§Ø­Ø¯ Ø§ÙØ°Ù ØªØ­Ø³ÙÙØª ÙÙÙ Ø§ÙÙÙÙ ÙÙÙ Ø¨ÙØ³Ø¨Ø© 1%Ø'
+                ? 'ما الشيء الواحد الذي تحسّنت فيه اليوم ولو بنسبة 1%؟'
                 : 'What is one thing you improved by even 1% today?'}
             </p>
             <textarea
               value={caniQ1}
               onChange={e => setCaniQ1(e.target.value)}
-              placeholder={isAr ? 'Ø§ÙØªØ¨ ÙÙØ§...' : 'Write here...'}
+              placeholder={isAr ? 'اكتب هنا...' : 'Write here...'}
               rows={2}
               className="input-dark resize-none text-sm w-full"
             />
@@ -477,23 +477,23 @@ export default function EveningRitual() {
           <div>
             <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
               2. {isAr
-                ? 'ÙØ§ Ø¹Ø§Ø¯Ø© ØµØºÙØ±Ø© ÙÙÙÙÙ Ø¥Ø¶Ø§ÙØªÙØ§ ØºØ¯Ø§Ù ÙØªÙÙÙ Ø£ÙØ¶ÙØ'
+                ? 'ما عادة صغيرة يمكنك إضافتها غداً لتكون أفضل؟'
                 : 'What small habit can you add tomorrow to be 1% better?'}
             </p>
             <textarea
               value={caniQ2}
               onChange={e => setCaniQ2(e.target.value)}
-              placeholder={isAr ? 'Ø§ÙØªØ¨ ÙÙØ§...' : 'Write here...'}
+              placeholder={isAr ? 'اكتب هنا...' : 'Write here...'}
               rows={2}
               className="input-dark resize-none text-sm w-full"
             />
           </div>
 
-          {/* Q3 â Area chips */}
+          {/* Q3 — Area chips */}
           <div>
             <p className="text-xs font-bold mb-2" style={{ color: '#c9a84c' }}>
               3. {isAr
-                ? 'ÙÙ Ø£Ù ÙØ¬Ø§Ù ÙÙ ÙØ¬Ø§ÙØ§Øª Ø­ÙØ§ØªÙ ØªØ±ÙØ¯ Ø§ÙØªØ­Ø³ÙÙ Ø§ÙØ£Ø³Ø±Ø¹Ø'
+                ? 'في أي مجال من مجالات حياتك تريد التحسين الأسرع؟'
                 : 'In which life area do you want to improve the fastest?'}
             </p>
             {/* CROSS-LINK 6: Wheel suggestion hint */}
@@ -501,15 +501,15 @@ export default function EveningRitual() {
               <div className="rounded-xl px-3 py-2 mb-2 flex items-center justify-between gap-2"
                 style={{ background: 'rgba(52,152,219,0.08)', border: '1px solid rgba(52,152,219,0.2)' }}>
                 <p className="text-xs" style={{ color: '#3498db', flex: 1 }}>
-                  ð {isAr
-                    ? `ÙÙØªØ±Ø­ ÙÙ Ø¹Ø¬ÙØ© Ø§ÙØ­ÙØ§Ø©: "${wheelSuggestedCaniLabel}"`
+                  📊 {isAr
+                    ? `مقترح من عجلة الحياة: "${wheelSuggestedCaniLabel}"`
                     : `Suggested from Wheel: "${wheelSuggestedCaniLabel}"`}
                 </p>
                 <button
                   onClick={() => navigate('/wheel')}
                   className="text-xs font-bold px-2 py-1 rounded-lg transition-all active:scale-95"
                   style={{ background: 'rgba(52,152,219,0.15)', border: '1px solid rgba(52,152,219,0.3)', color: '#3498db', whiteSpace: 'nowrap', cursor: 'pointer' }}>
-                  {isAr ? 'Ø¹Ø¬ÙØ© Ø§ÙØ­ÙØ§Ø© â' : 'â Wheel'}
+                  {isAr ? 'عجلة الحياة ←' : '→ Wheel'}
                 </button>
               </div>
             )}
@@ -532,7 +532,7 @@ export default function EveningRitual() {
                     <span>{label}</span>
                     {isSuggested && !isSelected && (
                       <span className="text-[9px] font-bold" style={{ color: '#3498db' }}>
-                        ð {isAr ? 'ÙÙØªØ±Ø­' : 'suggested'}
+                        📊 {isAr ? 'مقترح' : 'suggested'}
                       </span>
                     )}
                   </button>
@@ -545,11 +545,11 @@ export default function EveningRitual() {
           <div className="rounded-2xl p-4"
             style={{ background: '#111', border: '1px solid #1e1e1e' }}>
             <p className="text-xs font-bold mb-3 text-white">
-              ð {isAr ? 'ÙØªØ± Ø§ÙØªØ­Ø³ÙÙ â ÙÙ Ø­Ø³ÙÙØª ÙÙØ³Ù Ø§ÙÙÙÙØ' : 'Improvement Meter â How much did you improve today?'}
+              📊 {isAr ? 'متر التحسين — كم حسّنت نفسك اليوم؟' : 'Improvement Meter — How much did you improve today?'}
             </p>
             {(() => {
               const meterLabel = isAr
-                ? (caniMeter <= 3 ? 'Ø¶Ø¹ÙÙ' : caniMeter <= 6 ? 'ÙØªÙØ³Ø·' : 'ÙÙÙ')
+                ? (caniMeter <= 3 ? 'ضعيف' : caniMeter <= 6 ? 'متوسط' : 'قوي')
                 : (caniMeter <= 3 ? 'Weak' : caniMeter <= 6 ? 'Moderate' : 'Strong')
               return (
                 <>
@@ -571,9 +571,9 @@ export default function EveningRitual() {
                     className="w-full"
                   />
                   <div className="flex justify-between mt-1">
-                    <span className="text-xs" style={{ color: '#e63946' }}>{isAr ? 'Ø¶Ø¹ÙÙ' : 'Weak'}</span>
-                    <span className="text-xs" style={{ color: '#f39c12' }}>{isAr ? 'ÙØªÙØ³Ø·' : 'Moderate'}</span>
-                    <span className="text-xs" style={{ color: '#2ecc71' }}>{isAr ? 'ÙÙÙ' : 'Strong'}</span>
+                    <span className="text-xs" style={{ color: '#e63946' }}>{isAr ? 'ضعيف' : 'Weak'}</span>
+                    <span className="text-xs" style={{ color: '#f39c12' }}>{isAr ? 'متوسط' : 'Moderate'}</span>
+                    <span className="text-xs" style={{ color: '#2ecc71' }}>{isAr ? 'قوي' : 'Strong'}</span>
                   </div>
                 </>
               )
@@ -592,10 +592,10 @@ export default function EveningRitual() {
             onClick={saveCANI}
             disabled={!canProceed}
             className="w-full btn-gold py-3 text-sm disabled:opacity-40">
-            {isAr ? 'Ø­ÙØ¸ ÙØ§ÙÙØªØ§Ø¨Ø¹Ø© ÙØªØ®Ø·ÙØ· Ø§ÙØºØ¯ â' : 'Save & Continue to Tomorrow Planning â'}
+            {isAr ? 'حفظ والمتابعة لتخطيط الغد →' : 'Save & Continue to Tomorrow Planning →'}
           </button>
           <button onClick={() => setView('tomorrow')} className="w-full text-xs py-1" style={{ color: '#444' }}>
-            {t('skip')} â
+            {t('skip')} →
           </button>
         </div>
       </Layout>
@@ -611,7 +611,7 @@ export default function EveningRitual() {
         <div className="space-y-4 pt-2">
           <p className="text-xs" style={{ color: '#888' }}>
             {isAr
-              ? 'Ø§ÙØ§ÙØªÙØ§Ù ÙÙØºÙÙ ÙÙÙÙ Ø¨Ø­Ø§ÙØ© Ø¬ÙÙÙØ© ÙÙØ¨Ø±ÙØ¬ Ø¹ÙÙÙ Ø§ÙØ¨Ø§Ø·Ù ÙÙØ¥ÙØ¬Ø§Ø¨ÙØ© Ø£Ø«ÙØ§Ø¡ Ø§ÙÙÙÙ.'
+              ? 'الامتنان يُغلق يومك بحالة جميلة ويبرمج عقلك الباطن للإيجابية أثناء النوم.'
               : 'Gratitude closes your day in a beautiful state and programs your subconscious for positivity during sleep.'}
           </p>
 
@@ -619,42 +619,42 @@ export default function EveningRitual() {
           {hasGratitudeToday ? (
             <div className="rounded-2xl p-4" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
               <p className="text-xs font-bold mb-2" style={{ color: '#2ecc71' }}>
-                {isAr ? 'â Ø£Ø¶ÙØª Ø§ÙØªÙØ§ÙÙ Ø§ÙÙÙÙ' : 'â You logged gratitude today'}
+                {isAr ? '✓ أضفت امتنانك اليوم' : '✓ You logged gratitude today'}
               </p>
               {todayGratitude.filter(v => v && v.trim()).map((g, i) => (
                 <p key={i} className="text-xs mb-1 leading-relaxed" style={{ color: '#999' }}>
-                  {i === 0 ? 'ð' : i === 1 ? 'ð' : 'ð'} {g}
+                  {i === 0 ? '🌟' : i === 1 ? '💛' : '🙏'} {g}
                 </p>
               ))}
               <button
                 onClick={() => navigate('/gratitude')}
                 className="mt-3 w-full rounded-xl py-2 text-xs font-bold transition-all active:scale-[0.97]"
                 style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)', color: '#c9a84c' }}>
-                {isAr ? 'ØªØ¹Ø¯ÙÙ Ø§ÙØ§ÙØªÙØ§Ù â' : 'Edit Gratitude ->'}
+                {isAr ? 'تعديل الامتنان ←' : 'Edit Gratitude ->'}
               </button>
             </div>
           ) : (
             <div className="rounded-2xl p-4" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
               <p className="text-sm font-bold mb-2" style={{ color: '#c9a84c' }}>
-                {isAr ? 'ð ÙÙ Ø£Ø¶ÙØª Ø´ÙØ¦Ø§Ù ÙÙØ§ÙØªÙØ§Ù Ø§ÙÙÙÙØ' : 'ð Did you add something to be grateful for today?'}
+                {isAr ? '🙏 هل أضفت شيئاً للامتنان اليوم؟' : '🙏 Did you add something to be grateful for today?'}
               </p>
               <p className="text-xs mb-3" style={{ color: '#888' }}>
                 {isAr
-                  ? 'Ø§ÙØ§ÙØªÙØ§Ù ÙØ¨Ù Ø§ÙÙÙÙ ÙØ¨Ø±ÙØ¬ Ø¹ÙÙÙ Ø§ÙØ¨Ø§Ø·Ù ÙÙØ¥ÙØ¬Ø§Ø¨ÙØ© â Ø£Ø¶Ù 3 Ø£Ø´ÙØ§Ø¡ ØªØ´ÙØ±ÙØ§'
-                  : 'Gratitude before sleep programs your subconscious for positivity â add 3 things you are grateful for'}
+                  ? 'الامتنان قبل النوم يبرمج عقلك الباطن للإيجابية — أضف 3 أشياء تشكرها'
+                  : 'Gratitude before sleep programs your subconscious for positivity — add 3 things you are grateful for'}
               </p>
               <button
                 onClick={() => navigate('/gratitude')}
                 className="w-full rounded-xl py-3 text-sm font-bold transition-all active:scale-[0.97]"
                 style={{ background: 'linear-gradient(135deg, #c9a84c, #a07a30)', color: '#000' }}>
-                {isAr ? 'ð Ø§ÙØªØ­ ØµÙØ­Ø© Ø§ÙØ§ÙØªÙØ§Ù â' : '-> ð Open Gratitude Page'}
+                {isAr ? '🙏 افتح صفحة الامتنان ←' : '-> 🙏 Open Gratitude Page'}
               </button>
             </div>
           )}
 
           <button onClick={() => setView('cani')}
             className="w-full btn-gold py-3 text-sm">
-            {isAr ? 'CANI â Ø§ÙØªØ­Ø³ÙÙ Ø§ÙÙØ³ØªÙØ± â' : 'CANI â Improvement ->'}
+            {isAr ? 'CANI — التحسين المستمر →' : 'CANI — Improvement ->'}
           </button>
         </div>
       </Layout>
@@ -669,44 +669,44 @@ export default function EveningRitual() {
         {caniStreak >= 3 && (
           <div className="rounded-2xl p-2.5 flex items-center gap-2"
             style={{ background: 'rgba(46,204,113,0.06)', border: '1px solid rgba(46,204,113,0.2)' }}>
-            <span className="text-lg">ð¥</span>
+            <span className="text-lg">🔥</span>
             <p className="text-xs font-bold" style={{ color: '#2ecc71' }}>
-              {isAr ? `Ø³ÙØ³ÙØ© CANI: ${caniStreak} Ø£ÙØ§Ù` : `CANI Streak: ${caniStreak} days`}
+              {isAr ? `سلسلة CANI: ${caniStreak} أيام` : `CANI Streak: ${caniStreak} days`}
             </p>
           </div>
         )}
 
-        {/* #7 â Morning Reference */}
+        {/* #7 — Morning Reference */}
         {morningCommitment && (
           <div className="rounded-2xl p-3" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)' }}>
             <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
-              âï¸ {isAr ? 'ÙØ°Ø§ Ø§ÙØµØ¨Ø§Ø­ ÙÙØª:' : 'This morning you said:'}
+              ☀️ {isAr ? 'هذا الصباح قلت:' : 'This morning you said:'}
             </p>
             <p className="text-xs text-white leading-relaxed" style={{ fontStyle: 'italic' }}>
               "{morningCommitment}"
             </p>
             <p className="text-xs mt-1" style={{ color: '#888' }}>
-              {isAr ? 'ÙÙ ÙÙØ°ØªÙØ§Ø ÙÙÙØ± ÙÙ Ø°ÙÙ Ø£Ø«ÙØ§Ø¡ Ø£Ø³Ø¦ÙØªÙ Ø§ÙÙØ³Ø§Ø¦ÙØ©' : 'Did you follow through? Reflect on this during your evening questions'}
+              {isAr ? 'هل نفذتها؟ فكّر في ذلك أثناء أسئلتك المسائية' : 'Did you follow through? Reflect on this during your evening questions'}
             </p>
           </div>
         )}
 
-        {/* #5 â Commitment Reminder */}
+        {/* #5 — Commitment Reminder */}
         {commitment?.text && !morningCommitment && (
           <div className="rounded-2xl p-3" style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)' }}>
             <p className="text-xs font-bold mb-1" style={{ color: '#c9a84c' }}>
-              ð {isAr ? 'ØªØ°ÙÙØ± Ø§ÙØªØ²Ø§ÙÙ' : 'Remember Your Commitment'}
+              📜 {isAr ? 'تذكّر التزامك' : 'Remember Your Commitment'}
             </p>
             <p className="text-xs text-white leading-relaxed" style={{ fontStyle: 'italic' }}>"{commitment.text}"</p>
           </div>
         )}
 
-        {/* #2 â Wheel of Life Reflection */}
+        {/* #2 — Wheel of Life Reflection */}
         {lowestArea && (
           <div className="rounded-2xl p-3" style={{ background: 'rgba(230,57,70,0.06)', border: '1px solid rgba(230,57,70,0.15)' }}>
             <p className="text-xs font-bold" style={{ color: '#e63946' }}>
-              âï¸ {isAr
-                ? `ÙØ§Ø°Ø§ ÙØ¹ÙØª Ø§ÙÙÙÙ ÙØªØ­Ø³ÙÙ "${AREA_NAMES[lowestArea[0]]?.ar || lowestArea[0]}"Ø`
+              ⚙️ {isAr
+                ? `ماذا فعلت اليوم لتحسين "${AREA_NAMES[lowestArea[0]]?.ar || lowestArea[0]}"؟`
                 : `What did you do today to improve "${AREA_NAMES[lowestArea[0]]?.en || lowestArea[0]}"?`}
             </p>
           </div>
@@ -716,7 +716,7 @@ export default function EveningRitual() {
           <div className="progress-bar-fill" style={{ width: `${((qIndex + 1) / QUESTIONS.length) * 100}%` }} />
         </div>
         <p className="text-xs text-center" style={{ color: '#888' }}>
-          {lang === 'ar' ? `Ø§ÙØ³Ø¤Ø§Ù ${qIndex + 1} ÙÙ ${QUESTIONS.length}` : `Question ${qIndex + 1} of ${QUESTIONS.length}`}
+          {lang === 'ar' ? `السؤال ${qIndex + 1} من ${QUESTIONS.length}` : `Question ${qIndex + 1} of ${QUESTIONS.length}`}
         </p>
         <div className="rounded-2xl p-5"
           style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.2)' }}>
@@ -733,14 +733,14 @@ export default function EveningRitual() {
           return (
             <div className="rounded-xl p-3" style={{ background: 'rgba(147,112,219,0.06)', border: '1px solid rgba(147,112,219,0.15)' }}>
               <p className="text-xs font-bold mb-1" style={{ color: '#9370db' }}>
-                ð {isAr ? 'Ø¥Ø¬Ø§Ø¨ØªÙ Ø§ÙØ³Ø§Ø¨ÙØ©:' : 'Your previous answer:'}
+                📖 {isAr ? 'إجابتك السابقة:' : 'Your previous answer:'}
               </p>
               <p className="text-xs leading-relaxed" style={{ color: '#999', fontStyle: 'italic' }}>
                 "{pastText.slice(0, 120)}{pastText.length > 120 ? '...' : ''}"
               </p>
               <p className="text-xs mt-1" style={{ color: '#444' }}>
                 {new Date(pastDates[0]).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' })}
-                {' â '}{isAr ? 'ÙØ§Ø­Ø¸ ÙÙÙ ØªØªØ·ÙØ± Ø¥Ø¬Ø§Ø¨Ø§ØªÙ' : 'Notice how your answers evolve'}
+                {' — '}{isAr ? 'لاحظ كيف تتطور إجاباتك' : 'Notice how your answers evolve'}
               </p>
             </div>
           )
@@ -750,10 +750,10 @@ export default function EveningRitual() {
           placeholder={t('morning_type_answer')} rows={4} className="input-dark resize-none text-sm" />
         <button onClick={saveAnswer} disabled={!answer.trim()}
           className="w-full btn-gold py-3 text-sm disabled:opacity-40">
-          {qIndex < QUESTIONS.length - 1 ? `${t('next')} â` : `${t('evening_gratitude')} â`}
+          {qIndex < QUESTIONS.length - 1 ? `${t('next')} →` : `${t('evening_gratitude')} ✓`}
         </button>
         <button onClick={() => setView('gratitude')} className="w-full text-xs py-1" style={{ color: '#444' }}>
-          {t('skip')} â {t('evening_gratitude')}
+          {t('skip')} → {t('evening_gratitude')}
         </button>
       </div>
     </Layout>
