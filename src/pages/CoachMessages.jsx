@@ -436,14 +436,6 @@ export default function CoachMessages() {
   const [loadingMsgs, setLoadingMsgs] = useState(true)
   const [tab,       setTab]       = useState('compose') // 'compose' | 'history'
 
-  if (currentUser?.role !== 'admin') {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#090909' }}>
-        <p style={{ color: '#ff6b7a' }}>غير مصرح</p>
-      </div>
-    )
-  }
-
   const loadStudents = async () => {
     try {
       const data = await upwApi.getProgress()
@@ -470,6 +462,15 @@ export default function CoachMessages() {
   const handleSent = () => {
     if (tab === 'history') loadMessages()
     else loadMessages() // refresh silently
+  }
+
+  // Admin-only guard (after all hooks — React rules of hooks)
+  if (currentUser?.role !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#090909' }}>
+        <p style={{ color: '#ff6b7a' }}>غير مصرح</p>
+      </div>
+    )
   }
 
   return (

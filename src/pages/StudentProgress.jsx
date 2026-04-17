@@ -376,14 +376,6 @@ export default function StudentProgress() {
   const [sortBy,     setSortBy]     = useState('streak') // 'streak' | 'lastActive' | 'name' | 'progress'
   const [msgStudent, setMsgStudent] = useState(null)
 
-  if (currentUser?.role !== 'admin') {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: '#090909' }}>
-        <p style={{ color: '#ff6b7a' }}>غير مصرح</p>
-      </div>
-    )
-  }
-
   const load = async () => {
     setLoading(true)
     try {
@@ -437,6 +429,15 @@ export default function StudentProgress() {
   const avgStreak    = students.length
     ? (students.reduce((sum, s) => sum + (s.state?.streak || 0), 0) / students.length).toFixed(1)
     : 0
+
+  // Admin-only guard (after all hooks — React rules of hooks)
+  if (currentUser?.role !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#090909' }}>
+        <p style={{ color: '#ff6b7a' }}>غير مصرح</p>
+      </div>
+    )
+  }
 
   return (
     <div
