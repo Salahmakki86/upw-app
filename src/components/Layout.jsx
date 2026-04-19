@@ -19,7 +19,7 @@ export default function Layout({ children, title, subtitle, rightAction, helpKey
       {/* Header */}
       {title && (
         <header
-          className="flex-shrink-0 flex items-center justify-between px-5 pt-12 pb-4"
+          className="flex-shrink-0 flex items-center justify-between px-5 pb-4 safe-top"
           style={{ background: '#090909' }}
         >
           <div className="flex-1">
@@ -34,9 +34,10 @@ export default function Layout({ children, title, subtitle, rightAction, helpKey
             {helpKey && (
               <button
                 onClick={() => setShowHelp(true)}
+                aria-label={lang === 'ar' ? 'مساعدة' : 'Help'}
                 className="flex items-center justify-center rounded-full font-bold text-xs transition-all duration-200 active:scale-90"
                 style={{
-                  width: 36, height: 36,
+                  width: 44, height: 44,
                   background: 'rgba(201,168,76,0.1)',
                   border: '1px solid rgba(201,168,76,0.3)',
                   color: '#c9a84c',
@@ -48,10 +49,11 @@ export default function Layout({ children, title, subtitle, rightAction, helpKey
             {/* Language Toggle */}
             <button
               onClick={toggleLang}
+              aria-label={lang === 'ar' ? 'Switch to English' : 'التبديل للعربية'}
               className="flex items-center justify-center rounded-full font-bold text-xs transition-all duration-200 active:scale-90"
               style={{
-                width: 36,
-                height: 36,
+                width: 44,
+                height: 44,
                 background: 'rgba(201,168,76,0.1)',
                 border: '1px solid rgba(201,168,76,0.3)',
                 color: '#c9a84c',

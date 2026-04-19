@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { AppProvider } from './context/AppContext'
 import { LangProvider } from './context/LangContext'
@@ -7,73 +8,75 @@ import MessageModal from './components/MessageModal'
 import IdentityReinforcement from './components/IdentityReinforcement'
 import { ToastProvider } from './context/ToastContext'
 
-import LoginPage    from './pages/LoginPage'
-import AdminPage    from './pages/AdminPage'
-import Dashboard    from './pages/Dashboard'
-import MorningRitual   from './pages/MorningRitual'
-import StateManagement from './pages/StateManagement'
-import Goals           from './pages/Goals'
-import WheelOfLife     from './pages/WheelOfLife'
-import Beliefs         from './pages/Beliefs'
-import EnergyChallenge from './pages/EnergyChallenge'
-import EveningRitual   from './pages/EveningRitual'
-import Library         from './pages/Library'
-import BusinessMastery   from './pages/BusinessMastery'
-import DateWithDestiny   from './pages/DateWithDestiny'
-import WeeklyReview      from './pages/WeeklyReview'
-import FinancialFreedom  from './pages/FinancialFreedom'
-import PersonalPower     from './pages/PersonalPower'
-import FearToFpower      from './pages/FearToFpower'
-import TimeOfLife        from './pages/TimeOfLife'
-import DailyWins         from './pages/DailyWins'
-import LetterToSelf      from './pages/LetterToSelf'
-import ModelingExcellence from './pages/ModelingExcellence'
-import RelationshipMastery from './pages/RelationshipMastery'
-import EnergyProtocol    from './pages/EnergyProtocol'
-import DailyChallenge    from './pages/DailyChallenge'
-import Statistics        from './pages/Statistics'
-import ScalingUp        from './pages/ScalingUp'
-import Lifebook         from './pages/Lifebook'
-import GratitudeJournal from './pages/GratitudeJournal'
-import HabitTracker     from './pages/HabitTracker'
-import ReadingLog       from './pages/ReadingLog'
-import VisionBoard      from './pages/VisionBoard'
-import SleepTracker     from './pages/SleepTracker'
-import Achievements     from './pages/Achievements'
-import StudentProgress  from './pages/StudentProgress'
-import CoachMessages    from './pages/CoachMessages'
-import CommandCenter    from './pages/CommandCenter'
-import CoachPrep        from './pages/CoachPrep'
-import TodayPage        from './pages/TodayPage'
-import BaselinePage     from './pages/BaselinePage'
-import InsightsPage     from './pages/InsightsPage'
-import CommitmentPage   from './pages/CommitmentPage'
-import GroupChallengePage from './pages/GroupChallengePage'
-import WeeklyReportPage from './pages/WeeklyReportPage'
-import MyWeeklySummary from './pages/MyWeeklySummary'
-import BusinessScorecard from './pages/BusinessScorecard'
-import Sprint90 from './pages/Sprint90'
-import PowerHour from './pages/PowerHour'
-import DecisionJournal from './pages/DecisionJournal'
-import SkillStack from './pages/SkillStack'
-import NetworkTracker from './pages/NetworkTracker'
-import SalesPipeline from './pages/SalesPipeline'
-import BizDashboard from './pages/BizDashboard'
-import CustomerAvatar from './pages/CustomerAvatar'
-import ContentTracker from './pages/ContentTracker'
-import SixHumanNeeds      from './pages/SixHumanNeeds'
-import NACProcess         from './pages/NACProcess'
-import CompellingFuture   from './pages/CompellingFuture'
-import ValuesHierarchy    from './pages/ValuesHierarchy'
-import Incantations       from './pages/Incantations'
-import TransformationDashboard from './pages/TransformationDashboard'
-import UPWProgram from './pages/UPWProgram'
-import CelebrationRituals from './pages/CelebrationRituals'
-import LifeStoryReframing from './pages/LifeStoryReframing'
-import EmergencyToolkit from './pages/EmergencyToolkit'
-import VideoLibrary from './pages/VideoLibrary'
-import WeeklyPulse from './pages/WeeklyPulse'
-import MonthlyReset from './pages/MonthlyReset'
+import LoginPage              from './pages/LoginPage'
+import Dashboard              from './pages/Dashboard'
+import TodayPage              from './pages/TodayPage'
+
+// Lazy-loaded routes (code-split into separate chunks)
+const AdminPage = lazy(() => import('./pages/AdminPage'))
+const MorningRitual = lazy(() => import('./pages/MorningRitual'))
+const StateManagement = lazy(() => import('./pages/StateManagement'))
+const Goals = lazy(() => import('./pages/Goals'))
+const WheelOfLife = lazy(() => import('./pages/WheelOfLife'))
+const Beliefs = lazy(() => import('./pages/Beliefs'))
+const EnergyChallenge = lazy(() => import('./pages/EnergyChallenge'))
+const EveningRitual = lazy(() => import('./pages/EveningRitual'))
+const Library = lazy(() => import('./pages/Library'))
+const BusinessMastery = lazy(() => import('./pages/BusinessMastery'))
+const DateWithDestiny = lazy(() => import('./pages/DateWithDestiny'))
+const WeeklyReview = lazy(() => import('./pages/WeeklyReview'))
+const FinancialFreedom = lazy(() => import('./pages/FinancialFreedom'))
+const PersonalPower = lazy(() => import('./pages/PersonalPower'))
+const FearToFpower = lazy(() => import('./pages/FearToFpower'))
+const TimeOfLife = lazy(() => import('./pages/TimeOfLife'))
+const DailyWins = lazy(() => import('./pages/DailyWins'))
+const LetterToSelf = lazy(() => import('./pages/LetterToSelf'))
+const ModelingExcellence = lazy(() => import('./pages/ModelingExcellence'))
+const RelationshipMastery = lazy(() => import('./pages/RelationshipMastery'))
+const EnergyProtocol = lazy(() => import('./pages/EnergyProtocol'))
+const DailyChallenge = lazy(() => import('./pages/DailyChallenge'))
+const Statistics = lazy(() => import('./pages/Statistics'))
+const ScalingUp = lazy(() => import('./pages/ScalingUp'))
+const Lifebook = lazy(() => import('./pages/Lifebook'))
+const GratitudeJournal = lazy(() => import('./pages/GratitudeJournal'))
+const HabitTracker = lazy(() => import('./pages/HabitTracker'))
+const ReadingLog = lazy(() => import('./pages/ReadingLog'))
+const VisionBoard = lazy(() => import('./pages/VisionBoard'))
+const SleepTracker = lazy(() => import('./pages/SleepTracker'))
+const Achievements = lazy(() => import('./pages/Achievements'))
+const StudentProgress = lazy(() => import('./pages/StudentProgress'))
+const CoachMessages = lazy(() => import('./pages/CoachMessages'))
+const CommandCenter = lazy(() => import('./pages/CommandCenter'))
+const CoachPrep = lazy(() => import('./pages/CoachPrep'))
+const BaselinePage = lazy(() => import('./pages/BaselinePage'))
+const InsightsPage = lazy(() => import('./pages/InsightsPage'))
+const CommitmentPage = lazy(() => import('./pages/CommitmentPage'))
+const GroupChallengePage = lazy(() => import('./pages/GroupChallengePage'))
+const WeeklyReportPage = lazy(() => import('./pages/WeeklyReportPage'))
+const MyWeeklySummary = lazy(() => import('./pages/MyWeeklySummary'))
+const BusinessScorecard = lazy(() => import('./pages/BusinessScorecard'))
+const Sprint90 = lazy(() => import('./pages/Sprint90'))
+const PowerHour = lazy(() => import('./pages/PowerHour'))
+const DecisionJournal = lazy(() => import('./pages/DecisionJournal'))
+const SkillStack = lazy(() => import('./pages/SkillStack'))
+const NetworkTracker = lazy(() => import('./pages/NetworkTracker'))
+const SalesPipeline = lazy(() => import('./pages/SalesPipeline'))
+const BizDashboard = lazy(() => import('./pages/BizDashboard'))
+const CustomerAvatar = lazy(() => import('./pages/CustomerAvatar'))
+const ContentTracker = lazy(() => import('./pages/ContentTracker'))
+const SixHumanNeeds = lazy(() => import('./pages/SixHumanNeeds'))
+const NACProcess = lazy(() => import('./pages/NACProcess'))
+const CompellingFuture = lazy(() => import('./pages/CompellingFuture'))
+const ValuesHierarchy = lazy(() => import('./pages/ValuesHierarchy'))
+const Incantations = lazy(() => import('./pages/Incantations'))
+const TransformationDashboard = lazy(() => import('./pages/TransformationDashboard'))
+const UPWProgram = lazy(() => import('./pages/UPWProgram'))
+const CelebrationRituals = lazy(() => import('./pages/CelebrationRituals'))
+const LifeStoryReframing = lazy(() => import('./pages/LifeStoryReframing'))
+const EmergencyToolkit = lazy(() => import('./pages/EmergencyToolkit'))
+const VideoLibrary = lazy(() => import('./pages/VideoLibrary'))
+const WeeklyPulse = lazy(() => import('./pages/WeeklyPulse'))
+const MonthlyReset = lazy(() => import('./pages/MonthlyReset'))
 import ErrorBoundary from './components/ErrorBoundary'
 import { useApp } from './context/AppContext'
 
@@ -116,7 +119,7 @@ function AppRoutes() {
         <MessageModal />
         <IdentityReinforcement />
         <BrowserRouter>
-          <Routes>
+          <Suspense fallback={<RouteFallback />}><Routes>
             <Route path="/"        element={<SmartHome />}       />
             <Route path="/dashboard" element={<Dashboard />}     />
             <Route path="/morning" element={<MorningRitual />}   />
@@ -209,11 +212,31 @@ function AppRoutes() {
               element={currentUser.role === 'admin' ? <AdminPage /> : <Navigate to="/" />}
             />
             <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
+          </Routes></Suspense>
         </BrowserRouter>
       </AppProvider>
       </ToastProvider>
     </LangProvider>
+  )
+}
+
+
+// Loading indicator shown while lazy-loaded route chunks are fetched
+function RouteFallback() {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, display: 'flex',
+      alignItems: 'center', justifyContent: 'center',
+      background: '#090909', color: '#c9a84c'
+    }}>
+      <div style={{
+        width: 32, height: 32, borderRadius: '50%',
+        border: '3px solid rgba(201,168,76,0.2)',
+        borderTopColor: '#c9a84c',
+        animation: 'spin 0.8s linear infinite'
+      }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
   )
 }
 

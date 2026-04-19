@@ -39,7 +39,9 @@ export default function BottomNav() {
               <button
                 key={tab.path}
                 onClick={() => navigate(tab.path)}
+                aria-label={t(tab.labelKey)}
                 className="relative -top-5 flex flex-col items-center gap-1"
+                style={{ minHeight: 56, minWidth: 56 }}
               >
                 <div
                   className="w-14 h-14 rounded-full flex items-center justify-center font-black text-sm text-tr-black transition-all duration-200 active:scale-90"
@@ -70,8 +72,10 @@ export default function BottomNav() {
             <button
               key={tab.path}
               onClick={() => navigate(tab.path)}
-              className="nav-tab flex flex-col items-center gap-1 flex-1 py-1 transition-all duration-200"
-              style={{ color: active ? '#c9a84c' : '#555555' }}
+              aria-label={t(tab.labelKey)}
+              aria-current={active ? 'page' : undefined}
+              className="nav-tab flex flex-col items-center gap-1 flex-1 py-2 transition-all duration-200"
+              style={{ color: active ? '#c9a84c' : '#555555', minHeight: 48 }}
             >
               <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
               <span className="text-xs font-medium">{t(tab.labelKey)}</span>
