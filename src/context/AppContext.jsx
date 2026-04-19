@@ -803,6 +803,40 @@ export function AppProvider({ children, userId, hasData }) {
     })
   }, [setState, today, yesterday])
 
+  // Complete evening ritual (atomically saves ALL data + flags in a single setState)
+  // Fixes the bug where eveningDone was reset by the daily effect because
+  // lastActiveDate was never updated by evening completion.
+  const completeEvening = useCallback((payload) => {
+    // payload = { answers, gratitude, dayRating, tomorrow, reflection, cani }
+    setState(prev => {
+      const existingEveningLog = prev.eveningLog || {}
+      const existingPQLog = prev.powerQuestionsLog || {}
+      const todayPQ = existingPQLog[today] || {}
+      return {
+        ...prev,
+        eveningDone: true,
+        lastActiveDate: today,  // ← critical: prevents daily reset from wiping eveningDone
+        eveningAnswers: payload.answers,
+        powerQuestionsLog: {
+          ...existingPQLog,
+          [today]: { ...todayPQ, evening: payload.answers },
+        },
+        eveningLog: {
+          ...existingEveningLog,
+          [today]: {
+            answers: payload.answers,
+            gratitude: payload.gratitude,
+            dayRating: payload.dayRating,
+            tomorrow: payload.tomorrow,
+            reflection: payload.reflection,
+            cani: payload.cani,
+            completedAt: new Date().toISOString(),
+          },
+        },
+      }
+    })
+  }, [setState, today])
+
   // Add goal
   const addGoal = useCallback((goal) => {
     setState(prev => ({
@@ -1087,6 +1121,7 @@ export function AppProvider({ children, userId, hasData }) {
       today,
       logState,
       completeMorning,
+      completeEvening,
       addGoal, updateGoal, deleteGoal,
       updateWheel, saveWheelSnapshot,
       toggleChallengeHabit, startChallenge,

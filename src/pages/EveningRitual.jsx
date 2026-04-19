@@ -122,7 +122,7 @@ function CANIMiniCalendar({ caniLog, isAr, lang }) {
 }
 
 export default function EveningRitual() {
-  const { state, update } = useApp()
+  const { state, update, completeEvening } = useApp()
   const { lang, t } = useLang()
   const navigate = useNavigate()
   const isAr = lang === 'ar'
@@ -210,34 +210,25 @@ export default function EveningRitual() {
 
   const finishEvening = () => {
     const todayKey = getTodayStr()
-    update('eveningDone', true)
-    update('eveningAnswers', answers)
-    // Also save to date-keyed log for growth tracking
-    const pqLog = state.powerQuestionsLog || {}
-    const todayPQ = pqLog[todayKey] || {}
-    update('powerQuestionsLog', { ...pqLog, [todayKey]: { ...todayPQ, evening: answers } })
     // Auto-calculate dayRating from StateCheckin (backwards-compatible: falls back to manual value)
     const checkin = state.stateCheckin?.[todayKey]
     const computedRating = checkin
       ? Math.round(((checkin.energy || 5) + (checkin.mood || 5) + (checkin.clarity || 5)) / 3)
       : dayRating
-    // Save ALL evening data to the log — previously this was lost on navigation
     // Gratitude: prefer the unified gratitude page data, fall back to any local evening entries
     const unifiedGratitude = state.gratitude?.[todayKey]?.filter(v => v && v.trim()) || []
     const localGratitude = gratitude.filter(g => g.trim())
     const finalGratitude = unifiedGratitude.length > 0 ? unifiedGratitude : localGratitude
-    const existingLog = state.eveningLog || {}
-    update('eveningLog', {
-      ...existingLog,
-      [todayKey]: {
-        answers,
-        gratitude: finalGratitude,
-        dayRating: computedRating,
-        tomorrow: tomorrow.filter(t => t.trim()),
-        reflection: reflection.trim(),
-        cani: { q1: caniQ1, q2: caniQ2, area: caniArea, meter: caniMeter },
-        completedAt: new Date().toISOString(),
-      }
+    // Atomic: sets eveningDone + lastActiveDate + all logs in a single setState.
+    // This prevents the daily-reset effect from wiping eveningDone because
+    // lastActiveDate stayed on an old day.
+    completeEvening({
+      answers,
+      gratitude: finalGratitude,
+      dayRating: computedRating,
+      tomorrow: tomorrow.filter(t => t.trim()),
+      reflection: reflection.trim(),
+      cani: { q1: caniQ1, q2: caniQ2, area: caniArea, meter: caniMeter },
     })
     setView('reflection')
   }
