@@ -27,6 +27,8 @@ import { generateBriefing } from '../utils/morningBriefing'
 import { calcWeightedScore, getScoreInsight } from '../utils/dailyScore'
 import { getDailyPersonalizedTip } from '../utils/personalization'
 import { getTodayVisibility } from '../utils/progressiveUI'
+import IdentityAnchor from '../components/IdentityAnchor'
+import { getTodayPlan, computeCurrentDay, getCurrentChapter } from '../utils/journeyEngine'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -379,6 +381,14 @@ export default function TodayPage() {
   // ── Progressive UI -- hide advanced elements for new users ────────────
   const todayVis = useMemo(() => getTodayVisibility(state), [state.morningLog])
 
+  // ── 90-Day Journey info (opt-in) ─────────────────────────────────────
+  const journeyActive = !!state.journey90?.active
+  const journeyDay = useMemo(() => computeCurrentDay(state), [state.journey90])
+  const journeyPlan = useMemo(() => getTodayPlan(state), [state.journey90])
+  const journeyChapter = useMemo(() => getCurrentChapter(state), [state.journey90])
+  const journeyDayCompleted = !!(state.journey90?.dayCompletions || {})[journeyDay]
+  const focusMode = !!state.uiPreferences?.focusMode
+
   // ── Wheel of Life <-> State Connection ──────────────────────────────
   const wheelStateLink = useMemo(() => {
     const wheel = state.wheelScores || {}
@@ -510,6 +520,73 @@ export default function TodayPage() {
       </div>
 
       {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* IDENTITY ANCHOR — TR1: Daily identity reminder + alignment check   */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {!focusMode && (
+        <div style={{ padding: '0 16px 14px' }}>
+          <IdentityAnchor variant="compact" />
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* 90-DAY JOURNEY DAY CARD (only if journey active)                   */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {journeyActive && journeyPlan && (
+        <div style={{ padding: '0 16px 14px' }}>
+          <button
+            onClick={() => navigate('/journey')}
+            className="active:scale-[0.98] transition-all"
+            style={{
+              width: '100%', borderRadius: 20, padding: '14px 16px',
+              background: 'linear-gradient(135deg, rgba(201,168,76,0.10), rgba(201,168,76,0.02))',
+              border: `1px solid ${journeyDayCompleted ? 'rgba(46,204,113,0.35)' : 'rgba(201,168,76,0.3)'}`,
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 12,
+              flexDirection: isAr ? 'row-reverse' : 'row',
+              textAlign: isAr ? 'right' : 'left',
+            }}
+          >
+            <span style={{ fontSize: 32, lineHeight: 1, flexShrink: 0 }}>
+              {journeyChapter?.emoji || '🌱'}
+            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: 9, fontWeight: 900, letterSpacing: '0.08em',
+                color: '#c9a84c', marginBottom: 3, textTransform: 'uppercase',
+              }}>
+                {isAr ? `اليوم ${journeyDay}/٩٠ — ${journeyChapter?.titleAr || ''}` : `Day ${journeyDay}/90 — ${journeyChapter?.titleEn || ''}`}
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: '#eee', marginBottom: 2 }}>
+                {journeyPlan.primary?.emoji}{' '}
+                {isAr ? journeyPlan.primary?.labelAr : journeyPlan.primary?.labelEn}
+              </div>
+              {journeyPlan.milestone && (
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#c9a84c', marginTop: 3 }}>
+                  {journeyPlan.milestone.emoji}{' '}
+                  {isAr ? journeyPlan.milestone.ar : journeyPlan.milestone.en}
+                </div>
+              )}
+            </div>
+            {journeyDayCompleted ? (
+              <div style={{
+                width: 28, height: 28, borderRadius: '50%',
+                background: 'rgba(46,204,113,0.15)',
+                border: '1.5px solid rgba(46,204,113,0.5)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <Check size={14} style={{ color: '#2ecc71' }} />
+              </div>
+            ) : (
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#c9a84c', flexShrink: 0 }}>
+                →
+              </span>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════════ */}
       {/* SECTION 2: 3 PRIORITY TASKS (~40vh)                               */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       <div style={{ padding: '0 16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -616,6 +693,11 @@ export default function TodayPage() {
           <div style={{
             animation: 'fadeIn 0.3s ease',
           }}>
+
+            {/* Full Identity Check-in (morning/evening slider) */}
+            <div style={{ marginBottom: 14 }}>
+              <IdentityAnchor variant="full" showQuestion={true} />
+            </div>
 
             {/* Personalized AI Coach Card */}
             {todayVis.personalizedCoach && (

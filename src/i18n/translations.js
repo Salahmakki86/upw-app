@@ -32,6 +32,7 @@ export const translations = {
     nav_goals: 'الأهداف',
     nav_evening: 'المساء',
     nav_business: 'الأعمال',
+    nav_more: 'المزيد',
     nav_lifebook: 'حياتي',
     nav_destiny:  'القدر',
 
@@ -371,6 +372,7 @@ export const translations = {
     nav_goals: 'Goals',
     nav_evening: 'Evening',
     nav_business: 'Business',
+    nav_more: 'More',
     nav_lifebook: 'Lifebook',
     nav_destiny:  'Destiny',
 

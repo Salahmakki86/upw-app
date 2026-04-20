@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
 import { upwApi } from '../api/upwApi'
 import { useToast } from './ToastContext'
+import { queueStateSave, flushQueue, subscribeOnline, isOnline } from '../utils/offlineQueue'
 
 const INITIAL_STATE = {
   // Streak
@@ -350,6 +351,149 @@ const INITIAL_STATE = {
 
   // Power Question answers log: [{ date, question, answer, ts }]
   powerQuestionLog: [],
+
+  // ═══════════════════════════════════════════════════════════════════
+  //                    STRATEGIC UPGRADE STATE KEYS
+  // ═══════════════════════════════════════════════════════════════════
+
+  // UI Preferences (Focus Mode, Notifications prefs, dismissals)
+  // Never destructive: existing UI works when these are undefined.
+  uiPreferences: {
+    focusMode: false,                  // Simplified Dashboard (3 cards only)
+    sosDestination: 'emergency',       // 'emergency' | 'state' — where SOS FAB goes
+    showIdentityAnchor: true,          // Show identity line on Dashboard/Today
+    showTriadButton: true,             // Show Triad Reset floating button
+    reducedMotion: false,              // Accessibility
+  },
+
+  // Feature Flags (opt-in for new features without breaking old users)
+  featureFlags: {
+    allToolsPage: true,
+    identityDashboard: true,
+    journey90: true,
+    painPleasure: true,
+    emotionalHomeTracker: true,
+    valuesInAction: true,
+    massiveActionTracker: true,
+    heroArchetype: true,
+    blueprintCheck: true,
+    weeklyPowerQuestions: true,
+    aiCoach: true,
+    voiceJournaling: true,
+    pdfExport: true,
+    challengeMarketplace: true,
+    analyticsDashboard: true,
+  },
+
+  // TR1: Daily Identity Check — { 'YYYY-MM-DD': { statement, morningScore, eveningScore } }
+  identityAlignmentLog: {},
+
+  // TR6: Triad Reset sessions — [{ id, ts, beforeState, afterState, duration }]
+  triadResetLog: [],
+
+  // TR4: Emotional Home — weekly tracking of actual emotions vs target
+  // { 'YYYY-WW': { actual: [...], target: [...], reflection } }
+  emotionalHomeLog: {},
+
+  // TR10: Hero Archetype — which archetype user identifies with + journal log
+  heroArchetype: {
+    selected: null,           // 'warrior' | 'sage' | 'creator' | 'lover' | 'ruler' | 'magician' | 'innocent' | 'explorer' | 'hero' | 'caregiver' | 'jester' | 'everyman'
+    setAt: null,
+    alignmentLog: {},         // { 'YYYY-MM-DD': alignmentScore 1-10 }
+  },
+
+  // TR7: Weekly Power Questions — { 'YYYY-WW': { q1Answer, q2Answer, q3Answer, completedAt } }
+  weeklyQuestionsLog: {},
+
+  // TR8: Blueprint Check — monthly — [{ monthKey, completedAt, gaps, responses, actionPlan }]
+  blueprintCheckLog: [],
+
+  // TR9: Massive Action Tracker — weekly per-goal — { 'YYYY-WW': { [goalId]: { action, done, date } } }
+  massiveActionLog: {},
+
+  // TR2: Values in Action — decisions tracked with linked values — { [decisionId]: { valueIds: [], ts } }
+  decisionValueLog: {},
+
+  // Conflict Log — preserves alternate values when smartMerge detects big conflicts
+  // [{ id, ts, field, localValue, remoteValue, resolvedBy }]
+  conflictLog: [],
+
+  // Notification Preferences
+  notificationPrefs: {
+    enabled: false,
+    morningReminder: true,
+    morningTime: '06:30',
+    middayCheck: true,
+    middayTime: '12:00',
+    lateAfternoon: true,
+    lateAfternoonTime: '17:00',
+    eveningReminder: true,
+    eveningTime: '20:30',
+    insightsAlert: true,
+    weeklyReview: true,
+  },
+
+  // Unread indicators (badges in BottomNav)
+  unreadCounts: {
+    insights: 0,
+    messages: 0,
+    discoveries: 0,
+    weeklyReport: 0,
+  },
+
+  // 90-Day Transformation Journey
+  journey90: {
+    active: false,
+    startDate: null,
+    currentDay: 0,
+    dayCompletions: {},          // { 1: true, 2: true, ... }
+    chapterGraduations: {},      // { 'foundations': ISO, 'discovery': ISO, 'mastery': ISO }
+    currentChapter: null,        // 'foundations' | 'discovery' | 'mastery' | null
+  },
+
+  // Challenge Marketplace — currently accepted challenges
+  challengeMarketplace: {
+    accepted: [],     // [{ id, challengeId, startDate, progress: {}, completed }]
+    completed: [],    // Archived completed
+  },
+
+  // AI Coach conversation log (UI only — actual AI integration future)
+  aiCoachLog: [],     // [{ id, ts, role: 'user'|'assistant', content, snapshotContext }]
+
+  // Voice-First Journaling entries
+  voiceJournal: {},   // { 'YYYY-MM-DD': [{ id, transcript, durationMs, ts, analysis }] }
+
+  // Goal Pain-Pleasure (TR3) is stored INSIDE goal object (non-breaking)
+  // goal.painPleasure = { pain: '', pleasure: '', intensity: 1-10 }
+
+  // Goal Ritual Focus Log — which goal was focused on during morning
+  // { 'YYYY-MM-DD': goalId }
+  goalRitualFocus: {},
+
+  // Wheel-Goal Link — when low wheel area spawned a goal
+  // { [wheelArea]: goalId }
+  wheelGoalLinks: {},
+
+  // Belief-Goal Link — when belief transformation linked to a goal
+  // { [beliefId]: goalId }
+  beliefGoalLinks: {},
+
+  // Bootstrap Insights seen (so we don't repeat)
+  bootstrapInsightsSeen: {},   // { insightId: ISODate }
+
+  // Insight Actions Log — when user committed to an action from insightEngine
+  // { [insightId]: { chosenOption, ts, checkedAfter } }
+  insightActionsLog: {},
+
+  // Today Plan Checked (from eveningLog[yesterday].tomorrow items)
+  // { 'YYYY-MM-DD': { 0: true, 1: false, 2: true } }
+  todayPlanChecked: {},
+
+  // Ritual Quality Reflections (1-5 rating after morning/evening)
+  // Already declared above as ritualReflections — this comment is a pointer
+
+  // Data Export log (track when user exported)
+  dataExports: [],  // [{ ts, size, filename }]
 }
 
 const AppContext = createContext(null)
@@ -457,7 +601,35 @@ export function AppProvider({ children, userId, hasData }) {
     const remoteWins = remoteTs >= localTs
     const primary   = remoteWins ? remoteState : localState
     const secondary = remoteWins ? localState  : remoteState
+
+    // ── Conflict Detection — surface significant text-field conflicts to user ──
+    // Only checks a few user-authored string fields; avoids noise on booleans/numbers.
+    const CONFLICT_FIELDS = ['userName', 'identityStatement', 'morningCommitment']
+    const detectedConflicts = []
+    for (const f of CONFLICT_FIELDS) {
+      const localV  = localState?.[f]
+      const remoteV = remoteState?.[f]
+      if (
+        typeof localV === 'string' && typeof remoteV === 'string' &&
+        localV.trim() && remoteV.trim() && localV.trim() !== remoteV.trim()
+      ) {
+        detectedConflicts.push({
+          id: `${f}-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+          ts: Date.now(),
+          field: f,
+          localValue: localV,
+          remoteValue: remoteV,
+          resolvedBy: remoteWins ? 'remote' : 'local',
+        })
+      }
+    }
+
     let merged = { ...base, ...secondary, ...primary }
+    if (detectedConflicts.length > 0) {
+      // Preserve both existing conflictLog and new conflicts, cap at 20 entries.
+      const prevLog = Array.isArray(merged.conflictLog) ? merged.conflictLog : []
+      merged.conflictLog = [...prevLog, ...detectedConflicts].slice(-20)
+    }
 
     // Deep-merge date-keyed log objects (keep entries from BOTH devices)
     const LOG_KEYS = [
@@ -679,6 +851,31 @@ export function AppProvider({ children, userId, hasData }) {
   // Track consecutive sync failures for smart toast behaviour
   const syncFailCount = useRef(0)
 
+  // ── Offline Queue: flush on reconnect, and on mount if connection healthy ──
+  useEffect(() => {
+    // Try to flush any leftover payload from a previous offline session.
+    flushQueue(upwApi.saveState).then((flushed) => {
+      if (flushed) {
+        const _lang = localStorage.getItem('upw-lang') || 'ar'
+        showToast(_lang === 'ar' ? 'تمت مزامنة التغييرات المعلقة ✓' : 'Pending changes synced ✓', 'success', 1500)
+      }
+    }).catch(() => {})
+
+    const unsub = subscribeOnline((isUp) => {
+      if (!isUp) return
+      // Small delay — let the network stabilize before attempting.
+      setTimeout(() => {
+        flushQueue(upwApi.saveState).then((flushed) => {
+          if (flushed) {
+            const _lang = localStorage.getItem('upw-lang') || 'ar'
+            showToast(_lang === 'ar' ? 'تمت مزامنة التغييرات المعلقة ✓' : 'Pending changes synced ✓', 'success', 1500)
+          }
+        }).catch(() => {})
+      }, 1500)
+    })
+    return unsub
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const setState = useCallback((updater) => {
     setStateRaw(prev => {
       const next = typeof updater === 'function' ? updater(prev) : { ...prev, ...updater }
@@ -688,6 +885,11 @@ export function AppProvider({ children, userId, hasData }) {
       // Debounced sync to backend (3 s) with retry
       if (syncTimer.current) clearTimeout(syncTimer.current)
       syncTimer.current = setTimeout(() => {
+        // If we know we're offline, queue immediately — don't burn retries.
+        if (!isOnline()) {
+          queueStateSave(next)
+          return
+        }
         const attempt = (retries) => {
           upwApi.saveState(next)
             .then(() => {
@@ -704,6 +906,8 @@ export function AppProvider({ children, userId, hasData }) {
                 setTimeout(() => attempt(retries - 1), 5000)
               } else {
                 syncFailCount.current++
+                // After exhausting retries, queue the latest payload for later flush.
+                queueStateSave(next)
                 // Only show a subtle warning after 3+ consecutive failures
                 if (syncFailCount.current >= 3) {
                   const _lang = localStorage.getItem('upw-lang') || 'ar'
@@ -1107,6 +1311,395 @@ export function AppProvider({ children, userId, hasData }) {
     }))
   }, [setState])
 
+  // ═══════════════════════════════════════════════════════════════════
+  //               STRATEGIC UPGRADE — UPDATE FUNCTIONS
+  // ═══════════════════════════════════════════════════════════════════
+
+  // UI Preferences (Focus Mode, sos destination, identity anchor, triad, reduced-motion)
+  const updateUIPref = useCallback((key, value) => {
+    setState(prev => ({
+      ...prev,
+      uiPreferences: { ...(prev.uiPreferences || {}), [key]: value },
+    }))
+  }, [setState])
+
+  // Feature Flags
+  const toggleFeatureFlag = useCallback((flag) => {
+    setState(prev => ({
+      ...prev,
+      featureFlags: { ...(prev.featureFlags || {}), [flag]: !(prev.featureFlags || {})[flag] },
+    }))
+  }, [setState])
+
+  // TR1: Record daily identity alignment score (morning or evening)
+  const recordIdentityAlignment = useCallback((when, score, statement) => {
+    // when: 'morning' | 'evening'
+    setState(prev => {
+      const log = prev.identityAlignmentLog || {}
+      const todayEntry = log[today] || {}
+      return {
+        ...prev,
+        identityAlignmentLog: {
+          ...log,
+          [today]: {
+            ...todayEntry,
+            statement: statement || todayEntry.statement || '',
+            [`${when}Score`]: score,
+            [`${when}Ts`]: Date.now(),
+          },
+        },
+      }
+    })
+  }, [setState, today])
+
+  // TR6: Add a Triad Reset session
+  const logTriadReset = useCallback((payload) => {
+    // payload = { beforeState, afterState, duration }
+    setState(prev => ({
+      ...prev,
+      triadResetLog: [
+        ...(prev.triadResetLog || []),
+        { id: Date.now(), ts: Date.now(), ...payload },
+      ].slice(-500), // cap at 500 entries
+    }))
+  }, [setState])
+
+  // TR4: Weekly emotional home tracking
+  const updateEmotionalHomeWeek = useCallback((weekKey, patch) => {
+    setState(prev => ({
+      ...prev,
+      emotionalHomeLog: {
+        ...(prev.emotionalHomeLog || {}),
+        [weekKey]: { ...((prev.emotionalHomeLog || {})[weekKey] || {}), ...patch },
+      },
+    }))
+  }, [setState])
+
+  // TR10: Set hero archetype
+  const setHeroArchetype = useCallback((archetype) => {
+    setState(prev => ({
+      ...prev,
+      heroArchetype: {
+        ...(prev.heroArchetype || {}),
+        selected: archetype,
+        setAt: (prev.heroArchetype?.setAt) || new Date().toISOString(),
+      },
+    }))
+  }, [setState])
+
+  const recordHeroAlignment = useCallback((score) => {
+    setState(prev => ({
+      ...prev,
+      heroArchetype: {
+        ...(prev.heroArchetype || {}),
+        alignmentLog: {
+          ...((prev.heroArchetype || {}).alignmentLog || {}),
+          [today]: score,
+        },
+      },
+    }))
+  }, [setState, today])
+
+  // TR7: Weekly Power Questions
+  const saveWeeklyPowerQuestions = useCallback((weekKey, answers) => {
+    setState(prev => ({
+      ...prev,
+      weeklyQuestionsLog: {
+        ...(prev.weeklyQuestionsLog || {}),
+        [weekKey]: { ...answers, completedAt: new Date().toISOString() },
+      },
+    }))
+  }, [setState])
+
+  // TR8: Blueprint Check (monthly)
+  const saveBlueprintCheck = useCallback((entry) => {
+    setState(prev => ({
+      ...prev,
+      blueprintCheckLog: [
+        ...(prev.blueprintCheckLog || []),
+        { id: Date.now(), ...entry, completedAt: new Date().toISOString() },
+      ],
+    }))
+  }, [setState])
+
+  // TR9: Massive Action per-goal, per-week
+  const setMassiveAction = useCallback((weekKey, goalId, payload) => {
+    setState(prev => {
+      const log = prev.massiveActionLog || {}
+      const week = log[weekKey] || {}
+      return {
+        ...prev,
+        massiveActionLog: {
+          ...log,
+          [weekKey]: { ...week, [goalId]: { ...(week[goalId] || {}), ...payload } },
+        },
+      }
+    })
+  }, [setState])
+
+  // TR2: Link a value to a decision
+  const linkValueToDecision = useCallback((decisionId, valueIds) => {
+    setState(prev => ({
+      ...prev,
+      decisionValueLog: {
+        ...(prev.decisionValueLog || {}),
+        [decisionId]: { valueIds, ts: Date.now() },
+      },
+    }))
+  }, [setState])
+
+  // Conflict Log
+  const addConflict = useCallback((field, localValue, remoteValue) => {
+    setState(prev => ({
+      ...prev,
+      conflictLog: [
+        ...(prev.conflictLog || []),
+        { id: Date.now(), ts: Date.now(), field, localValue, remoteValue, resolvedBy: null },
+      ].slice(-100), // cap at 100
+    }))
+  }, [setState])
+
+  const resolveConflict = useCallback((id, resolvedBy) => {
+    setState(prev => ({
+      ...prev,
+      conflictLog: (prev.conflictLog || []).map(c =>
+        c.id === id ? { ...c, resolvedBy, resolvedAt: Date.now() } : c
+      ),
+    }))
+  }, [setState])
+
+  // Notification Preferences
+  const updateNotificationPref = useCallback((key, value) => {
+    setState(prev => ({
+      ...prev,
+      notificationPrefs: { ...(prev.notificationPrefs || {}), [key]: value },
+    }))
+  }, [setState])
+
+  // Unread Counts
+  const setUnreadCount = useCallback((key, count) => {
+    setState(prev => ({
+      ...prev,
+      unreadCounts: { ...(prev.unreadCounts || {}), [key]: Math.max(0, count) },
+    }))
+  }, [setState])
+
+  const clearUnread = useCallback((key) => {
+    setState(prev => ({
+      ...prev,
+      unreadCounts: { ...(prev.unreadCounts || {}), [key]: 0 },
+    }))
+  }, [setState])
+
+  // 90-Day Journey
+  const startJourney90 = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      journey90: {
+        active: true,
+        startDate: today,
+        currentDay: 1,
+        dayCompletions: {},
+        chapterGraduations: {},
+        currentChapter: 'foundations',
+      },
+    }))
+  }, [setState, today])
+
+  const completeJourneyDay = useCallback((dayNumber) => {
+    setState(prev => {
+      const j = prev.journey90 || {}
+      const completions = { ...(j.dayCompletions || {}), [dayNumber]: new Date().toISOString() }
+      let chapter = j.currentChapter || 'foundations'
+      const grads = { ...(j.chapterGraduations || {}) }
+      if (dayNumber === 30 && !grads.foundations) { grads.foundations = new Date().toISOString(); chapter = 'discovery' }
+      if (dayNumber === 60 && !grads.discovery)   { grads.discovery   = new Date().toISOString(); chapter = 'mastery'   }
+      if (dayNumber === 90 && !grads.mastery)     { grads.mastery     = new Date().toISOString() }
+      return {
+        ...prev,
+        journey90: {
+          ...j,
+          currentDay: Math.max(j.currentDay || 0, dayNumber),
+          dayCompletions: completions,
+          chapterGraduations: grads,
+          currentChapter: chapter,
+        },
+      }
+    })
+  }, [setState])
+
+  const updateJourney90 = useCallback((patch) => {
+    setState(prev => ({
+      ...prev,
+      journey90: { ...(prev.journey90 || {}), ...patch },
+    }))
+  }, [setState])
+
+  // Challenge Marketplace
+  const acceptMarketChallenge = useCallback((challenge) => {
+    setState(prev => ({
+      ...prev,
+      challengeMarketplace: {
+        ...(prev.challengeMarketplace || { accepted: [], completed: [] }),
+        accepted: [
+          ...((prev.challengeMarketplace || {}).accepted || []),
+          { ...challenge, startDate: today, progress: {}, completed: false },
+        ],
+      },
+    }))
+  }, [setState, today])
+
+  const updateMarketChallenge = useCallback((challengeId, patch) => {
+    setState(prev => {
+      const mp = prev.challengeMarketplace || { accepted: [], completed: [] }
+      return {
+        ...prev,
+        challengeMarketplace: {
+          ...mp,
+          accepted: (mp.accepted || []).map(c => c.challengeId === challengeId ? { ...c, ...patch } : c),
+        },
+      }
+    })
+  }, [setState])
+
+  const completeMarketChallenge = useCallback((challengeId) => {
+    setState(prev => {
+      const mp = prev.challengeMarketplace || { accepted: [], completed: [] }
+      const done = (mp.accepted || []).find(c => c.challengeId === challengeId)
+      return {
+        ...prev,
+        challengeMarketplace: {
+          ...mp,
+          accepted: (mp.accepted || []).filter(c => c.challengeId !== challengeId),
+          completed: done ? [...(mp.completed || []), { ...done, completedAt: new Date().toISOString() }] : (mp.completed || []),
+        },
+      }
+    })
+  }, [setState])
+
+  // AI Coach
+  const addAICoachMessage = useCallback((role, content, snapshotContext) => {
+    setState(prev => ({
+      ...prev,
+      aiCoachLog: [
+        ...(prev.aiCoachLog || []),
+        { id: Date.now(), ts: Date.now(), role, content, snapshotContext },
+      ].slice(-200),
+    }))
+  }, [setState])
+
+  // Voice Journaling
+  const addVoiceJournalEntry = useCallback((entry) => {
+    setState(prev => {
+      const vj = prev.voiceJournal || {}
+      const day = vj[today] || []
+      return {
+        ...prev,
+        voiceJournal: {
+          ...vj,
+          [today]: [...day, { id: Date.now(), ts: Date.now(), ...entry }],
+        },
+      }
+    })
+  }, [setState, today])
+
+  // Bridges
+  const setGoalRitualFocus = useCallback((goalId) => {
+    setState(prev => ({
+      ...prev,
+      goalRitualFocus: { ...(prev.goalRitualFocus || {}), [today]: goalId },
+    }))
+  }, [setState, today])
+
+  const linkWheelToGoal = useCallback((wheelArea, goalId) => {
+    setState(prev => ({
+      ...prev,
+      wheelGoalLinks: { ...(prev.wheelGoalLinks || {}), [wheelArea]: goalId },
+    }))
+  }, [setState])
+
+  const linkBeliefToGoal = useCallback((beliefId, goalId) => {
+    setState(prev => ({
+      ...prev,
+      beliefGoalLinks: { ...(prev.beliefGoalLinks || {}), [beliefId]: goalId },
+    }))
+  }, [setState])
+
+  // Update goal pain-pleasure (TR3)
+  const setGoalPainPleasure = useCallback((goalId, painPleasure) => {
+    setState(prev => ({
+      ...prev,
+      goals: (prev.goals || []).map(g => g.id === goalId ? { ...g, painPleasure } : g),
+    }))
+  }, [setState])
+
+  // Today Plan Check
+  const toggleTodayPlan = useCallback((index) => {
+    setState(prev => {
+      const log = prev.todayPlanChecked || {}
+      const day = log[today] || {}
+      return {
+        ...prev,
+        todayPlanChecked: { ...log, [today]: { ...day, [index]: !day[index] } },
+      }
+    })
+  }, [setState, today])
+
+  // Bootstrap Insights marking
+  const markBootstrapInsightSeen = useCallback((insightId) => {
+    setState(prev => ({
+      ...prev,
+      bootstrapInsightsSeen: { ...(prev.bootstrapInsightsSeen || {}), [insightId]: new Date().toISOString() },
+    }))
+  }, [setState])
+
+  // Insight Actions Log
+  const logInsightAction = useCallback((insightId, chosenOption) => {
+    setState(prev => ({
+      ...prev,
+      insightActionsLog: {
+        ...(prev.insightActionsLog || {}),
+        [insightId]: { chosenOption, ts: Date.now(), checkedAfter: null },
+      },
+    }))
+  }, [setState])
+
+  // Reassess onboarding
+  const reassessOnboarding = useCallback((patch) => {
+    setState(prev => ({
+      ...prev,
+      onboardingProfile: {
+        ...(prev.onboardingProfile || {}),
+        ...patch,
+        lastReassessedAt: new Date().toISOString(),
+      },
+    }))
+  }, [setState])
+
+  // Data Export log
+  const logDataExport = useCallback((meta) => {
+    setState(prev => ({
+      ...prev,
+      dataExports: [...(prev.dataExports || []), { ts: Date.now(), ...meta }].slice(-20),
+    }))
+  }, [setState])
+
+  // Replace entire state (used by Import feature). ALWAYS merges, never overwrites blindly.
+  const mergeImportedState = useCallback((imported) => {
+    setState(prev => {
+      if (!imported || typeof imported !== 'object') return prev
+      // Shallow merge for top-level. User's existing data takes priority over imported
+      // ONLY for critical identity fields; imported takes priority for logs (more data = better).
+      const KEEP_LOCAL = ['userName', 'onboardingDone', 'onboardingProfile']
+      const merged = { ...prev }
+      for (const key of Object.keys(imported)) {
+        if (KEEP_LOCAL.includes(key) && prev[key]) continue
+        merged[key] = imported[key]
+      }
+      return merged
+    })
+  }, [setState])
+
   // ── Always derive todayState from stateLog — never trust the stored value ──
   // This eliminates ALL edge cases where todayState could be stale across a day boundary.
   // stateLog is the source of truth; todayState is just a convenience snapshot.
@@ -1142,6 +1735,30 @@ export function AppProvider({ children, userId, hasData }) {
       updateEnergyProtocol,
       acceptChallenge, completeChallenge,
       updateScalingUp,
+      // ── Strategic upgrade functions ─────────────────────
+      updateUIPref, toggleFeatureFlag,
+      recordIdentityAlignment,
+      logTriadReset,
+      updateEmotionalHomeWeek,
+      setHeroArchetype, recordHeroAlignment,
+      saveWeeklyPowerQuestions,
+      saveBlueprintCheck,
+      setMassiveAction,
+      linkValueToDecision,
+      addConflict, resolveConflict,
+      updateNotificationPref,
+      setUnreadCount, clearUnread,
+      startJourney90, completeJourneyDay, updateJourney90,
+      acceptMarketChallenge, updateMarketChallenge, completeMarketChallenge,
+      addAICoachMessage,
+      addVoiceJournalEntry,
+      setGoalRitualFocus, linkWheelToGoal, linkBeliefToGoal,
+      setGoalPainPleasure,
+      toggleTodayPlan,
+      markBootstrapInsightSeen, logInsightAction,
+      reassessOnboarding,
+      logDataExport, mergeImportedState,
+      syncing,
     }}>
       {children}
     </AppContext.Provider>

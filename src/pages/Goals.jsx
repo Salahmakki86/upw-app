@@ -10,7 +10,7 @@ const TIMEFRAMES = {
   en: ['7 days', '30 days', '90 days', '1 year', '3 years'],
 }
 
-function GoalCard({ goal, onUpdate, onDelete, t, blockers, isAr, onGoToBeliefs }) {
+function GoalCard({ goal, onUpdate, onDelete, t, blockers, isAr, onGoToBeliefs, onGoToPainPleasure }) {
   const [expanded, setExpanded] = useState(false)
   const [editProg, setEditProg] = useState(false)
   const [prog, setProg] = useState(goal.progress || 0)
@@ -480,6 +480,25 @@ function GoalCard({ goal, onUpdate, onDelete, t, blockers, isAr, onGoToBeliefs }
             </div>
           )}
 
+          {/* Bridge B4 — Pain/Pleasure Matrix (deep edit via dedicated page) */}
+          {onGoToPainPleasure && (
+            <button
+              onClick={onGoToPainPleasure}
+              className="w-full rounded-xl py-2 text-xs font-bold transition-all"
+              style={{
+                background: (goal.pain || goal.pleasure)
+                  ? 'rgba(201,168,76,0.08)'
+                  : 'linear-gradient(135deg, rgba(230,57,70,0.08), rgba(46,204,113,0.06))',
+                border: `1px solid ${(goal.pain || goal.pleasure) ? 'rgba(201,168,76,0.25)' : 'rgba(201,168,76,0.3)'}`,
+                color: '#c9a84c',
+              }}
+            >
+              {(goal.pain || goal.pleasure)
+                ? `⚖️ ${isAr ? 'عمّق مصفوفة الألم والمتعة' : 'Deepen the Pain/Pleasure Matrix'} →`
+                : `⚖️ ${isAr ? 'أنشئ مصفوفة الألم والمتعة' : 'Build the Pain/Pleasure Matrix'} →`}
+            </button>
+          )}
+
           {/* ── Weekly Note ── */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
@@ -875,7 +894,7 @@ export default function Goals() {
                   <div>
                     <p className="section-title">{t('goals_active')}</p>
                     <div className="space-y-3">
-                      {activeGoals.map(g => <GoalCard key={g.id} goal={g} onUpdate={updateGoal} onDelete={deleteGoal} t={t} blockers={beliefBlockers[g.id]} isAr={isAr} onGoToBeliefs={() => navigate('/beliefs')} />)}
+                      {activeGoals.map(g => <GoalCard key={g.id} goal={g} onUpdate={updateGoal} onDelete={deleteGoal} t={t} blockers={beliefBlockers[g.id]} isAr={isAr} onGoToBeliefs={() => navigate('/beliefs')} onGoToPainPleasure={() => navigate(`/pain-pleasure?goalId=${g.id}`)} />)}
                     </div>
                   </div>
                 )}
@@ -883,7 +902,7 @@ export default function Goals() {
                   <div>
                     <p className="section-title">{t('goals_completed')} 🏆</p>
                     <div className="space-y-3">
-                      {doneGoals.map(g => <GoalCard key={g.id} goal={g} onUpdate={updateGoal} onDelete={deleteGoal} t={t} />)}
+                      {doneGoals.map(g => <GoalCard key={g.id} goal={g} onUpdate={updateGoal} onDelete={deleteGoal} t={t} isAr={isAr} onGoToPainPleasure={() => navigate(`/pain-pleasure?goalId=${g.id}`)} />)}
                     </div>
                   </div>
                 )}

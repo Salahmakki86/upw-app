@@ -558,15 +558,98 @@ function IdentityGapTracker({ lang }) {
 }
 
 export default function Beliefs() {
-  const { state, addBelief, removeBelief } = useApp()
+  const { state, addBelief, removeBelief, linkBeliefToGoal } = useApp()
   const { lang, t } = useLang()
   const isAr = lang === 'ar'
   const [view, setView] = useState('list')
   const [dickensBelief, setDickensBelief] = useState('')
   const [newLimiting, setNewLimiting] = useState('')
   const [newEmpowering, setNewEmpowering] = useState('')
+  const [linkPickerBeliefId, setLinkPickerBeliefId] = useState(null)
 
   const startDickens = (belief) => { setDickensBelief(belief); setView('dickens') }
+
+  // Bridge B3 — Belief → Goal
+  const beliefGoalLinks = state.beliefGoalLinks || {}
+  const activeGoalsB = (state.goals || []).filter(g => !g.completed && (g.progress || 0) < 100)
+  const getLinkedGoal = (beliefId) => {
+    const gId = beliefGoalLinks[beliefId]
+    if (!gId) return null
+    return activeGoalsB.find(g => g.id === gId) || null
+  }
+
+  const BeliefGoalLinker = ({ belief, tint }) => {
+    const linked = getLinkedGoal(belief.id)
+    const isPicking = linkPickerBeliefId === belief.id
+    if (linked) {
+      return (
+        <div className="flex items-center gap-2 mt-2 pt-2" style={{ borderTop: '1px dashed #2a2a2a' }}>
+          <span style={{ fontSize: 10, color: '#666' }}>
+            🔗 {isAr ? 'يخدم الهدف:' : 'Serves goal:'}
+          </span>
+          <span className="flex-1 truncate" style={{ fontSize: 11, color: tint, fontWeight: 700 }}>
+            {(linked.result || linked.title || '').slice(0, 40)}
+          </span>
+          <button
+            onClick={() => linkBeliefToGoal(belief.id, null)}
+            style={{
+              fontSize: 10, color: '#888', background: 'transparent',
+              border: '1px solid #333', borderRadius: 6, padding: '2px 6px',
+            }}
+            aria-label={isAr ? 'إلغاء الربط' : 'Unlink'}
+          >✕</button>
+        </div>
+      )
+    }
+    if (isPicking) {
+      return (
+        <div className="mt-2 pt-2" style={{ borderTop: '1px dashed #2a2a2a' }}>
+          <p style={{ fontSize: 10, color: '#888', marginBottom: 6 }}>
+            {isAr ? 'اختر هدفاً يرتبط بهذا المعتقد:' : 'Pick a goal linked to this belief:'}
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 140, overflowY: 'auto' }}>
+            {activeGoalsB.length === 0 ? (
+              <p style={{ fontSize: 10, color: '#666' }}>
+                {isAr ? 'لا أهداف نشطة — أضف هدفاً أولاً' : 'No active goals — add one first'}
+              </p>
+            ) : activeGoalsB.map(g => (
+              <button
+                key={g.id}
+                onClick={() => { linkBeliefToGoal(belief.id, g.id); setLinkPickerBeliefId(null) }}
+                className="truncate"
+                style={{
+                  fontSize: 11, fontWeight: 700, color: '#fff', textAlign: 'start',
+                  background: '#0e0e0e', border: '1px solid #2a2a2a',
+                  borderRadius: 8, padding: '6px 10px',
+                }}
+              >
+                {(g.result || g.title || '').slice(0, 50)}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setLinkPickerBeliefId(null)}
+            style={{ fontSize: 10, color: '#666', marginTop: 6, background: 'transparent' }}
+          >
+            {isAr ? 'إغلاق' : 'Cancel'}
+          </button>
+        </div>
+      )
+    }
+    return (
+      <button
+        onClick={() => setLinkPickerBeliefId(belief.id)}
+        className="mt-2 pt-2"
+        style={{
+          fontSize: 10, color: tint, background: 'transparent',
+          borderTop: '1px dashed #2a2a2a', width: '100%', textAlign: 'start',
+          paddingTop: 8, fontWeight: 600,
+        }}
+      >
+        🔗 {isAr ? 'اربط هذا المعتقد بهدف' : 'Link this belief to a goal'}
+      </button>
+    )
+  }
 
   if (view === 'dickens') {
     return (
@@ -621,19 +704,22 @@ export default function Beliefs() {
           </div>
           <div className="space-y-2">
             {state.limitingBeliefs.map(b => (
-              <div key={b.id} className="rounded-xl p-3 flex items-center justify-between"
+              <div key={b.id} className="rounded-xl p-3"
                 style={{ background: 'rgba(230,57,70,0.07)', border: '1px solid rgba(230,57,70,0.2)' }}>
-                <p className="text-sm text-white flex-1">{b.text}</p>
-                <div className="flex gap-1 mr-2">
-                  <button onClick={() => startDickens(b.text)}
-                    className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
-                    style={{ background: 'rgba(201,168,76,0.15)', color: '#c9a84c' }}>
-                    {t('beliefs_dickens')} ⚡
-                  </button>
-                  <button onClick={() => removeBelief('limiting', b.id)} className="p-1.5 rounded-lg" style={{ color: '#555' }}>
-                    <Trash2 size={13} />
-                  </button>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-white flex-1">{b.text}</p>
+                  <div className="flex gap-1 mr-2">
+                    <button onClick={() => startDickens(b.text)}
+                      className="text-xs px-2 py-1 rounded-lg font-bold transition-all"
+                      style={{ background: 'rgba(201,168,76,0.15)', color: '#c9a84c' }}>
+                      {t('beliefs_dickens')} ⚡
+                    </button>
+                    <button onClick={() => removeBelief('limiting', b.id)} className="p-1.5 rounded-lg" style={{ color: '#555' }}>
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
+                <BeliefGoalLinker belief={b} tint="#e63946" />
               </div>
             ))}
             {state.limitingBeliefs.length === 0 && (
@@ -660,12 +746,15 @@ export default function Beliefs() {
           </div>
           <div className="space-y-2">
             {state.empoweringBeliefs.map(b => (
-              <div key={b.id} className="rounded-xl p-3 flex items-center justify-between"
+              <div key={b.id} className="rounded-xl p-3"
                 style={{ background: 'rgba(46,204,113,0.07)', border: '1px solid rgba(46,204,113,0.2)' }}>
-                <p className="text-sm text-white flex-1">{b.text}</p>
-                <button onClick={() => removeBelief('empowering', b.id)} className="p-1.5 rounded-lg mr-2" style={{ color: '#555' }}>
-                  <Trash2 size={13} />
-                </button>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-white flex-1">{b.text}</p>
+                  <button onClick={() => removeBelief('empowering', b.id)} className="p-1.5 rounded-lg mr-2" style={{ color: '#555' }}>
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+                <BeliefGoalLinker belief={b} tint="#2ecc71" />
               </div>
             ))}
             {state.empoweringBeliefs.length === 0 && (

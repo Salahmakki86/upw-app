@@ -39,6 +39,10 @@ import ShareProgressCard from '../components/ShareProgressCard'
 import { generateActionableInsights } from '../utils/insightEngine'
 import ActionableInsightCard from '../components/ActionableInsightCard'
 import StreakInsurance from '../components/StreakInsurance'
+import BootstrapInsightCard from '../components/BootstrapInsightCard'
+import EmptyStateCard from '../components/EmptyStateCard'
+import FocusModeToggle from '../components/FocusModeToggle'
+import ConflictResolver from '../components/ConflictResolver'
 
 const QUOTES = {
   ar: [
@@ -310,6 +314,9 @@ export default function Dashboard() {
   const vis = useMemo(() => getDashboardVisibility(state), [state.morningLog])
   const uiLevel = useMemo(() => getUIComplexity(state), [state.morningLog])
 
+  // Focus Mode (M2) — hide everything except essential action cards
+  const focusMode = !!state.uiPreferences?.focusMode
+
   // ── Yesterday key (for hero logic) ─────────────────────
   const yesterday = useMemo(() => {
     const d = new Date(); d.setDate(d.getDate() - 1)
@@ -428,6 +435,32 @@ export default function Dashboard() {
           <StreakInsurance onDismiss={() => update('streakInsuranceSaved', false)} />
         )}
 
+        {/* ── Sync Conflict Resolver — only when smartMerge logged conflicts ── */}
+        <ConflictResolver />
+
+        {/* ── Focus Mode Toggle — compact pill, top of dashboard ───── */}
+        {!focusMode && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <FocusModeToggle size="sm" showLabel={true} />
+          </div>
+        )}
+        {focusMode && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '10px 12px', borderRadius: 12,
+            background: 'rgba(201,168,76,0.08)',
+            border: '1px solid rgba(201,168,76,0.3)',
+          }}>
+            <span style={{ fontSize: 11, fontWeight: 800, color: '#c9a84c' }}>
+              🎯 {isAr ? 'وضع التركيز مفعَّل — عرض مبسَّط فقط' : 'Focus Mode ON — minimal view'}
+            </span>
+            <FocusModeToggle size="sm" showLabel={false} />
+          </div>
+        )}
+
+        {/* ── Bootstrap Insights (days 1-21, cold-start) ──────────── */}
+        {!focusMode && <BootstrapInsightCard limit={2} />}
+
         {/* ── Hero Section — one sentence + one button ──────── */}
         <div className="rounded-2xl overflow-hidden relative" style={{
           background: 'linear-gradient(160deg, #151510, #0e0e0e)',
@@ -453,28 +486,28 @@ export default function Dashboard() {
         </div>
 
         {/* ── Smart Reminder (time-based nudge + notification prompt) ── */}
-        {vis.smartReminder && <SmartReminder state={state} isAr={isAr} navigate={navigate} />}
+        {!focusMode && vis.smartReminder && <SmartReminder state={state} isAr={isAr} navigate={navigate} />}
 
         {/* ── Adaptive Nudge (personalized recommendations) ──── */}
-        {vis.adaptiveNudge && <AdaptiveNudge />}
+        {!focusMode && vis.adaptiveNudge && <AdaptiveNudge />}
 
         {/* ── Stale Goal Nudge — Coaching dialogue for stuck goals ── */}
-        {vis.staleGoalNudge && <StaleGoalNudge />}
+        {!focusMode && vis.staleGoalNudge && <StaleGoalNudge />}
 
         {/* ── Guided 30-Day Journey (Fix #15) ── */}
-        {vis.guidedJourney && <GuidedJourney />}
+        {!focusMode && vis.guidedJourney && <GuidedJourney />}
 
         {/* ── Weekly Auto Report (Fix #18) ── */}
-        {vis.weeklyReport && <WeeklyAutoReport />}
+        {!focusMode && vis.weeklyReport && <WeeklyAutoReport />}
 
         {/* ── Monthly Progress Proof ── */}
-        {vis.weeklyReport && <ProgressProof />}
+        {!focusMode && vis.weeklyReport && <ProgressProof />}
 
         {/* ── Mini Intelligence Banner — visible earlier ──────── */}
-        {vis.miniInsight && <MiniInsightBanner />}
+        {!focusMode && vis.miniInsight && <MiniInsightBanner />}
 
         {/* ── Sleep → Performance Briefing ─────────────────────── */}
-        {(() => {
+        {!focusMode && (() => {
           const yKey = (() => { const d = new Date(); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10) })()
           const lastSleep = state.sleepLog?.[yKey]
           if (!lastSleep?.hours) return null
@@ -498,7 +531,7 @@ export default function Dashboard() {
         })()}
 
         {/* ── Weighted Score Insight ──────────────────────────── */}
-        {scoreInsight && weightedScore < 60 && (
+        {!focusMode && scoreInsight && weightedScore < 60 && (
           <div className="rounded-xl px-4 py-2.5 flex items-center gap-2" style={{
             background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)',
           }}>
@@ -508,7 +541,7 @@ export default function Dashboard() {
         )}
 
         {/* ── Top Actionable Insight ─────────────────── */}
-        {actionableInsights.length > 0 && (
+        {!focusMode && actionableInsights.length > 0 && (
           <ActionableInsightCard
             insight={actionableInsights[0]}
             onAction={(id, optIdx) => {
@@ -536,10 +569,10 @@ export default function Dashboard() {
         )}
 
         {/* ── Transformation Intelligence (full — level 3+) ──── */}
-        {vis.transformPulse && <TransformationPulse />}
+        {!focusMode && vis.transformPulse && <TransformationPulse />}
 
         {/* ── Share Progress Card button ─────────────────────── */}
-        {vis.transformPulse && (
+        {!focusMode && vis.transformPulse && (
           <button
             onClick={() => setShowShareCard(true)}
             className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-bold text-sm transition-all active:scale-[0.97]"
@@ -618,10 +651,10 @@ export default function Dashboard() {
         })()}
 
         {/* #1 — Discovery of the Day */}
-        {vis.discoveryCard && <DiscoveryCard />}
+        {!focusMode && vis.discoveryCard && <DiscoveryCard />}
 
         {/* #4 — Goal Nudge */}
-        {vis.goalNudge && <GoalNudge />}
+        {!focusMode && vis.goalNudge && <GoalNudge />}
 
         {/* ── يوم متكامل ─────────────────────────────────────── */}
         <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: `1px solid ${allDone ? '#c9a84c40' : '#1e1e1e'}` }}>
@@ -672,10 +705,10 @@ export default function Dashboard() {
         </div>
 
         {/* ── Journey Stage Map ──────────────────────────────── */}
-        {vis.journeyStageMap && <JourneyStageMap state={state} isAr={isAr} />}
+        {!focusMode && vis.journeyStageMap && <JourneyStageMap state={state} isAr={isAr} />}
 
         {/* ── 30-day State History ────────────────────────────── */}
-        {vis.stateHistory && hasStateHistory && (
+        {!focusMode && vis.stateHistory && hasStateHistory && (
           <div className="rounded-2xl p-4" style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-black uppercase tracking-widest" style={{ color: '#c9a84c' }}>
@@ -723,19 +756,21 @@ export default function Dashboard() {
         )}
 
         {/* ── Tony Quote ─────────────────────────────────────── */}
-        <div className="rounded-2xl p-5 relative overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #1a1500 0%, #1a1a1a 100%)', border: '1px solid rgba(201,168,76,0.2)' }}>
-          <div className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-10"
-            style={{ background: 'radial-gradient(circle, #c9a84c, transparent)', transform: 'translate(30%, -30%)' }} />
-          <p className="text-xs mb-3 font-semibold tracking-widest uppercase" style={{ color: '#c9a84c' }}>
-            ✦ {t('dash_quote_title')}
-          </p>
-          <p className="text-base font-bold text-white leading-relaxed mb-2">"{quote.text}"</p>
-          <p className="text-xs" style={{ color: '#888' }}>— {quote.author}</p>
-        </div>
+        {!focusMode && (
+          <div className="rounded-2xl p-5 relative overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, #1a1500 0%, #1a1a1a 100%)', border: '1px solid rgba(201,168,76,0.2)' }}>
+            <div className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-10"
+              style={{ background: 'radial-gradient(circle, #c9a84c, transparent)', transform: 'translate(30%, -30%)' }} />
+            <p className="text-xs mb-3 font-semibold tracking-widest uppercase" style={{ color: '#c9a84c' }}>
+              ✦ {t('dash_quote_title')}
+            </p>
+            <p className="text-base font-bold text-white leading-relaxed mb-2">"{quote.text}"</p>
+            <p className="text-xs" style={{ color: '#888' }}>— {quote.author}</p>
+          </div>
+        )}
 
-        {/* ── Goals Snapshot ─────────────────────────────────── */}
-        {vis.goalsSnapshot && state.goals.length > 0 && (
+        {/* ── Goals Snapshot (with empty-state coaching) ────────── */}
+        {!focusMode && vis.goalsSnapshot && state.goals.length > 0 && (
           <button onClick={() => navigate('/goals')}
             className="card w-full text-right active:scale-[0.98] transition-all">
             <div className="flex items-center justify-between mb-3">
@@ -758,8 +793,23 @@ export default function Dashboard() {
           </button>
         )}
 
+        {/* ── Empty state when no goals yet (gentle nudge to /goals) ─── */}
+        {!focusMode && vis.goalsSnapshot && state.goals.length === 0 && (
+          <EmptyStateCard
+            emoji="🎯"
+            titleAr="لا أهداف بعد"
+            titleEn="No goals yet"
+            bodyAr="الأهداف توجّه طاقتك. ابدأ بهدف واحد واضح — ماذا ستصل إليه خلال ٩٠ يوم؟"
+            bodyEn="Goals focus your energy. Start with ONE clear goal — what will you achieve in 90 days?"
+            ctaAr="أضف أول هدف"
+            ctaEn="Add first goal"
+            ctaPath="/goals"
+            accentColor="#c9a84c"
+          />
+        )}
+
         {/* ── Badges ─────────────────────────────────────────── */}
-        {vis.badges && (() => {
+        {!focusMode && vis.badges && (() => {
           const badges = [
             {
               emoji: '🔥',
@@ -862,6 +912,8 @@ export default function Dashboard() {
           })()
             .filter(cat => visibleCategoryKeys.has(cat.key))
             .filter(cat => !cat.adminOnly || currentUser?.role === 'admin')
+            // Focus Mode: only show daily + admin (if admin); everything else via /all-tools
+            .filter(cat => !focusMode || cat.key === 'daily' || cat.key === 'admin')
             .map(cat => {
               const isOpen = openCats[cat.key]
               return (
@@ -915,7 +967,7 @@ export default function Dashboard() {
         </div>
 
         {/* #6 — Unlock Progress (compact version after Journey Map) */}
-        {vis.unlockProgress && unlockTier < 4 && stagesRemaining > 0 && (
+        {!focusMode && vis.unlockProgress && unlockTier < 4 && stagesRemaining > 0 && (
           <div className="rounded-xl p-3 text-center" style={{ background: 'rgba(201,168,76,0.05)', border: '1px solid rgba(201,168,76,0.12)' }}>
             <p className="text-xs font-semibold" style={{ color: '#888' }}>
               🔓 {nextUnlockMsg}
@@ -924,7 +976,7 @@ export default function Dashboard() {
         )}
 
         {/* ── Affirmation Banner ──────────────────────────────── */}
-        {vis.affirmation && (
+        {!focusMode && vis.affirmation && (
           <div className="rounded-2xl p-4 flex items-center gap-3"
             style={{ background: 'rgba(201,168,76,0.07)', border: '1px solid rgba(201,168,76,0.15)' }}>
             <span className="text-2xl">🔥</span>
@@ -937,6 +989,22 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
+        )}
+
+        {/* ── Focus Mode helper: link to /all-tools for all hidden tools ── */}
+        {focusMode && (
+          <button
+            onClick={() => navigate('/all-tools')}
+            className="w-full flex items-center justify-center gap-2 rounded-xl py-3 font-bold text-sm transition-all active:scale-[0.97]"
+            style={{
+              background: 'rgba(201,168,76,0.08)',
+              border: '1px solid rgba(201,168,76,0.25)',
+              color: '#c9a84c',
+            }}
+          >
+            <span>📚</span>
+            {isAr ? 'كل الأدوات' : 'All Tools'}
+          </button>
         )}
 
       </div>

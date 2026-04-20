@@ -2,13 +2,18 @@ import { useState } from 'react'
 import BottomNav from './BottomNav'
 import { useLang } from '../context/LangContext'
 import HelpDrawer from './HelpDrawer'
+import IdentityAnchor from './IdentityAnchor'
+import TriadReset from './TriadReset'
+import OfflineIndicator from './OfflineIndicator'
 import { useApp } from '../context/AppContext'
 import { calcDailyScore, DAILY_TASKS_TOTAL } from '../utils/dailyScore'
 
-export default function Layout({ children, title, subtitle, rightAction, helpKey }) {
+export default function Layout({ children, title, subtitle, rightAction, helpKey, hideAnchor = false }) {
   const { lang, toggleLang, t } = useLang()
   const { state } = useApp()
   const [showHelp, setShowHelp] = useState(false)
+  const [showTriad, setShowTriad] = useState(false)
+  const focusMode = !!state.uiPreferences?.focusMode
 
   const score = calcDailyScore(state)
   const pct   = Math.round((score / DAILY_TASKS_TOTAL) * 100)
@@ -82,21 +87,32 @@ export default function Layout({ children, title, subtitle, rightAction, helpKey
         />
       </div>
 
-      {/* Score pill — shown only when at least 1 task done */}
-      {score > 0 && (
+      {/* Score pill — shown only when at least 1 task done; OfflineIndicator on the other side */}
+      {(score > 0 || true) && (
         <div style={{
-          display: 'flex', justifyContent: 'flex-end', paddingRight: 16, paddingTop: 4, flexShrink: 0,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '4px 16px 0', flexShrink: 0, gap: 8,
         }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 4,
-            background: isComplete ? 'rgba(46,204,113,0.1)' : 'rgba(201,168,76,0.1)',
-            border: `1px solid ${isComplete ? 'rgba(46,204,113,0.3)' : 'rgba(201,168,76,0.25)'}`,
-            borderRadius: 20, padding: '2px 8px',
-          }}>
-            <span style={{ fontSize: 9, fontWeight: 800, color: isComplete ? '#2ecc71' : '#c9a84c' }}>
-              {isComplete ? '🏆' : '⚡'} {score}/{DAILY_TASKS_TOTAL}
-            </span>
-          </div>
+          <OfflineIndicator />
+          {score > 0 ? (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4,
+              background: isComplete ? 'rgba(46,204,113,0.1)' : 'rgba(201,168,76,0.1)',
+              border: `1px solid ${isComplete ? 'rgba(46,204,113,0.3)' : 'rgba(201,168,76,0.25)'}`,
+              borderRadius: 20, padding: '2px 8px',
+            }}>
+              <span style={{ fontSize: 9, fontWeight: 800, color: isComplete ? '#2ecc71' : '#c9a84c' }}>
+                {isComplete ? '🏆' : '⚡'} {score}/{DAILY_TASKS_TOTAL}
+              </span>
+            </div>
+          ) : <span /> /* spacer so OfflineIndicator stays left */}
+        </div>
+      )}
+
+      {/* Identity Anchor — compact line, opt-out via uiPreferences.identityAnchorHidden */}
+      {!hideAnchor && !focusMode && (
+        <div style={{ padding: '4px 16px 0 16px', flexShrink: 0 }}>
+          <IdentityAnchor variant="compact" />
         </div>
       )}
 
@@ -105,8 +121,36 @@ export default function Layout({ children, title, subtitle, rightAction, helpKey
         {children}
       </main>
 
+      {/* Floating Triad Reset button */}
+      {!focusMode && (
+        <button
+          onClick={() => setShowTriad(true)}
+          aria-label={lang === 'ar' ? 'إعادة ضبط الحالة — ٦٠ ثانية' : '60-second state reset'}
+          title={lang === 'ar' ? 'إعادة ضبط الحالة — ٦٠ ثانية' : '60-second state reset'}
+          style={{
+            position: 'fixed',
+            insetInlineEnd: 16,
+            bottom: 96,
+            width: 44, height: 44,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #c9a84c, #a88930)',
+            color: '#090909',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 6px 18px rgba(201,168,76,0.35), 0 0 0 2px #090909',
+            zIndex: 40,
+            fontSize: 18,
+            fontWeight: 900,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          ⚡
+        </button>
+      )}
+
       <BottomNav />
       {showHelp && <HelpDrawer pageKey={helpKey} onClose={() => setShowHelp(false)} />}
+      <TriadReset open={showTriad} onClose={() => setShowTriad(false)} />
     </div>
   )
 }

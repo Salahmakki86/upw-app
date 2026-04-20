@@ -77,6 +77,23 @@ const EmergencyToolkit = lazy(() => import('./pages/EmergencyToolkit'))
 const VideoLibrary = lazy(() => import('./pages/VideoLibrary'))
 const WeeklyPulse = lazy(() => import('./pages/WeeklyPulse'))
 const MonthlyReset = lazy(() => import('./pages/MonthlyReset'))
+// New Waves 3 pages
+const AllToolsPage = lazy(() => import('./pages/AllToolsPage'))
+const IdentityPage = lazy(() => import('./pages/IdentityPage'))
+const JourneyPage = lazy(() => import('./pages/JourneyPage'))
+const HeroArchetypePage = lazy(() => import('./pages/HeroArchetypePage'))
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const PainPleasurePage = lazy(() => import('./pages/PainPleasurePage'))
+const EmotionalHomePage = lazy(() => import('./pages/EmotionalHomePage'))
+const ValuesInActionPage = lazy(() => import('./pages/ValuesInActionPage'))
+const MassiveActionPage = lazy(() => import('./pages/MassiveActionPage'))
+const BlueprintCheckPage = lazy(() => import('./pages/BlueprintCheckPage'))
+const WeeklyQuestionsPage = lazy(() => import('./pages/WeeklyQuestionsPage'))
+const AICoachPage = lazy(() => import('./pages/AICoachPage'))
+const VoiceJournalPage = lazy(() => import('./pages/VoiceJournalPage'))
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'))
+const NotificationsPrefsPage = lazy(() => import('./pages/NotificationsPrefsPage'))
+const ChallengeLibraryPage = lazy(() => import('./pages/ChallengeLibraryPage'))
 import ErrorBoundary from './components/ErrorBoundary'
 import { useApp } from './context/AppContext'
 
@@ -211,6 +228,23 @@ function AppRoutes() {
               path="/admin"
               element={currentUser.role === 'admin' ? <AdminPage /> : <Navigate to="/" />}
             />
+            {/* Wave 3 — new routes */}
+            <Route path="/all-tools"          element={<AllToolsPage />} />
+            <Route path="/identity"           element={<IdentityPage />} />
+            <Route path="/journey"            element={<JourneyPage />} />
+            <Route path="/hero-archetype"     element={<HeroArchetypePage />} />
+            <Route path="/settings"           element={<SettingsPage />} />
+            <Route path="/pain-pleasure"      element={<PainPleasurePage />} />
+            <Route path="/emotional-home"     element={<EmotionalHomePage />} />
+            <Route path="/values-in-action"   element={<ValuesInActionPage />} />
+            <Route path="/massive-action"     element={<MassiveActionPage />} />
+            <Route path="/blueprint-check"    element={<BlueprintCheckPage />} />
+            <Route path="/weekly-questions"   element={<WeeklyQuestionsPage />} />
+            <Route path="/ai-coach"           element={<AICoachPage />} />
+            <Route path="/voice-journal"      element={<VoiceJournalPage />} />
+            <Route path="/analytics"          element={<AnalyticsPage />} />
+            <Route path="/notifications-prefs" element={<NotificationsPrefsPage />} />
+            <Route path="/challenge-library"  element={<ChallengeLibraryPage />} />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes></Suspense>
         </BrowserRouter>

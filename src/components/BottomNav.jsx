@@ -1,7 +1,8 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Home, Sun, Target, Briefcase } from 'lucide-react'
+import { Home, Sun, Target, Briefcase, LayoutGrid } from 'lucide-react'
 import { useLang } from '../context/LangContext'
 import { useAuth } from '../context/AuthContext'
+import NotificationBadge from './NotificationBadge'
 
 export default function BottomNav() {
   const location = useLocation()
@@ -15,7 +16,8 @@ export default function BottomNav() {
     { path: '/morning',   icon: Sun,       labelKey: 'nav_morning'  },
     { path: '/state',     icon: null,      labelKey: 'nav_sos',     center: true },
     { path: '/goals',     icon: Target,    labelKey: 'nav_goals'    },
-    { path: '/business',  icon: Briefcase, labelKey: 'nav_business',  adminOnly: true },
+    { path: '/business',  icon: Briefcase, labelKey: 'nav_business',  adminOnly: true, badgeKey: 'adminTab' },
+    { path: '/all-tools', icon: LayoutGrid, labelKey: 'nav_more' },
   ].filter(tab => !tab.adminOnly || isAdmin)
 
   return (
@@ -74,10 +76,17 @@ export default function BottomNav() {
               onClick={() => navigate(tab.path)}
               aria-label={t(tab.labelKey)}
               aria-current={active ? 'page' : undefined}
-              className="nav-tab flex flex-col items-center gap-1 flex-1 py-2 transition-all duration-200"
+              className="nav-tab flex flex-col items-center gap-1 flex-1 py-2 transition-all duration-200 relative"
               style={{ color: active ? '#c9a84c' : '#555555', minHeight: 48 }}
             >
-              <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
+              <div style={{ position: 'relative' }}>
+                <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
+                {tab.badgeKey && (
+                  <span style={{ position: 'absolute', top: -4, insetInlineEnd: -6 }}>
+                    <NotificationBadge forKey={tab.badgeKey} type="dot" size="sm" />
+                  </span>
+                )}
+              </div>
               <span className="text-xs font-medium">{t(tab.labelKey)}</span>
               {active && (
                 <div

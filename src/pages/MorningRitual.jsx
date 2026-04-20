@@ -209,7 +209,7 @@ function PhaseTimer({ phase, onComplete, t }) {
 const VIDEO_URL = 'https://www.youtube.com/watch?v=faTGTgid8Uc'
 
 export default function MorningRitual() {
-  const { state, completeMorning, update } = useApp()
+  const { state, completeMorning, update, setGoalRitualFocus } = useApp()
   const { lang, t } = useLang()
   const navigate = useNavigate()
   const isAr = lang === 'ar'
@@ -551,6 +551,11 @@ export default function MorningRitual() {
   // #5 — Commitment reference
   const commitment = state.commitment
 
+  // Bridge B1 — Goal Ritual Focus: pick 1 goal today to weave through the ritual
+  const activeGoals = (state.goals || []).filter(g => !g.completed && (g.progress || 0) < 100)
+  const todayFocusGoalId = (state.goalRitualFocus || {})[today] || null
+  const todayFocusGoal = activeGoals.find(g => g.id === todayFocusGoalId) || null
+
   return (
     <Layout title={t('morning_title')} subtitle={t('morning_subtitle')} helpKey="morning">
       <div className="space-y-4 pt-2">
@@ -613,6 +618,57 @@ export default function MorningRitual() {
             <p className="text-xs text-white leading-relaxed" style={{ fontStyle: 'italic' }}>
               "{commitment.text}"
             </p>
+          </div>
+        )}
+
+        {/* Bridge B1 — Goal Ritual Focus */}
+        {activeGoals.length > 0 && donePhases.length === 0 && (
+          <div className="rounded-2xl p-3" style={{
+            background: 'linear-gradient(135deg, rgba(230,198,112,0.08), rgba(201,168,76,0.04))',
+            border: '1px solid rgba(201,168,76,0.25)',
+          }}>
+            <p className="text-xs font-bold mb-2" style={{ color: '#c9a84c' }}>
+              🎯 {isAr ? 'تركيز الطقس على هدف واحد اليوم' : "Focus today's ritual on one goal"}
+            </p>
+            {todayFocusGoal ? (
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🎯</span>
+                <p className="flex-1 text-xs text-white font-bold leading-relaxed">
+                  {todayFocusGoal.result || todayFocusGoal.title}
+                </p>
+                <button
+                  onClick={() => setGoalRitualFocus(null)}
+                  className="text-xs"
+                  style={{ color: '#888', background: 'transparent', border: '1px solid #333', borderRadius: 8, padding: '4px 8px' }}
+                  aria-label={isAr ? 'إلغاء التركيز' : 'Clear focus'}
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <p className="text-xs" style={{ color: '#888' }}>
+                  {isAr
+                    ? 'اختر هدفاً لتركّز عليه في التخيّل والأسئلة'
+                    : 'Pick a goal to focus on in visualization & questions'}
+                </p>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {activeGoals.slice(0, 5).map(g => (
+                    <button
+                      key={g.id}
+                      onClick={() => setGoalRitualFocus(g.id)}
+                      className="text-xs font-bold"
+                      style={{
+                        background: '#141414', border: '1px solid rgba(201,168,76,0.3)',
+                        color: '#c9a84c', borderRadius: 10, padding: '6px 10px',
+                      }}
+                    >
+                      {(g.result || g.title || '').slice(0, 30)}{(g.result || g.title || '').length > 30 ? '…' : ''}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -772,19 +828,27 @@ export default function MorningRitual() {
                 {PHASES[activePhase].instruction}
               </p>
 
-              {/* Show top 3 goals in Visualization phase (phase 3) */}
+              {/* Show top 3 goals in Visualization phase (phase 3) — focus goal first if set */}
               {activePhase === 3 && (state.goals || []).length > 0 && (
                 <div className="mb-4 rounded-xl p-3 space-y-2"
                   style={{ background: '#9b59b615', border: '1px solid #9b59b630' }}>
                   <p className="text-xs font-bold" style={{ color: '#9b59b6' }}>
                     🎯 {isAr ? 'تخيّل هذه الأهداف محققة الآن:' : 'Visualize these goals as already achieved:'}
                   </p>
-                  {(state.goals || []).filter(g => (g.progress || 0) < 100).slice(0, 3).map((g, i) => (
-                    <div key={g.id} className="flex items-center gap-2">
-                      <span className="text-xs font-bold" style={{ color: '#9b59b6' }}>{i + 1}.</span>
-                      <span className="text-xs font-bold text-white">{g.result}</span>
-                    </div>
-                  ))}
+                  {(() => {
+                    const goalsList = (state.goals || []).filter(g => (g.progress || 0) < 100)
+                    const ordered = todayFocusGoal
+                      ? [todayFocusGoal, ...goalsList.filter(g => g.id !== todayFocusGoal.id)]
+                      : goalsList
+                    return ordered.slice(0, 3).map((g, i) => (
+                      <div key={g.id} className="flex items-center gap-2">
+                        <span className="text-xs font-bold" style={{ color: todayFocusGoal && g.id === todayFocusGoal.id ? '#c9a84c' : '#9b59b6' }}>
+                          {todayFocusGoal && g.id === todayFocusGoal.id ? '⭐' : (i + 1) + '.'}
+                        </span>
+                        <span className="text-xs font-bold text-white">{g.result || g.title}</span>
+                      </div>
+                    ))
+                  })()}
                 </div>
               )}
 

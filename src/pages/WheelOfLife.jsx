@@ -114,7 +114,7 @@ function RadarChart({ scores, areas, size = 260 }) {
 }
 
 export default function WheelOfLife() {
-  const { state, updateWheel, saveWheelSnapshot } = useApp()
+  const { state, updateWheel, saveWheelSnapshot, linkWheelToGoal } = useApp()
   const { lang, t } = useLang()
   const navigate = useNavigate()
   const isAr = lang === 'ar'
@@ -124,6 +124,11 @@ export default function WheelOfLife() {
   const [compareMode, setCompareMode] = useState(false)
   const [scoreInfoArea, setScoreInfoArea] = useState(null)
   const [lowAreaSuggestions, setLowAreaSuggestions] = useState([])
+  const [linkPickerArea, setLinkPickerArea] = useState(null)
+
+  // Bridge B2 — Wheel → Goal linking
+  const wheelGoalLinks = state.wheelGoalLinks || {}
+  const activeGoals = (state.goals || []).filter(g => !g.completed && (g.progress || 0) < 100)
 
   const AREAS = AREAS_DATA[lang]
   const scores = state.wheelScores
@@ -250,7 +255,11 @@ export default function WheelOfLife() {
         )}
 
         <div className="space-y-3">
-          {AREAS.map(area => (
+          {AREAS.map(area => {
+            const linkedGoalId = wheelGoalLinks[area.key]
+            const linkedGoal = linkedGoalId ? activeGoals.find(g => g.id === linkedGoalId) : null
+            const isPicking = linkPickerArea === area.key
+            return (
             <div key={area.key} className="rounded-2xl p-4 transition-all"
               style={{ background: activeArea === area.key ? `${area.color}10` : '#1a1a1a',
                 border: `1px solid ${activeArea === area.key ? area.color + '44' : '#2a2a2a'}` }}
@@ -279,8 +288,74 @@ export default function WheelOfLife() {
               <div className="flex justify-between text-xs mt-1" style={{ color: '#444' }}>
                 <span>0</span><span>5</span><span>10</span>
               </div>
+
+              {/* Bridge B2 — Linked Goal */}
+              <div className="mt-3 pt-3" style={{ borderTop: '1px dashed #2a2a2a' }} onClick={e => e.stopPropagation()}>
+                {linkedGoal ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs" style={{ color: '#666' }}>
+                      🔗 {isAr ? 'هدف مرتبط:' : 'Linked goal:'}
+                    </span>
+                    <button
+                      onClick={() => navigate('/goals')}
+                      className="flex-1 text-xs font-bold text-white text-start truncate"
+                      style={{ background: 'transparent', border: 'none' }}
+                    >
+                      {linkedGoal.result || linkedGoal.title}
+                    </button>
+                    <button
+                      onClick={() => linkWheelToGoal(area.key, null)}
+                      className="text-xs"
+                      style={{ color: '#888', background: 'transparent', border: '1px solid #333', borderRadius: 6, padding: '2px 6px' }}
+                      aria-label={isAr ? 'إلغاء الربط' : 'Unlink'}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : isPicking ? (
+                  <div>
+                    <p className="text-xs mb-2" style={{ color: '#888' }}>
+                      {isAr ? 'اختر هدفاً لربطه بـ' : 'Pick a goal to link to'} {area.emoji} {area.label}
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 160, overflowY: 'auto' }}>
+                      {activeGoals.length === 0 ? (
+                        <p className="text-xs" style={{ color: '#666' }}>
+                          {isAr ? 'لا أهداف نشطة — أضف هدفاً أولاً' : 'No active goals — add one first'}
+                        </p>
+                      ) : activeGoals.map(g => (
+                        <button
+                          key={g.id}
+                          onClick={() => { linkWheelToGoal(area.key, g.id); setLinkPickerArea(null) }}
+                          className="text-xs font-bold text-white text-start truncate"
+                          style={{
+                            background: '#111', border: '1px solid #222',
+                            borderRadius: 8, padding: '6px 10px',
+                          }}
+                        >
+                          {(g.result || g.title || '').slice(0, 50)}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setLinkPickerArea(null)}
+                      className="text-xs mt-2"
+                      style={{ color: '#666', background: 'transparent' }}
+                    >
+                      {isAr ? 'إغلاق' : 'Cancel'}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setLinkPickerArea(area.key)}
+                    className="text-xs font-bold"
+                    style={{ color: '#c9a84c', background: 'transparent' }}
+                  >
+                    🔗 {isAr ? 'اربط هدفاً بهذا المجال' : 'Link a goal to this area'}
+                  </button>
+                )}
+              </div>
             </div>
-          ))}
+          )})}
         </div>
 
         <div className="rounded-2xl p-4" style={{ background: 'rgba(230,57,70,0.07)', border: '1px solid rgba(230,57,70,0.2)' }}>
