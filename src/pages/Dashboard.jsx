@@ -402,28 +402,46 @@ export default function Dashboard() {
             <Flame size={12} />
             {state.streak} {t('day')}
           </div>
-          <button onClick={() => setShowSearch(true)}
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
-            style={{ background:'rgba(255,255,255,0.06)', border:'1px solid #2a2a2a' }}>
-            <Search size={15} style={{ color: '#aaa' }} />
+          <button
+            onClick={() => setShowSearch(true)}
+            aria-label={isAr ? 'بحث' : 'Search'}
+            className="btn-glass-pill-red"
+            style={{
+              width: 36, height: 36,
+              background: 'rgba(255,255,255,0.05)',
+              borderColor: 'rgba(255,255,255,0.14)',
+              color: '#aaa',
+            }}
+          >
+            <Search size={15} />
           </button>
-          <button onClick={toggleLang}
-            className="flex items-center justify-center rounded-full font-bold text-xs transition-all duration-200 active:scale-90"
-            style={{ width:36, height:36, background:'rgba(201,168,76,0.1)', border:'1px solid rgba(201,168,76,0.3)', color:'#c9a84c',
-              fontFamily: isAr ? "'Inter', sans-serif" : "'Cairo', sans-serif" }}>
+          <button
+            onClick={toggleLang}
+            aria-label={isAr ? 'Switch to English' : 'التبديل للعربية'}
+            className="btn-glass-pill font-bold text-xs"
+            style={{
+              width: 36, height: 36,
+              fontFamily: isAr ? "'Inter', sans-serif" : "'Cairo', sans-serif",
+            }}
+          >
             {t('lang_toggle')}
           </button>
           {currentUser?.role === 'admin' && (
-            <button onClick={() => navigate('/admin')}
-              className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
-              style={{ background:'rgba(201,168,76,0.1)', border:'1px solid rgba(201,168,76,0.3)' }}>
-              <Settings size={15} style={{ color: '#c9a84c' }} />
+            <button
+              onClick={() => navigate('/admin')}
+              aria-label={isAr ? 'الإدارة' : 'Admin'}
+              className="btn-glass-pill"
+              style={{ width: 36, height: 36 }}
+            >
+              <Settings size={15} />
             </button>
           )}
-          <button onClick={logout}
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-90"
-            style={{ background:'rgba(255,107,122,0.1)', border:'1px solid rgba(255,107,122,0.3)' }}>
-            <LogOut size={15} style={{ color: '#ff6b7a' }} />
+          <button
+            onClick={logout}
+            aria-label={isAr ? 'تسجيل الخروج' : 'Logout'}
+            className="btn-glass-pill-red"
+          >
+            <LogOut size={15} />
           </button>
         </div>
       </div>
@@ -461,27 +479,45 @@ export default function Dashboard() {
         {/* ── Bootstrap Insights (days 1-21, cold-start) ──────────── */}
         {!focusMode && <BootstrapInsightCard limit={2} />}
 
-        {/* ── Hero Section — one sentence + one button ──────── */}
+        {/* ── Hero Section — glass card + glass-gold CTA ─────── */}
         <div className="rounded-2xl overflow-hidden relative" style={{
-          background: 'linear-gradient(160deg, #151510, #0e0e0e)',
-          border: '1px solid rgba(201,168,76,0.15)',
+          background: 'linear-gradient(160deg, rgba(26,21,12,0.85) 0%, rgba(14,14,14,0.9) 100%)',
+          backdropFilter: 'blur(24px) saturate(200%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(200%)',
+          border: '1px solid rgba(201,168,76,0.22)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.45), 0 2px 8px rgba(201,168,76,0.08), inset 0 1px 0 rgba(255,255,255,0.08)',
           padding: '28px 24px',
           minHeight: 160,
         }}>
-          {/* Subtle gold glow orb in corner */}
-          <div className="absolute top-0 right-0 w-32 h-32 rounded-full"
-            style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.08), transparent)', transform: 'translate(20%,-20%)' }} />
+          {/* Two layered glow orbs for depth */}
+          <div className="absolute top-0 right-0 w-36 h-36 rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(232,201,106,0.14), transparent 70%)', transform: 'translate(25%,-25%)' }} />
+          <div className="absolute bottom-0 left-0 w-28 h-28 rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.08), transparent 70%)', transform: 'translate(-25%,25%)' }} />
 
           {/* Briefing text — the main focus */}
-          <p className="text-lg font-medium leading-relaxed relative z-10" style={{ color: '#eee' }}>
+          <p className="text-lg font-medium leading-relaxed relative z-10" style={{
+            color: '#f0e8d0',
+            textShadow: '0 1px 3px rgba(0,0,0,0.4)',
+          }}>
             {heroData.text}
           </p>
 
-          {/* One CTA button */}
-          <button onClick={() => navigate(heroData.action.path)}
-            className="mt-5 w-full py-3.5 rounded-xl font-bold text-sm transition-all active:scale-[0.97] relative z-10"
-            style={{ background: 'linear-gradient(135deg, #c9a84c, #dbb85c)', color: '#090909' }}>
+          {/* Glass-gold CTA button */}
+          <button
+            onClick={() => navigate(heroData.action.path)}
+            className="btn-glass-gold mt-5 w-full text-sm relative z-10"
+            style={{
+              padding: '14px 20px',
+              borderRadius: 14,
+            }}
+          >
             {heroData.action.label}
+            <span style={{
+              fontSize: 16,
+              marginInlineStart: 4,
+              filter: 'drop-shadow(0 0 6px rgba(232,201,106,0.6))',
+            }}>→</span>
           </button>
         </div>
 
@@ -918,18 +954,31 @@ export default function Dashboard() {
               const isOpen = openCats[cat.key]
               return (
                 <div key={cat.key} className="rounded-2xl overflow-hidden"
-                  style={{ background: '#0e0e0e', border: '1px solid #1e1e1e' }}>
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(20,20,20,0.75), rgba(12,12,12,0.85))',
+                    backdropFilter: 'blur(18px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(18px) saturate(180%)',
+                    border: `1px solid ${isOpen ? 'rgba(201,168,76,0.22)' : 'rgba(255,255,255,0.06)'}`,
+                    boxShadow: isOpen
+                      ? '0 6px 24px rgba(201,168,76,0.12), inset 0 1px 0 rgba(255,255,255,0.05)'
+                      : '0 4px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)',
+                    transition: 'all 0.3s ease',
+                  }}>
 
                   {/* Category header — tap to toggle */}
                   <button
                     onClick={() => toggleCat(cat.key)}
                     className="w-full flex items-center justify-between px-4 py-3 transition-all active:opacity-70"
                   >
-                    <span className="text-sm font-black" style={{ color: isOpen ? '#c9a84c' : '#777' }}>
+                    <span className="text-sm font-black" style={{
+                      color: isOpen ? '#c9a84c' : '#777',
+                      textShadow: isOpen ? '0 0 10px rgba(201,168,76,0.4)' : 'none',
+                      transition: 'all 0.3s',
+                    }}>
                       {isAr ? cat.labelAr : cat.labelEn}
                     </span>
                     {isOpen
-                      ? <ChevronUp size={15} style={{ color: '#c9a84c' }} />
+                      ? <ChevronUp size={15} style={{ color: '#c9a84c', filter: 'drop-shadow(0 0 4px rgba(201,168,76,0.5))' }} />
                       : <ChevronDown size={15} style={{ color: '#444' }} />}
                   </button>
 
@@ -942,18 +991,49 @@ export default function Dashboard() {
                         return (
                           <button key={link.path}
                             onClick={() => !locked && navigate(link.path)}
-                            className="flex flex-col items-center gap-2 rounded-xl p-2.5 transition-all duration-200 active:scale-95 relative"
+                            className="flex flex-col items-center gap-2 rounded-xl p-2.5 transition-all duration-300 active:scale-95 relative group"
                             style={{
-                              background: '#151515', border: '1px solid #252525',
+                              background: 'linear-gradient(135deg, rgba(26,26,26,0.65), rgba(14,14,14,0.75))',
+                              backdropFilter: 'blur(12px) saturate(160%)',
+                              WebkitBackdropFilter: 'blur(12px) saturate(160%)',
+                              border: `1px solid ${locked ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.08)'}`,
+                              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
                               opacity: locked ? 0.4 : 1,
                               filter: locked ? 'grayscale(0.8)' : 'none',
                             }}>
-                            <div className="w-9 h-9 rounded-lg flex items-center justify-center"
-                              style={{ background: `${link.color}18` }}>
-                              {locked ? <span style={{ fontSize: 14 }}>🔒</span> : <Icon size={17} style={{ color: link.color }} />}
+                            {/* Icon frame — tinted by link.color with glass depth + inner highlight */}
+                            <div
+                              className="icon-halo"
+                              style={{
+                                position: 'relative',
+                                width: 40, height: 40,
+                                borderRadius: 12,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                background: `linear-gradient(135deg, ${link.color}28 0%, ${link.color}0a 70%, ${link.color}14 100%)`,
+                                border: `1px solid ${link.color}3c`,
+                                boxShadow: `0 2px 10px ${link.color}26, inset 0 1px 0 rgba(255,255,255,0.12)`,
+                              }}
+                            >
+                              {/* Inner top highlight */}
+                              <span style={{
+                                position: 'absolute',
+                                inset: 1,
+                                borderRadius: 11,
+                                background: 'linear-gradient(180deg, rgba(255,255,255,0.1), transparent 50%)',
+                                pointerEvents: 'none',
+                              }} />
+                              {locked
+                                ? <span style={{ fontSize: 14, position: 'relative' }}>🔒</span>
+                                : <Icon size={18} style={{
+                                    color: link.color,
+                                    filter: `drop-shadow(0 0 5px ${link.color}80)`,
+                                    position: 'relative',
+                                    strokeWidth: 2.2,
+                                  }} />
+                              }
                             </div>
                             <span className="text-center leading-tight font-semibold"
-                              style={{ color: locked ? '#444' : '#aaa', fontSize: 9 }}>
+                              style={{ color: locked ? '#444' : '#bbb', fontSize: 9 }}>
                               {t(link.labelKey)}
                             </span>
                           </button>
@@ -1027,19 +1107,22 @@ export default function Dashboard() {
         <ProfileAssessment />
       )}
 
-      {/* ── Support Button (students only) ─────────────────── */}
+      {/* ── Support Button (students only) — glass-gold / glass-green ── */}
       {currentUser?.role !== 'admin' && (
         <button
           onClick={sendSupport}
-          className="fixed z-40 flex items-center gap-2 rounded-full px-4 py-3 font-bold text-sm transition-all active:scale-95"
+          aria-label={isAr ? 'أحتاج دعماً' : 'Need Support'}
+          className={`fixed z-40 flex items-center gap-2 rounded-full px-4 py-3 font-bold text-sm transition-all duration-300 active:scale-95 ${supportSent ? 'glass-green' : 'glass-gold'}`}
           style={{
-            bottom: 84, left: isAr ? 16 : 'auto', right: isAr ? 'auto' : 16,
-            background: supportSent ? 'linear-gradient(135deg,#2ecc71,#27ae60)' : 'linear-gradient(135deg,#c9a84c,#e8c96a)',
-            color: '#0a0a0a',
-            boxShadow: '0 4px 20px rgba(201,168,76,0.4)',
+            bottom: 156,
+            insetInlineStart: 16,
+            color: supportSent ? '#a6ecbf' : '#f2e4b3',
+            textShadow: '0 1px 2px rgba(0,0,0,0.4)',
           }}
         >
-          <LifeBuoy size={16} />
+          <LifeBuoy size={16} style={{
+            filter: 'drop-shadow(0 0 4px rgba(201,168,76,0.55))',
+          }} />
           {supportSent
             ? (isAr ? 'تم الإرسال ✓' : 'Sent ✓')
             : (isAr ? 'أحتاج دعماً' : 'Need Support')}

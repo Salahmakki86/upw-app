@@ -785,8 +785,8 @@ export default function MorningRitual() {
 
             <button
               onClick={() => setView('questions')}
-              className="w-full py-3 rounded-2xl font-bold text-sm"
-              style={{ background: 'linear-gradient(135deg, #c9a84c, #a88930)', color: '#090909' }}
+              className="btn-glass-gold w-full text-sm"
+              style={{ padding: '12px 20px', borderRadius: 16 }}
             >
               {isAr ? 'انتهيت من الفيديو ← الأسئلة' : 'Done with video → Questions'} ✓
             </button>

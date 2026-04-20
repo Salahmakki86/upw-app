@@ -610,46 +610,40 @@ export default function TodayPage() {
       </div>
 
       {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* SECTION 3: GOLDEN BUTTON (fixed bottom area)                      */}
+      {/* SECTION 3: GLASS-GOLD CTA (fixed bottom area)                     */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       <div style={{ padding: '24px 16px 16px' }}>
         {allDone ? (
           <button
+            className="glass-green w-full transition-all duration-300"
             style={{
-              width: '100%',
               padding: '18px 24px',
               borderRadius: 20,
-              background: 'linear-gradient(135deg, #2ecc71, #27ae60)',
-              border: 'none',
-              color: '#fff',
+              color: '#a6ecbf',
               fontSize: 18,
               fontWeight: 800,
               cursor: 'pointer',
               textAlign: 'center',
               letterSpacing: '-0.01em',
+              textShadow: '0 1px 3px rgba(0,0,0,0.4)',
             }}
           >
-            {isAr ? 'يومك مكتمل!' : 'Day Complete!'}
+            🏆 {isAr ? 'يومك مكتمل!' : 'Day Complete!'}
           </button>
         ) : (
           <button
             onClick={() => navigate(firstIncompleteTask.path)}
-            className="active:scale-[0.97] transition-all"
+            className="btn-glass-gold w-full active:scale-[0.97] transition-all duration-300"
             style={{
-              width: '100%',
               padding: '18px 24px',
               borderRadius: 20,
-              background: 'linear-gradient(135deg, #c9a84c, #dbb85c)',
-              border: 'none',
-              color: '#090909',
               fontSize: 18,
-              fontWeight: 800,
-              cursor: 'pointer',
-              textAlign: 'center',
               letterSpacing: '-0.01em',
-              boxShadow: '0 4px 24px rgba(201,168,76,0.25)',
             }}
           >
+            <span style={{
+              filter: 'drop-shadow(0 0 6px rgba(232,201,106,0.5))',
+            }}>→</span>
             {isAr ? 'ابدا المهمة التالية' : 'Start Next Task'}
           </button>
         )}
@@ -1067,33 +1061,35 @@ export default function TodayPage() {
 
       </div>
 
-      {/* ── Floating Support Button ──────────────────────────────────────────── */}
+      {/* ── Floating Support Button — glass-gold / glass-green ───────────────── */}
       {!isAdmin && (
         <button
           onClick={handleSupport}
           disabled={supportLoading}
-          className="active:scale-95 transition-all"
+          aria-label={isAr ? 'احتاج دعما' : 'Need support'}
+          className={`active:scale-95 transition-all duration-300 ${supportSent ? 'glass-green' : 'glass-gold'} ${supportSent ? '' : 'icon-pulse'}`}
           style={{
             position: 'fixed',
-            bottom: 84,
-            [isAr ? 'left' : 'right']: 16,
-            width: 56, height: 56,
+            bottom: 156,
+            insetInlineStart: 16,
+            width: 52, height: 52,
             borderRadius: '50%',
-            background: supportSent
-              ? 'linear-gradient(135deg, #2ecc71, #27ae60)'
-              : 'linear-gradient(135deg, #c9a84c, #e8c96a)',
-            border: 'none',
-            boxShadow: '0 4px 20px rgba(201,168,76,0.4)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer',
+            cursor: supportLoading ? 'wait' : 'pointer',
             zIndex: 50,
           }}
           title={isAr ? 'احتاج دعما' : 'Need support'}
         >
           {supportSent ? (
-            <Check size={22} style={{ color: '#fff' }} />
+            <Check size={22} style={{
+              color: '#a6ecbf',
+              filter: 'drop-shadow(0 0 4px rgba(46,204,113,0.6))',
+            }} />
           ) : (
-            <LifeBuoy size={22} style={{ color: '#1a1000' }} />
+            <LifeBuoy size={22} style={{
+              color: '#f2e4b3',
+              filter: 'drop-shadow(0 0 6px rgba(201,168,76,0.65))',
+            }} />
           )}
         </button>
       )}

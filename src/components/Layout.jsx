@@ -35,33 +35,22 @@ export default function Layout({ children, title, subtitle, rightAction, helpKey
           </div>
           <div className="flex items-center gap-2">
             {rightAction && <div>{rightAction}</div>}
-            {/* Help Button */}
+            {/* Help Button — glass pill */}
             {helpKey && (
               <button
                 onClick={() => setShowHelp(true)}
                 aria-label={lang === 'ar' ? 'مساعدة' : 'Help'}
-                className="flex items-center justify-center rounded-full font-bold text-xs transition-all duration-200 active:scale-90"
-                style={{
-                  width: 44, height: 44,
-                  background: 'rgba(201,168,76,0.1)',
-                  border: '1px solid rgba(201,168,76,0.3)',
-                  color: '#c9a84c',
-                }}
+                className="btn-glass-pill font-bold text-sm"
               >
                 ?
               </button>
             )}
-            {/* Language Toggle */}
+            {/* Language Toggle — glass pill */}
             <button
               onClick={toggleLang}
               aria-label={lang === 'ar' ? 'Switch to English' : 'التبديل للعربية'}
-              className="flex items-center justify-center rounded-full font-bold text-xs transition-all duration-200 active:scale-90"
+              className="btn-glass-pill font-bold text-xs"
               style={{
-                width: 44,
-                height: 44,
-                background: 'rgba(201,168,76,0.1)',
-                border: '1px solid rgba(201,168,76,0.3)',
-                color: '#c9a84c',
                 fontFamily: lang === 'ar' ? "'Inter', sans-serif" : "'Cairo', sans-serif",
               }}
               title={lang === 'ar' ? 'Switch to English' : 'التبديل للعربية'}
@@ -121,27 +110,31 @@ export default function Layout({ children, title, subtitle, rightAction, helpKey
         {children}
       </main>
 
-      {/* Floating Triad Reset button */}
+      {/* Floating Triad Reset button — glass-gold + breathing pulse */}
       {!focusMode && (
         <button
           onClick={() => setShowTriad(true)}
           aria-label={lang === 'ar' ? 'إعادة ضبط الحالة — ٦٠ ثانية' : '60-second state reset'}
           title={lang === 'ar' ? 'إعادة ضبط الحالة — ٦٠ ثانية' : '60-second state reset'}
+          className="icon-pulse transition-all duration-300 active:scale-90"
           style={{
             position: 'fixed',
             insetInlineEnd: 16,
             bottom: 96,
-            width: 44, height: 44,
+            width: 48, height: 48,
             borderRadius: '50%',
-            background: 'linear-gradient(135deg, #c9a84c, #a88930)',
-            color: '#090909',
-            border: 'none',
+            background: 'linear-gradient(135deg, rgba(232,201,106,0.38) 0%, rgba(201,168,76,0.22) 60%, rgba(168,137,48,0.30) 100%)',
+            backdropFilter: 'blur(18px) saturate(200%)',
+            WebkitBackdropFilter: 'blur(18px) saturate(200%)',
+            border: '1px solid rgba(232,201,106,0.55)',
+            color: '#f2e4b3',
             cursor: 'pointer',
-            boxShadow: '0 6px 18px rgba(201,168,76,0.35), 0 0 0 2px #090909',
+            boxShadow: '0 6px 24px rgba(201,168,76,0.42), 0 0 0 2px rgba(9,9,9,0.8), inset 0 1px 0 rgba(255,255,255,0.22)',
             zIndex: 40,
-            fontSize: 18,
+            fontSize: 20,
             fontWeight: 900,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
+            textShadow: '0 1px 3px rgba(0,0,0,0.5)',
           }}
         >
           ⚡
