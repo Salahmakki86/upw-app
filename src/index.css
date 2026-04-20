@@ -776,21 +776,25 @@ main [style*="position: fixed"][style*="inset"] {
 /*  - fixed-position floating buttons (already styled inline)            */
 /* ════════════════════════════════════════════════════════════════════ */
 
-/* Layer A — universal blur on every non-excluded button */
-button:not([class*="btn-glass"]):not([class*="nav-tab"]):not([class*="icon-frame"]):not([class*="bg-transparent"]):not([class*="fixed"]):not([data-glass-skip]),
-a[role="button"]:not([class*="btn-glass"]):not([class*="bg-transparent"]) {
+/* Layer A — backdrop blur only, no forced border/shadow.
+   Border + shadow are added by Layer B and color-tint layers (which
+   also override background), so custom-styled buttons that don't get
+   a color tint remain visually intact. */
+button:not([class*="btn-glass"]):not([class*="nav-tab"]):not([class*="icon-frame"]):not([class*="bg-transparent"]):not([class*="fixed"]):not([data-glass-skip]):not([style*="position: fixed"]):not([style*="position:fixed"]),
+a[role="button"]:not([class*="btn-glass"]):not([class*="bg-transparent"]):not([data-glass-skip]) {
   backdrop-filter: blur(14px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(14px) saturate(180%) !important;
+  transition: transform 0.25s ease, filter 0.25s ease, box-shadow 0.3s ease !important;
+}
+
+/* Layer B — default neutral dark glass for buttons without color hint.
+   Sets background + border + shadow together (a cohesive pill). */
+button:not([class*="btn-glass"]):not([class*="nav-tab"]):not([class*="icon-frame"]):not([class*="bg-transparent"]):not([class*="fixed"]):not([data-glass-skip]):not([style*="position: fixed"]):not([style*="position:fixed"]):not([style*="rgb(201"]):not([style*="rgb(230"]):not([style*="rgb(46,"]):not([style*="rgb(46 "]):not([style*="rgb(52,"]):not([style*="rgb(52 "]):not([style*="rgb(155"]):not([style*="rgb(243"]):not([style*="rgb(255, 107"]):not([style*="rgb(255,107"]):not([style*="linear-gradient"]):not([style*="background"]):not([class*="bg-red"]):not([class*="bg-rose"]):not([class*="bg-green"]):not([class*="bg-emerald"]):not([class*="bg-blue"]):not([class*="bg-cyan"]):not([class*="bg-sky"]):not([class*="bg-purple"]):not([class*="bg-violet"]):not([class*="bg-fuchsia"]):not([class*="bg-pink"]):not([class*="bg-yellow"]):not([class*="bg-amber"]):not([class*="bg-orange"]):not([class*="bg-gold"]):not([class*="btn-gold"]):not([class*="btn-dark"]):not([class*="bg-"]) {
+  background: linear-gradient(135deg, rgba(26,26,26,0.55), rgba(14,14,14,0.72)) !important;
   border: 1px solid rgba(255,255,255,0.10) !important;
   box-shadow:
     0 4px 16px rgba(0,0,0,0.30),
     inset 0 1px 0 rgba(255,255,255,0.08) !important;
-  transition: all 0.3s ease !important;
-}
-
-/* Layer B — default neutral dark glass for buttons without color hint */
-button:not([class*="btn-glass"]):not([class*="nav-tab"]):not([class*="icon-frame"]):not([class*="bg-transparent"]):not([class*="fixed"]):not([data-glass-skip]):not([style*="rgb(201"]):not([style*="rgb(230"]):not([style*="rgb(46,"]):not([style*="rgb(46 "]):not([style*="rgb(52,"]):not([style*="rgb(52 "]):not([style*="rgb(155"]):not([style*="rgb(243"]):not([style*="rgb(255, 107"]):not([style*="rgb(255,107"]):not([class*="bg-red"]):not([class*="bg-rose"]):not([class*="bg-green"]):not([class*="bg-emerald"]):not([class*="bg-blue"]):not([class*="bg-cyan"]):not([class*="bg-sky"]):not([class*="bg-purple"]):not([class*="bg-violet"]):not([class*="bg-fuchsia"]):not([class*="bg-pink"]):not([class*="bg-yellow"]):not([class*="bg-amber"]):not([class*="bg-orange"]):not([class*="bg-gold"]):not([class*="btn-gold"]):not([class*="btn-dark"]) {
-  background: linear-gradient(135deg, rgba(26,26,26,0.55), rgba(14,14,14,0.72)) !important;
   color: #e8e0c6;
 }
 

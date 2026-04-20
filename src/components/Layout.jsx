@@ -120,6 +120,7 @@ export default function Layout({ children, title, subtitle, rightAction, helpKey
           onClick={() => setShowTriad(true)}
           aria-label={lang === 'ar' ? 'إعادة ضبط الحالة — ٦٠ ثانية' : '60-second state reset'}
           title={lang === 'ar' ? 'إعادة ضبط الحالة — ٦٠ ثانية' : '60-second state reset'}
+          data-glass-skip
           className="icon-pulse transition-all duration-300 active:scale-90"
           style={{
             position: 'fixed',

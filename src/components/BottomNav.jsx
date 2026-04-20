@@ -49,8 +49,9 @@ export default function BottomNav() {
                 onClick={() => navigate(tab.path)}
                 aria-label={t(tab.labelKey)}
                 aria-current={isActive ? 'page' : undefined}
-                className="relative -top-5 flex flex-col items-center gap-1"
-                style={{ minHeight: 56, minWidth: 56 }}
+                data-glass-skip
+                className="relative -top-5 flex flex-col items-center gap-1 bg-transparent"
+                style={{ minHeight: 56, minWidth: 56, background: 'transparent', border: 'none', boxShadow: 'none' }}
               >
                 <div
                   className={`w-14 h-14 rounded-full flex items-center justify-center font-black text-sm text-tr-black transition-all duration-300 active:scale-90 ${isActive ? 'icon-pulse' : ''}`}
