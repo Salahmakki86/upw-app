@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Home, Sun, Target, Briefcase, LayoutGrid } from 'lucide-react'
+import { LayoutDashboard, Sunrise, Crosshair, Building2, Shapes } from 'lucide-react'
 import { useLang } from '../context/LangContext'
 import { useAuth } from '../context/AuthContext'
 import NotificationBadge from './NotificationBadge'
@@ -12,12 +12,12 @@ export default function BottomNav() {
   const isAdmin = currentUser?.role === 'admin'
 
   const TABS = [
-    { path: '/dashboard', matchPaths: ['/', '/dashboard'], icon: Home, labelKey: 'nav_home' },
-    { path: '/morning',   icon: Sun,       labelKey: 'nav_morning'  },
+    { path: '/dashboard', matchPaths: ['/', '/dashboard'], icon: LayoutDashboard, labelKey: 'nav_home' },
+    { path: '/morning',   icon: Sunrise,   labelKey: 'nav_morning'  },
     { path: '/state',     icon: null,      labelKey: 'nav_sos',     center: true },
-    { path: '/goals',     icon: Target,    labelKey: 'nav_goals'    },
-    { path: '/business',  icon: Briefcase, labelKey: 'nav_business',  adminOnly: true, badgeKey: 'adminTab' },
-    { path: '/all-tools', icon: LayoutGrid, labelKey: 'nav_more' },
+    { path: '/goals',     icon: Crosshair, labelKey: 'nav_goals'    },
+    { path: '/business',  icon: Building2, labelKey: 'nav_business',  adminOnly: true, badgeKey: 'adminTab' },
+    { path: '/all-tools', icon: Shapes,    labelKey: 'nav_more' },
   ].filter(tab => !tab.adminOnly || isAdmin)
 
   return (

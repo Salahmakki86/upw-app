@@ -423,11 +423,16 @@ export default function TodayPage() {
       <WelcomeExperience />
 
       {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* SECTION 1: HERO (~40vh) -- greeting, briefing, score arc          */}
+      {/* SECTION 1: HERO (~40vh) — glass aurora hero with streak & score    */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       <div style={{
         minHeight: '40vh',
-        background: 'linear-gradient(180deg, #111 0%, #090909 100%)',
+        background: `
+          radial-gradient(ellipse 80% 60% at 50% 20%, rgba(201,168,76,0.12), transparent 60%),
+          radial-gradient(ellipse 60% 40% at 20% 80%, rgba(155,89,182,0.06), transparent 60%),
+          linear-gradient(180deg, rgba(17,17,17,0.4) 0%, rgba(9,9,9,0.2) 100%)`,
+        backdropFilter: 'blur(8px) saturate(140%)',
+        WebkitBackdropFilter: 'blur(8px) saturate(140%)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',

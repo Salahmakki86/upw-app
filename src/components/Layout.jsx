@@ -20,12 +20,16 @@ export default function Layout({ children, title, subtitle, rightAction, helpKey
   const isComplete = score === DAILY_TASKS_TOTAL
 
   return (
-    <div className="flex flex-col h-full" style={{ background: '#090909' }}>
-      {/* Header */}
+    <div className="flex flex-col h-full" style={{ background: 'transparent' }}>
+      {/* Header — glass-translucent so aurora bleeds through */}
       {title && (
         <header
           className="flex-shrink-0 flex items-center justify-between px-5 pb-4 safe-top"
-          style={{ background: '#090909' }}
+          style={{
+            background: 'linear-gradient(180deg, rgba(9,9,9,0.85) 0%, rgba(9,9,9,0.55) 100%)',
+            backdropFilter: 'blur(18px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(18px) saturate(180%)',
+          }}
         >
           <div className="flex-1">
             <h1 className="text-xl font-bold text-white">{title}</h1>
