@@ -137,40 +137,76 @@
       inset 0 1px 0 rgba(255,255,255,0.04);
   }
 
+  /* Primary CTA — gold glass (was solid gold gradient; upgraded app-wide) */
   .btn-gold {
-    @apply flex items-center justify-center gap-2 rounded-2xl font-bold text-tr-black transition-all duration-200 active:scale-95;
-    background: linear-gradient(135deg, #c9a84c 0%, #e8c96a 50%, #a88930 100%);
-    box-shadow: 0 0 20px rgba(201,168,76,0.3);
+    @apply flex items-center justify-center gap-2 rounded-2xl font-bold transition-all duration-300 active:scale-95;
+    background: linear-gradient(135deg,
+      rgba(201,168,76,0.42) 0%,
+      rgba(201,168,76,0.18) 50%,
+      rgba(232,201,106,0.32) 100%);
+    backdrop-filter: blur(22px) saturate(200%);
+    -webkit-backdrop-filter: blur(22px) saturate(200%);
+    border: 1px solid rgba(232,201,106,0.52);
+    color: #f2e4b3 !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    box-shadow:
+      0 6px 24px rgba(201,168,76,0.30),
+      0 2px 6px rgba(0,0,0,0.2),
+      inset 0 1px 0 rgba(255,255,255,0.22);
   }
-
   .btn-gold:hover {
-    box-shadow: 0 0 30px rgba(201,168,76,0.5);
+    background: linear-gradient(135deg,
+      rgba(201,168,76,0.55) 0%,
+      rgba(201,168,76,0.24) 50%,
+      rgba(232,201,106,0.40) 100%);
+    box-shadow:
+      0 8px 32px rgba(201,168,76,0.45),
+      inset 0 1px 0 rgba(255,255,255,0.28);
   }
 
+  /* Secondary — dark glass (was solid #1a1a1a; upgraded app-wide) */
   .btn-dark {
-    @apply flex items-center justify-center gap-2 rounded-2xl font-bold text-tr-white transition-all duration-200 active:scale-95;
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
+    @apply flex items-center justify-center gap-2 rounded-2xl font-bold text-tr-white transition-all duration-300 active:scale-95;
+    background: linear-gradient(135deg, rgba(26,26,26,0.62), rgba(14,14,14,0.80));
+    backdrop-filter: blur(18px) saturate(180%);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow:
+      0 4px 18px rgba(0,0,0,0.32),
+      inset 0 1px 0 rgba(255,255,255,0.06);
   }
-
   .btn-dark:hover {
-    border-color: #c9a84c;
+    border-color: rgba(201,168,76,0.48);
+    box-shadow:
+      0 6px 24px rgba(201,168,76,0.20),
+      inset 0 1px 0 rgba(255,255,255,0.10);
   }
 
   .text-gold { color: #c9a84c; }
   .text-gold-light { color: #e8c96a; }
-  .bg-gold { background: linear-gradient(135deg, #c9a84c, #e8c96a, #a88930); }
+
+  /* Gold background utility → translucent gradient (used on badges, bars) */
+  .bg-gold {
+    background: linear-gradient(135deg,
+      rgba(201,168,76,0.45),
+      rgba(232,201,106,0.28),
+      rgba(168,137,48,0.38));
+  }
 
   .gold-border { border-color: #c9a84c; }
 
+  /* Input — glass-translucent (was solid #111; upgraded app-wide) */
   .input-dark {
     @apply w-full rounded-xl p-3 text-tr-white outline-none transition-all;
-    background: #111111;
-    border: 1px solid #2a2a2a;
+    background: rgba(17,17,17,0.55);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.10);
   }
   .input-dark:focus {
-    border-color: #c9a84c;
-    box-shadow: 0 0 0 2px rgba(201,168,76,0.15);
+    border-color: rgba(201,168,76,0.55);
+    background: rgba(17,17,17,0.68);
+    box-shadow: 0 0 0 2px rgba(201,168,76,0.18);
   }
 
   .section-title {
@@ -723,4 +759,206 @@ main [class*="fixed"][class*="inset-0"],
 main [style*="position: fixed"][style*="inset"] {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+
+/* ════════════════════════════════════════════════════════════════════ */
+/* GLOBAL AUTO-GLASS BUTTONS — every button gets glass treatment        */
+/*                                                                       */
+/* React normalizes inline hex backgrounds to rgb() in the DOM, so we    */
+/* match rgb()-form patterns in [style*="..."] selectors. Class-based    */
+/* selectors catch Tailwind bg-* utilities and custom color classes.     */
+/*                                                                       */
+/* Carve-outs (skipped):                                                 */
+/*  - .btn-glass* (already glass)                                        */
+/*  - .nav-tab / BottomNav buttons (custom nav glass)                    */
+/*  - .icon-frame / .icon-frame-gold (icon containers)                   */
+/*  - explicit bg-transparent buttons                                    */
+/*  - fixed-position floating buttons (already styled inline)            */
+/* ════════════════════════════════════════════════════════════════════ */
+
+/* Layer A — universal blur on every non-excluded button */
+button:not([class*="btn-glass"]):not([class*="nav-tab"]):not([class*="icon-frame"]):not([class*="bg-transparent"]):not([class*="fixed"]):not([data-glass-skip]),
+a[role="button"]:not([class*="btn-glass"]):not([class*="bg-transparent"]) {
+  backdrop-filter: blur(14px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(180%) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  box-shadow:
+    0 4px 16px rgba(0,0,0,0.30),
+    inset 0 1px 0 rgba(255,255,255,0.08) !important;
+  transition: all 0.3s ease !important;
+}
+
+/* Layer B — default neutral dark glass for buttons without color hint */
+button:not([class*="btn-glass"]):not([class*="nav-tab"]):not([class*="icon-frame"]):not([class*="bg-transparent"]):not([class*="fixed"]):not([data-glass-skip]):not([style*="rgb(201"]):not([style*="rgb(230"]):not([style*="rgb(46,"]):not([style*="rgb(46 "]):not([style*="rgb(52,"]):not([style*="rgb(52 "]):not([style*="rgb(155"]):not([style*="rgb(243"]):not([style*="rgb(255, 107"]):not([style*="rgb(255,107"]):not([class*="bg-red"]):not([class*="bg-rose"]):not([class*="bg-green"]):not([class*="bg-emerald"]):not([class*="bg-blue"]):not([class*="bg-cyan"]):not([class*="bg-sky"]):not([class*="bg-purple"]):not([class*="bg-violet"]):not([class*="bg-fuchsia"]):not([class*="bg-pink"]):not([class*="bg-yellow"]):not([class*="bg-amber"]):not([class*="bg-orange"]):not([class*="bg-gold"]):not([class*="btn-gold"]):not([class*="btn-dark"]) {
+  background: linear-gradient(135deg, rgba(26,26,26,0.55), rgba(14,14,14,0.72)) !important;
+  color: #e8e0c6;
+}
+
+/* ──────── GOLD tint buttons → translucent gold glass ──────── */
+button[style*="rgb(201, 168, 76)"]:not([class*="btn-glass"]),
+button[style*="rgb(201,168,76)"]:not([class*="btn-glass"]),
+button[style*="rgb(232, 201, 106)"]:not([class*="btn-glass"]),
+button[style*="rgb(232,201,106)"]:not([class*="btn-glass"]),
+button[style*="rgb(168, 137, 48)"]:not([class*="btn-glass"]),
+button[style*="rgb(168,137,48)"]:not([class*="btn-glass"]),
+button[class~="bg-gold"]:not([class*="btn-glass"]),
+button[class*="bg-yellow"]:not([class*="btn-glass"]),
+button[class*="bg-amber"]:not([class*="btn-glass"]) {
+  background: linear-gradient(135deg,
+    rgba(201,168,76,0.42) 0%,
+    rgba(201,168,76,0.18) 55%,
+    rgba(232,201,106,0.30) 100%) !important;
+  border: 1px solid rgba(232,201,106,0.52) !important;
+  color: #f2e4b3 !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  box-shadow:
+    0 6px 22px rgba(201,168,76,0.28),
+    inset 0 1px 0 rgba(255,255,255,0.18) !important;
+}
+
+/* ──────── RED tint buttons ──────── */
+button[style*="rgb(230, 57, 70)"]:not([class*="btn-glass"]),
+button[style*="rgb(230,57,70)"]:not([class*="btn-glass"]),
+button[style*="rgb(255, 107, 122)"]:not([class*="btn-glass"]),
+button[style*="rgb(255,107,122)"]:not([class*="btn-glass"]),
+button[style*="rgb(239, 68, 68)"]:not([class*="btn-glass"]),
+button[style*="rgb(220, 38, 38)"]:not([class*="btn-glass"]),
+button[class*="bg-red"]:not([class*="btn-glass"]),
+button[class*="bg-rose"]:not([class*="btn-glass"]) {
+  background: linear-gradient(135deg,
+    rgba(230,57,70,0.38) 0%,
+    rgba(230,57,70,0.15) 100%) !important;
+  border: 1px solid rgba(230,57,70,0.52) !important;
+  color: #ffb3b8 !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  box-shadow:
+    0 6px 22px rgba(230,57,70,0.25),
+    inset 0 1px 0 rgba(255,255,255,0.10) !important;
+}
+
+/* ──────── GREEN tint buttons ──────── */
+button[style*="rgb(46, 204, 113)"]:not([class*="btn-glass"]),
+button[style*="rgb(46,204,113)"]:not([class*="btn-glass"]),
+button[style*="rgb(34, 197, 94)"]:not([class*="btn-glass"]),
+button[style*="rgb(39, 174, 96)"]:not([class*="btn-glass"]),
+button[class*="bg-green"]:not([class*="btn-glass"]),
+button[class*="bg-emerald"]:not([class*="btn-glass"]),
+button[class*="bg-teal"]:not([class*="btn-glass"]) {
+  background: linear-gradient(135deg,
+    rgba(46,204,113,0.38) 0%,
+    rgba(46,204,113,0.15) 100%) !important;
+  border: 1px solid rgba(46,204,113,0.52) !important;
+  color: #c2f3d6 !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  box-shadow:
+    0 6px 22px rgba(46,204,113,0.22),
+    inset 0 1px 0 rgba(255,255,255,0.10) !important;
+}
+
+/* ──────── BLUE tint buttons ──────── */
+button[style*="rgb(52, 152, 219)"]:not([class*="btn-glass"]),
+button[style*="rgb(52,152,219)"]:not([class*="btn-glass"]),
+button[style*="rgb(59, 130, 246)"]:not([class*="btn-glass"]),
+button[style*="rgb(37, 99, 235)"]:not([class*="btn-glass"]),
+button[class*="bg-blue"]:not([class*="btn-glass"]),
+button[class*="bg-cyan"]:not([class*="btn-glass"]),
+button[class*="bg-sky"]:not([class*="btn-glass"]),
+button[class*="bg-indigo"]:not([class*="btn-glass"]) {
+  background: linear-gradient(135deg,
+    rgba(52,152,219,0.38) 0%,
+    rgba(52,152,219,0.15) 100%) !important;
+  border: 1px solid rgba(52,152,219,0.52) !important;
+  color: #c7e5f7 !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  box-shadow:
+    0 6px 22px rgba(52,152,219,0.22),
+    inset 0 1px 0 rgba(255,255,255,0.10) !important;
+}
+
+/* ──────── PURPLE tint buttons ──────── */
+button[style*="rgb(155, 89, 182)"]:not([class*="btn-glass"]),
+button[style*="rgb(155,89,182)"]:not([class*="btn-glass"]),
+button[style*="rgb(168, 85, 247)"]:not([class*="btn-glass"]),
+button[class*="bg-purple"]:not([class*="btn-glass"]),
+button[class*="bg-violet"]:not([class*="btn-glass"]),
+button[class*="bg-fuchsia"]:not([class*="btn-glass"]),
+button[class*="bg-pink"]:not([class*="btn-glass"]) {
+  background: linear-gradient(135deg,
+    rgba(155,89,182,0.38) 0%,
+    rgba(155,89,182,0.15) 100%) !important;
+  border: 1px solid rgba(155,89,182,0.52) !important;
+  color: #e3c9eb !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  box-shadow:
+    0 6px 22px rgba(155,89,182,0.22),
+    inset 0 1px 0 rgba(255,255,255,0.10) !important;
+}
+
+/* ──────── ORANGE tint buttons ──────── */
+button[style*="rgb(243, 156, 18)"]:not([class*="btn-glass"]),
+button[style*="rgb(243,156,18)"]:not([class*="btn-glass"]),
+button[style*="rgb(249, 115, 22)"]:not([class*="btn-glass"]),
+button[class*="bg-orange"]:not([class*="btn-glass"]) {
+  background: linear-gradient(135deg,
+    rgba(243,156,18,0.38) 0%,
+    rgba(243,156,18,0.15) 100%) !important;
+  border: 1px solid rgba(243,156,18,0.52) !important;
+  color: #ffe1a3 !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  box-shadow:
+    0 6px 22px rgba(243,156,18,0.22),
+    inset 0 1px 0 rgba(255,255,255,0.10) !important;
+}
+
+/* ──────── GRAY / dark-neutral buttons → dark glass ──────── */
+button[style*="rgb(17, 17, 17)"]:not([class*="btn-glass"]),
+button[style*="rgb(26, 26, 26)"]:not([class*="btn-glass"]),
+button[style*="rgb(14, 14, 14)"]:not([class*="btn-glass"]),
+button[style*="rgb(21, 21, 21)"]:not([class*="btn-glass"]),
+button[style*="rgb(42, 42, 42)"]:not([class*="btn-glass"]),
+button[style*="rgb(9, 9, 9)"]:not([class*="btn-glass"]),
+button[class*="bg-gray"]:not([class*="btn-glass"]),
+button[class*="bg-slate"]:not([class*="btn-glass"]),
+button[class*="bg-zinc"]:not([class*="btn-glass"]),
+button[class*="bg-neutral"]:not([class*="btn-glass"]),
+button[class*="bg-stone"]:not([class*="btn-glass"]),
+button[class*="bg-black"]:not([class*="btn-glass"]) {
+  background: linear-gradient(135deg, rgba(26,26,26,0.58) 0%, rgba(14,14,14,0.78) 100%) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  color: #e8e0c6 !important;
+  box-shadow:
+    0 4px 18px rgba(0,0,0,0.32),
+    inset 0 1px 0 rgba(255,255,255,0.06) !important;
+}
+
+/* ──────── Universal hover lift ──────── */
+button:not([disabled]):not([class*="btn-glass"]):not([class*="nav-tab"]):not([class*="icon-frame"]):hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+button:not([disabled]):not([class*="btn-glass"]):not([class*="nav-tab"]):not([class*="icon-frame"]):active {
+  transform: translateY(0) scale(0.97);
+  filter: brightness(0.96);
+}
+
+/* Carve-out: disabled buttons — muted, no blur */
+button[disabled] {
+  opacity: 0.45;
+  filter: grayscale(0.4);
+}
+
+/* Carve-out: gradient-background buttons keep their gradient but gain blur */
+button[style*="linear-gradient"]:not([class*="btn-glass"]) {
+  backdrop-filter: blur(14px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(180%) !important;
+  /* let the inline gradient background remain visible */
+}
+
+/* Carve-out: Tailwind transparent / ghost buttons — no forced background */
+button[class*="bg-transparent"],
+button[class*="bg-white/"],
+button[class*="bg-black/"] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
