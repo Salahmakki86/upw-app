@@ -526,37 +526,81 @@ main button [class*="rounded-"] {
 }
 
 /* ════════════════════════════════════════════════════════════════════ */
-/* AUTO-GLASS FOR OPAQUE INLINE BACKGROUNDS                             */
-/* Many pages use inline background: #0e0e0e/#111/#0a0a0a on cards.     */
-/* We convert those opaque fills to translucent glass surfaces so the   */
-/* aurora bleeds through WITHOUT touching every page file.              */
+/* AUTO-GLASS FOR ALL OPAQUE DARK CARDS — bulletproof                    */
+/*                                                                       */
+/* React serializes inline `background: #0e0e0e` to `rgb(14, 14, 14)` in */
+/* the DOM, so hex-based [style*="#..."] selectors NEVER matched.        */
+/*                                                                       */
+/* Strategy: FORCE every rounded-xl/2xl/3xl container in <main> to be    */
+/* a translucent glass surface, except:                                  */
+/*  - <button> elements (preserve their specific button styles)          */
+/*  - accent-colored elements (gold/red/green rgba backgrounds stay)     */
+/*  - fixed/absolute dialogs/modals                                      */
 /* ════════════════════════════════════════════════════════════════════ */
 
-main [style*="background: #0e0e0e"],
-main [style*="background:#0e0e0e"],
-main [style*="background: #111111"],
-main [style*="background:#111111"],
-main [style*="background: #111"],
-main [style*="background:#111"],
-main [style*="background: #0a0a0a"],
-main [style*="background:#0a0a0a"],
-main [style*="background: #1a1a1a"],
-main [style*="background:#1a1a1a"],
-main [style*="background: #151515"],
-main [style*="background:#151515"],
-main [style*="background: #090909"],
-main [style*="background:#090909"] {
-  background: linear-gradient(135deg, rgba(26,26,26,0.70), rgba(12,12,12,0.82)) !important;
-  backdrop-filter: blur(18px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
-  border-color: rgba(255,255,255,0.07) !important;
+main [class*="rounded-xl"]:not(button):not([class*="fixed"]):not([class*="absolute"]),
+main [class*="rounded-2xl"]:not(button):not([class*="fixed"]):not([class*="absolute"]),
+main [class*="rounded-3xl"]:not(button):not([class*="fixed"]):not([class*="absolute"]) {
+  background: linear-gradient(135deg, rgba(26,26,26,0.58) 0%, rgba(12,12,12,0.78) 100%) !important;
+  backdrop-filter: blur(18px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(180%) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
   box-shadow:
-    0 6px 22px rgba(0,0,0,0.35),
+    0 6px 24px rgba(0,0,0,0.35),
     inset 0 1px 0 rgba(255,255,255,0.04) !important;
 }
 
-/* Leave the aurora body background alone (match only within <main>) */
-body[style*="background"] { /* noop guard */ }
+/* Carve-outs: elements with ACCENT-color rgba inline backgrounds keep
+   their tint. We restore the original background using the rgb() form
+   that the DOM actually has. These override the force-glass above. */
+main [style*="rgba(201, 168, 76"][class*="rounded-"]:not(button),
+main [style*="rgba(201,168,76"][class*="rounded-"]:not(button) {
+  background: rgba(201, 168, 76, 0.08) !important;
+  border-color: rgba(201, 168, 76, 0.25) !important;
+}
+main [style*="rgba(230, 57, 70"][class*="rounded-"]:not(button),
+main [style*="rgba(230,57,70"][class*="rounded-"]:not(button) {
+  background: rgba(230, 57, 70, 0.10) !important;
+  border-color: rgba(230, 57, 70, 0.25) !important;
+}
+main [style*="rgba(46, 204, 113"][class*="rounded-"]:not(button),
+main [style*="rgba(46,204,113"][class*="rounded-"]:not(button) {
+  background: rgba(46, 204, 113, 0.10) !important;
+  border-color: rgba(46, 204, 113, 0.25) !important;
+}
+main [style*="rgba(155, 89, 182"][class*="rounded-"]:not(button),
+main [style*="rgba(155,89,182"][class*="rounded-"]:not(button) {
+  background: rgba(155, 89, 182, 0.10) !important;
+  border-color: rgba(155, 89, 182, 0.25) !important;
+}
+main [style*="rgba(52, 152, 219"][class*="rounded-"]:not(button),
+main [style*="rgba(52,152,219"][class*="rounded-"]:not(button) {
+  background: rgba(52, 152, 219, 0.10) !important;
+  border-color: rgba(52, 152, 219, 0.25) !important;
+}
+main [style*="rgba(243, 156, 18"][class*="rounded-"]:not(button),
+main [style*="rgba(243,156,18"][class*="rounded-"]:not(button) {
+  background: rgba(243, 156, 18, 0.10) !important;
+  border-color: rgba(243, 156, 18, 0.25) !important;
+}
+
+/* Carve-out: elements with linear-gradient inline backgrounds keep theirs */
+main [style*="linear-gradient"][class*="rounded-"]:not(button) {
+  background: var(--preserve-bg) !important;
+}
+/* simpler: just disable the force when a linear-gradient is already present */
+main [style*="linear-gradient"][class*="rounded-"] {
+  /* let the inline gradient win */
+  background: revert !important;
+}
+
+/* But we still want the blur to show through even on gradient cards */
+main [class*="rounded-xl"]:not(button):not([class*="fixed"]):not([class*="absolute"]),
+main [class*="rounded-2xl"]:not(button):not([class*="fixed"]):not([class*="absolute"]),
+main [class*="rounded-3xl"]:not(button):not([class*="fixed"]):not([class*="absolute"]) {
+  backdrop-filter: blur(18px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(180%) !important;
+}
 
 /* Section titles — subtle gold gradient headings */
 .section-title {
